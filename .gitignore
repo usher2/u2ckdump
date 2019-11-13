@@ -1,0 +1,9 @@
+/res/*
+!/res/*.zip-sample
+!/res/.keep-me
+*\~
+*.swp
+*.log
+u2ckdump
+*.sh
+

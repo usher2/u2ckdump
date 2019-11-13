@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+message SearchIPv4Request {
+        uint32 query = 1;
+}
+
+message SearchIPv6Request {
+        string query = 1;
+}
+
+message SearchURLRequest {
+        string query = 1;
+}
+
+message SearchDomainRequest {
+        string query = 1;
+}
+
+message SearchResponse {
+        repeated Content results = 1;
+}
+
+service SearchIPv4Service {
+  rpc SearchIPv4 (SearchIPv4Request) returns (SearchResponse);
+}
+
+service SearchIPv6Service {
+  rpc SearchIPv6 (SearchIPv6Request) returns (SearchResponse);
+}
+
+service SearchURLService {
+  rpc SearchURL (SearchURLRequest) returns (SearchResponse);
+}
+
+service SearchDomainService {
+  rpc SearchURL (SearchURLRequest) returns (SearchResponse);
+}
+
+message Content {
+        int32 id = 1;
+        int32 entryType = 2;
+        int32 httpsBlock = 3;
+        int64 registryUpdateTime =4;
+	Decision decision = 5;
+        int64 includeTime = 6;
+        string blockType = 7;
+        string hash = 8;
+         int64 ts = 9;
+        uint32 u2Hash = 10;
+        repeated URL urls = 11;
+        repeated IPv4Address ip4s = 12;
+	repeated IPv6Address ip6s= 13;
+	repeated Subnet subnets = 14;
+	repeated Subnet6 subnet6s = 15;
+	repeated Domain domains = 16;
+}
+
+message Decision {
+	string date = 1;
+	string number = 2;
+	string org = 3;
+}
+
+message IPv4Address {
+	uint32 ip4 = 1;
+	int64 ts = 2;
+}
+
+message IPv6Address {
+	string ip6 = 1;
+	int64 ts = 2;
+}
+
+message Subnet {
+	string subnet = 1;
+	int64 ts = 2;
+}
+
+message Subnet6 {
+	string subnet6 = 1;
+	int64 ts = 2;
+}
+
+message URL {
+	string url = 1;
+	int64 ts = 2;
+}
+
+message Domain {
+	string domain = 1;
+	int64 ts = 2;
+}
+
