@@ -1,11 +1,13 @@
 package main
 
 import (
+	"google.golang.org/grpc"
+	"os"
 	"runtime"
 	"time"
 )
 
-func DumpPoll(done, stop chan bool, url, token, dir string, d time.Duration) {
+func DumpPoll(s *grpc.Server, done chan bool, sigs chan os.Signal, url, token, dir string, d time.Duration) {
 	runtime.GC()
 	Info.Printf("Complete GC\n")
 	DumpRefresh(url, token, dir)
@@ -14,7 +16,8 @@ func DumpPoll(done, stop chan bool, url, token, dir string, d time.Duration) {
 		select {
 		case <-timer.C:
 			DumpRefresh(url, token, dir)
-		case <-stop:
+		case <-sigs:
+			s.Stop()
 			done <- true
 		}
 	}
