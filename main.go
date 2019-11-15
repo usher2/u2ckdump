@@ -6,6 +6,9 @@ import (
 	//"log"
 	//"net/http"
 	//_ "net/http/pprof"
+	pb "github.com/usher-2/u2ckdump/msg"
+	"google.golang.org/grpc"
+	"net"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -19,6 +22,7 @@ func main() {
 	//}()
 	confAPIURL := flag.String("u", "https://example.com", "Dump API URL")
 	confAPIKey := flag.String("k", "xxxxxxxxxyyyyyyyyyyzzzzzzzzzqqqqqqqqqwwwwwwweeeeeeeerrrrrrrrrttt", "Dump API Key")
+	confPBPort := flag.String("p", "50001", "gRPC port")
 	confDumpCacheDir := flag.String("d", "res", "Dump cache dir")
 	confLogLevel := flag.String("l", "Debug", "Logging level")
 	flag.Parse()
@@ -58,11 +62,19 @@ func main() {
 	}
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
-	stop := make(chan bool, 1)
+	lis, err := net.Listen("tcp", ":"+*confPBPort)
+	if err != nil {
+		Error.Printf("Failed to listen: %s\n", err.Error())
+		os.Exit(1)
+	}
+	s := grpc.NewServer()
+	pb.RegisterSearchServiceServer(s, &server{})
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go DumpPoll(done, stop, *confAPIURL, *confAPIKey, *confDumpCacheDir, 60)
-	<-sigs
-	stop <- true
+	go DumpPoll(s, done, sigs, *confAPIURL, *confAPIKey, *confDumpCacheDir, 60)
+	if err := s.Serve(lis); err != nil {
+		Error.Printf("Failed to serve: %v", err.Error())
+		os.Exit(1)
+	}
 	<-done
 	Warning.Printf("Exiting...")
 }
