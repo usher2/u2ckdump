@@ -142,7 +142,7 @@ func Parse(dumpfile string) error {
 							v0.Domain = append(v0.Domain, TXDomain{Domain: v.Domain[i].Domain, Ts: parseTime(v.Ts)})
 						}
 					}
-					SPass[v.Id] = Nothing{}
+					SPass[v.Id] = NothingV
 					stats.CntAdd++
 				} else if o.U2Hash != u2Hash {
 					v0 := &TXContent{
@@ -169,7 +169,7 @@ func Parse(dumpfile string) error {
 						for i := range v.Ip {
 							ip := ip2i(v.Ip[i].Ip)
 							DumpSnap.Ip.AddIP4(ip, v.Id)
-							bufi[ip] = Nothing{}
+							bufi[ip] = NothingV
 							v0.Ip = append(v0.Ip, TXIp{Ip: ip})
 						}
 					}
@@ -186,7 +186,7 @@ func Parse(dumpfile string) error {
 						for i := range v.Ip6 {
 							ip6 := string(net.ParseIP(v.Ip6[i].Ip6))
 							DumpSnap.Ip6.AddRes(ip6, v.Id)
-							buf[ip6] = Nothing{}
+							buf[ip6] = NothingV
 							v0.Ip6 = append(v0.Ip6, TXIp6{Ip6: ip6, Ts: parseTime(v.Ts)})
 						}
 					}
@@ -201,7 +201,7 @@ func Parse(dumpfile string) error {
 						v0.Subnet = make([]TXSubnet, 0, len(v.Subnet))
 						for i := range v.Subnet {
 							DumpSnap.Subnet.AddRes(v.Subnet[i].Subnet, v.Id)
-							buf[v.Subnet[i].Subnet] = Nothing{}
+							buf[v.Subnet[i].Subnet] = NothingV
 							v0.Subnet = append(v0.Subnet, TXSubnet{Subnet: v.Subnet[i].Subnet, Ts: parseTime(v.Ts)})
 						}
 					}
@@ -215,7 +215,7 @@ func Parse(dumpfile string) error {
 						v0.Subnet6 = make([]TXSubnet6, 0, len(v.Subnet6))
 						for i := range v.Subnet6 {
 							DumpSnap.Subnet6.AddRes(v.Subnet6[i].Subnet6, v.Id)
-							buf[v.Subnet6[i].Subnet6] = Nothing{}
+							buf[v.Subnet6[i].Subnet6] = NothingV
 							v0.Subnet6 = append(v0.Subnet6, TXSubnet6{Subnet6: v.Subnet6[i].Subnet6, Ts: parseTime(v.Ts)})
 						}
 					}
@@ -230,7 +230,7 @@ func Parse(dumpfile string) error {
 						for i := range v.Url {
 							_url := NormalizeUrl(v.Url[i].Url)
 							DumpSnap.Url.AddRes(_url, v.Id)
-							buf[_url] = Nothing{}
+							buf[_url] = NothingV
 							v0.Url = append(v0.Url, TXUrl{Url: v.Url[i].Url, Ts: parseTime(v.Ts)})
 							if _url[:8] == "https://" {
 								v0.HTTPSBlock += 1
@@ -249,7 +249,7 @@ func Parse(dumpfile string) error {
 						for i := range v.Domain {
 							_domain := NormalizeDomain(v.Domain[i].Domain)
 							DumpSnap.Domain.AddRes(_domain, v.Id)
-							buf[_domain] = Nothing{}
+							buf[_domain] = NothingV
 							v0.Domain = append(v0.Domain, TXDomain{Domain: v.Domain[i].Domain, Ts: parseTime(v.Ts)})
 						}
 					}
@@ -260,11 +260,11 @@ func Parse(dumpfile string) error {
 						}
 					}
 					buf = nil
-					SPass[v.Id] = Nothing{}
+					SPass[v.Id] = NothingV
 					stats.CntUpdate++
 				} else {
 					o.RegistryUpdateTime = r.UpdateTime
-					SPass[o.Id] = Nothing{}
+					SPass[o.Id] = NothingV
 					//v = nil
 				}
 				DumpSnap.Content.Unlock()
