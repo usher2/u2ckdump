@@ -25,24 +25,71 @@ type TContentMap struct {
 }
 
 type TDump struct {
-	Ip      Ip4Set
-	Ip6     StringSet
-	Subnet  StringSet
-	Subnet6 StringSet
-	Url     StringSet
-	Domain  StringSet
+	ip      Ip4Set
+	ip6     StringSet
+	subnet  StringSet
+	subnet6 StringSet
+	url     StringSet
+	domain  StringSet
 	Content TContentMap
 }
 
-var DumpSnap = TDump{
-	Ip:      make(Ip4Set),
-	Ip6:     make(StringSet),
-	Subnet:  make(StringSet),
-	Subnet6: make(StringSet),
-	Url:     make(StringSet),
-	Domain:  make(StringSet),
-	Content: TContentMap{C: make(map[int]*TXContent)},
+func NewTDump() *TDump {
+	return &TDump{
+		ip:      make(Ip4Set),
+		ip6:     make(StringSet),
+		subnet:  make(StringSet),
+		subnet6: make(StringSet),
+		url:     make(StringSet),
+		domain:  make(StringSet),
+		Content: TContentMap{C: make(map[int]*TXContent)},
+	}
 }
+
+func (t *TDump) AddIp(ip uint32, id int) {
+	t.ip.Add(ip, id)
+}
+
+func (t *TDump) DeleteIp(ip uint32, id int) {
+	t.ip.Delete(ip, id)
+}
+
+func (t *TDump) AddIp6(i string, id int) {
+	t.ip6.Add(i, id)
+}
+func (t *TDump) DeleteIp6(i string, id int) {
+	t.ip6.Delete(i, id)
+}
+
+func (t *TDump) AddSubnet(i string, id int) {
+	t.subnet.Add(i, id)
+}
+func (t *TDump) DeleteSubnet(i string, id int) {
+	t.subnet.Delete(i, id)
+}
+
+func (t *TDump) AddSubnet6(i string, id int) {
+	t.subnet6.Add(i, id)
+}
+func (t *TDump) DeleteSubnet6(i string, id int) {
+	t.subnet6.Delete(i, id)
+}
+
+func (t *TDump) AddUrl(i string, id int) {
+	t.url.Add(i, id)
+}
+func (t *TDump) DeleteUrl(i string, id int) {
+	t.url.Delete(i, id)
+}
+
+func (t *TDump) AddDomain(i string, id int) {
+	t.domain.Add(i, id)
+}
+func (t *TDump) DeleteDomain(i string, id int) {
+	t.domain.Delete(i, id)
+}
+
+var DumpSnap = NewTDump()
 
 type TReg struct {
 	UpdateTime         int64

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"google.golang.org/grpc"
 	"os"
 	"runtime"
 	"time"
+
+	"google.golang.org/grpc"
 )
 
 func DumpPoll(s *grpc.Server, done chan bool, sigs chan os.Signal, url, token, dir string, d time.Duration) {

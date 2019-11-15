@@ -2,7 +2,7 @@ package main
 
 type StringSet map[string]IntSet
 
-func (a *StringSet) DelRes(i string, id int) {
+func (a *StringSet) Delete(i string, id int) {
 	if v, ok := (*a)[i]; ok {
 		delete(v, id)
 		if len(v) == 0 {
@@ -11,7 +11,7 @@ func (a *StringSet) DelRes(i string, id int) {
 	}
 }
 
-func (a *StringSet) AddRes(i string, id int) {
+func (a *StringSet) Add(i string, id int) {
 	if v, ok := (*a)[i]; !ok {
 		v = make(IntSet)
 		v[id] = NothingV
