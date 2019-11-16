@@ -101,62 +101,6 @@ type TReg struct {
 	FormatVersion      string
 }
 
-/*type TXDomain struct {
-	Domain string `json:"domain"`
-	Ts     int64  `json:"ts,omitempty"`
-}
-
-type TXUrl struct {
-	Url string `json:"url"`
-	Ts  int64  `json:"ts,omitempty"`
-}
-
-type TXIp struct {
-	Ip uint32 `json:"ip"`
-	Ts int64  `json:"ts,omitempty"`
-}
-
-type TXIp6 struct {
-	Ip6 string `json:"ip6"`
-	Ts  int64  `json:"ts,omitempty"`
-}
-
-type TXSubnet struct {
-	Subnet string `json:"subnet"`
-	Ts     int64  `json:"ts,omitempty"`
-}
-
-type TXSubnet6 struct {
-	Subnet6 string `json:"subnet6"`
-	Ts      int64  `json:"ts,omitempty"`
-}
-
-type TXDecision struct {
-	Date   string `json:"date"`
-	Number string `json:"number"`
-	Org    string `json:"org"`
-}
-
-type TXContent struct {
-	Id                 int         `json:"id"`
-	EntryType          int         `json:"entryType"`
-	UrgencyType        int         `json:"urgencyType,omitempty"`
-	HTTPSBlock         int         `json:"https,omitempty"`
-	RegistryUpdateTime int64       `json:"registry"`
-	Decision           TXDecision  `json:"decision"`
-	IncludeTime        int64       `json:"includeTime"`
-	BlockType          string      `json:"blockType,omitempty"`
-	Hash               string      `json:"hash"`
-	Ts                 int64       `json:"ts,omitempty"`
-	U2Hash             uint32      `xml:"-" json:"-"`
-	Url                []TXUrl     `json:"url,omitempty"`
-	Ip                 []TXIp      `json:"ip,omitempty"`
-	Ip6                []TXIp6     `json:"ip6,omitempty"`
-	Subnet             []TXSubnet  `json:"subnet,omitempty"`
-	Subnet6            []TXSubnet6 `json:"subnet6,omitempty"`
-	Domain             []TXDomain  `json:"domain,omitempty"`
-}*/
-
 var crc32Table = crc32.MakeTable(crc32.Castagnoli)
 
 func Parse2(UpdateTime int64) {
