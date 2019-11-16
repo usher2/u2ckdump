@@ -26,22 +26,22 @@ type TContentMap struct {
 
 type TDump struct {
 	ip      Ip4Set
-	ip6     StringSet
-	subnet  StringSet
-	subnet6 StringSet
-	url     StringSet
-	domain  StringSet
+	ip6     StringIntSet
+	subnet  StringIntSet
+	subnet6 StringIntSet
+	url     StringIntSet
+	domain  StringIntSet
 	Content TContentMap
 }
 
 func NewTDump() *TDump {
 	return &TDump{
 		ip:      make(Ip4Set),
-		ip6:     make(StringSet),
-		subnet:  make(StringSet),
-		subnet6: make(StringSet),
-		url:     make(StringSet),
-		domain:  make(StringSet),
+		ip6:     make(StringIntSet),
+		subnet:  make(StringIntSet),
+		subnet6: make(StringIntSet),
+		url:     make(StringIntSet),
+		domain:  make(StringIntSet),
 		Content: TContentMap{C: make(map[int]*TXContent)},
 	}
 }

@@ -1,8 +1,14 @@
 package main
 
-type StringSet map[string]IntSet
+type StringSet map[string]Nothing
 
-func (a *StringSet) Delete(i string, id int) {
+func NewStringSet(size int) StringSet {
+	return make(StringSet, size)
+}
+
+type StringIntSet map[string]IntSet
+
+func (a *StringIntSet) Delete(i string, id int) {
 	if v, ok := (*a)[i]; ok {
 		delete(v, id)
 		if len(v) == 0 {
@@ -11,7 +17,7 @@ func (a *StringSet) Delete(i string, id int) {
 	}
 }
 
-func (a *StringSet) Add(i string, id int) {
+func (a *StringIntSet) Add(i string, id int) {
 	if v, ok := (*a)[i]; !ok {
 		v = make(IntSet)
 		v[id] = NothingV

@@ -1,7 +1,7 @@
 package main
 
 // my parser without slices
-func ip2i(s string) uint32 {
+func parseIp4(s string) uint32 {
 	var ip, n uint32 = 0, 0
 	var r uint = 24
 	for i := 0; i < len(s); i++ {

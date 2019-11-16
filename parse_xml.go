@@ -18,7 +18,7 @@ func Parse(dumpfile string) error {
 		stats    Stats
 		r        TReg
 		buffer   bytes.Buffer
-		buf      map[string]Nothing
+		buf      StringSet
 		bufi     map[uint32]Nothing
 	)
 
@@ -102,7 +102,7 @@ func Parse(dumpfile string) error {
 					if len(v.Ip) > 0 {
 						v0.Ip = make([]TXIp, len(v.Ip))
 						for i := range v.Ip {
-							ip := ip2i(v.Ip[i].Ip)
+							ip := parseIp4(v.Ip[i].Ip)
 							DumpSnap.AddIp(ip, v.Id)
 							v0.Ip[i] = TXIp{Ip: ip, Ts: parseTime(v.Ts)}
 						}
@@ -110,8 +110,8 @@ func Parse(dumpfile string) error {
 
 					if len(v.Ip6) > 0 {
 						v0.Ip6 = make([]TXIp6, len(v.Ip6))
-						for i := range v.Ip6 {
-							ip6 := string(net.ParseIP(v.Ip6[i].Ip6))
+						for i, value := range v.Ip6 {
+							ip6 := string(net.ParseIP(value.Ip6))
 							DumpSnap.AddIp6(ip6, v.Id)
 							v0.Ip6[i] = TXIp6{Ip6: ip6, Ts: parseTime(v.Ts)}
 						}
@@ -119,25 +119,25 @@ func Parse(dumpfile string) error {
 
 					if len(v.Subnet6) > 0 {
 						v0.Subnet6 = make([]TXSubnet6, len(v.Subnet6))
-						for i := range v.Subnet6 {
-							DumpSnap.AddSubnet6(v.Subnet6[i].Subnet6, v.Id)
+						for i, value := range v.Subnet6 {
+							DumpSnap.AddSubnet6(value.Subnet6, v.Id)
 							v0.Subnet6[i] = TXSubnet6{Subnet6: v.Subnet6[i].Subnet6, Ts: parseTime(v.Ts)}
 						}
 					}
 
 					if len(v.Subnet) > 0 {
 						v0.Subnet = make([]TXSubnet, len(v.Subnet))
-						for i := range v.Subnet {
-							DumpSnap.AddSubnet(v.Subnet[i].Subnet, v.Id)
+						for i, value := range v.Subnet {
+							DumpSnap.AddSubnet(value.Subnet, v.Id)
 							v0.Subnet[i] = TXSubnet{Subnet: v.Subnet[i].Subnet, Ts: parseTime(v.Ts)}
 						}
 					}
 
 					if len(v.Url) > 0 {
 						v0.Url = make([]TXUrl, len(v.Url))
-						for i := range v.Url {
-							v0.Url[i] = TXUrl{Url: v.Url[i].Url, Ts: parseTime(v.Ts)}
-							_url := NormalizeUrl(v.Url[i].Url)
+						for i, value := range v.Url {
+							v0.Url[i] = TXUrl{Url: value.Url, Ts: parseTime(v.Ts)}
+							_url := NormalizeUrl(value.Url)
 							DumpSnap.AddUrl(_url, v.Id)
 							if _url[:8] == "https" {
 								v0.HTTPSBlock += 1
@@ -147,9 +147,9 @@ func Parse(dumpfile string) error {
 
 					if len(v.Domain) > 0 {
 						v0.Domain = make([]TXDomain, len(v.Domain))
-						for i := range v.Domain {
-							DumpSnap.AddDomain(NormalizeDomain(v.Domain[i].Domain), v.Id)
-							v0.Domain[i] = TXDomain{Domain: v.Domain[i].Domain, Ts: parseTime(v.Ts)}
+						for i, value := range v.Domain {
+							DumpSnap.AddDomain(NormalizeDomain(value.Domain), v.Id)
+							v0.Domain[i] = TXDomain{Domain: value.Domain, Ts: parseTime(v.Ts)}
 						}
 					}
 
@@ -173,105 +173,105 @@ func Parse(dumpfile string) error {
 					v0.U2Hash = u2Hash
 					v0.RegistryUpdateTime = r.UpdateTime
 					DumpSnap.Content.C[v.Id] = v0
+
 					// make updates
 					bufi = make(map[uint32]Nothing, len(v.Ip))
-
 					if len(v.Ip) > 0 {
 						v0.Ip = make([]TXIp, len(v.Ip))
-						for i := range v.Ip {
-							ip := ip2i(v.Ip[i].Ip)
+						for i, value := range v.Ip {
+							ip := parseIp4(value.Ip)
 							DumpSnap.AddIp(ip, v.Id)
 							bufi[ip] = NothingV
 							v0.Ip[i] = TXIp{Ip: ip}
 						}
 					}
-					for i := range o.Ip {
-						ip := o.Ip[i].Ip
+					for _, value := range o.Ip {
+						ip := value.Ip
 						if _, ok := bufi[ip]; !ok {
 							DumpSnap.DeleteIp(ip, o.Id)
 						}
 					}
 					bufi = nil
 
-					buf = make(map[string]Nothing, len(v.Ip6))
+					buf = NewStringSet(len(v.Ip6))
 					if len(v.Ip6) > 0 {
 						v0.Ip6 = make([]TXIp6, len(v.Ip6))
-						for i := range v.Ip6 {
-							ip6 := string(net.ParseIP(v.Ip6[i].Ip6))
+						for i, value := range v.Ip6 {
+							ip6 := string(net.ParseIP(value.Ip6))
 							DumpSnap.AddIp6(ip6, v.Id)
 							buf[ip6] = NothingV
 							v0.Ip6[i] = TXIp6{Ip6: ip6, Ts: parseTime(v.Ts)}
 						}
 					}
-
-					for i := range o.Ip6 {
-						ip6 := string(net.ParseIP(o.Ip6[i].Ip6))
+					for _, value := range o.Ip6 {
+						ip6 := string(net.ParseIP(value.Ip6))
 						if _, ok := buf[ip6]; !ok {
 							DumpSnap.DeleteIp6(ip6, o.Id)
 						}
 					}
 
-					buf = make(map[string]Nothing, len(v.Subnet))
+					buf = NewStringSet(len(v.Subnet))
 					if len(v.Subnet) > 0 {
 						v0.Subnet = make([]TXSubnet, len(v.Subnet))
-						for i := range v.Subnet {
-							DumpSnap.AddSubnet(v.Subnet[i].Subnet, v.Id)
-							buf[v.Subnet[i].Subnet] = NothingV
-							v0.Subnet[i] = TXSubnet{Subnet: v.Subnet[i].Subnet, Ts: parseTime(v.Ts)}
+						for i, value := range v.Subnet {
+							DumpSnap.AddSubnet(value.Subnet, v.Id)
+							buf[value.Subnet] = NothingV
+							v0.Subnet[i] = TXSubnet{Subnet: value.Subnet, Ts: parseTime(v.Ts)}
 						}
 					}
-					for i := range o.Subnet {
-						if _, ok := buf[o.Subnet[i].Subnet]; !ok {
-							DumpSnap.DeleteSubnet(o.Subnet[i].Subnet, o.Id)
+					for _, value := range o.Subnet {
+						if _, ok := buf[value.Subnet]; !ok {
+							DumpSnap.DeleteSubnet(value.Subnet, o.Id)
 						}
 					}
 
-					buf = make(map[string]Nothing, len(v.Subnet6))
+					buf = NewStringSet(len(v.Subnet6))
 					if len(v.Subnet6) > 0 {
 						v0.Subnet6 = make([]TXSubnet6, len(v.Subnet6))
-						for i := range v.Subnet6 {
-							DumpSnap.AddSubnet(v.Subnet6[i].Subnet6, v.Id)
-							buf[v.Subnet6[i].Subnet6] = NothingV
-							v0.Subnet6[i] = TXSubnet6{Subnet6: v.Subnet6[i].Subnet6, Ts: parseTime(v.Ts)}
+						for i, value := range v.Subnet6 {
+							DumpSnap.AddSubnet(value.Subnet6, v.Id)
+							buf[value.Subnet6] = NothingV
+							v0.Subnet6[i] = TXSubnet6{Subnet6: value.Subnet6, Ts: parseTime(v.Ts)}
 						}
 					}
-					for i := range o.Subnet6 {
-						if _, ok := buf[o.Subnet6[i].Subnet6]; !ok {
-							DumpSnap.DeleteSubnet6(o.Subnet6[i].Subnet6, o.Id)
+					for _, value := range o.Subnet6 {
+						if _, ok := buf[value.Subnet6]; !ok {
+							DumpSnap.DeleteSubnet6(value.Subnet6, o.Id)
 						}
 					}
-					buf = make(map[string]Nothing, len(v.Url))
+
+					buf = NewStringSet(len(v.Url))
 					if len(v.Url) > 0 {
 						v0.Url = make([]TXUrl, len(v.Url))
-						for i := range v.Url {
-							_url := NormalizeUrl(v.Url[i].Url)
+						for i, value := range v.Url {
+							_url := NormalizeUrl(value.Url)
 							DumpSnap.AddUrl(_url, v.Id)
 							buf[_url] = NothingV
-							v0.Url[i] = TXUrl{Url: v.Url[i].Url, Ts: parseTime(v.Ts)}
+							v0.Url[i] = TXUrl{Url: value.Url, Ts: parseTime(v.Ts)}
 							if _url[:8] == "https://" {
 								v0.HTTPSBlock += 1
 							}
 						}
 					}
-					for i := range o.Url {
-						_url := NormalizeUrl(o.Url[i].Url)
+					for _, value := range o.Url {
+						_url := NormalizeUrl(value.Url)
 						if _, ok := buf[_url]; !ok {
 							DumpSnap.DeleteUrl(_url, o.Id)
 						}
 					}
 
-					buf = make(map[string]Nothing, len(v.Domain))
+					buf = NewStringSet(len(v.Domain))
 					if len(v.Domain) > 0 {
 						v0.Domain = make([]TXDomain, len(v.Domain))
-						for i := range v.Domain {
-							_domain := NormalizeDomain(v.Domain[i].Domain)
+						for i, value := range v.Domain {
+							_domain := NormalizeDomain(value.Domain)
 							DumpSnap.AddDomain(_domain, v.Id)
 							buf[_domain] = NothingV
-							v0.Domain[i] = TXDomain{Domain: v.Domain[i].Domain, Ts: parseTime(v.Ts)}
+							v0.Domain[i] = TXDomain{Domain: value.Domain, Ts: parseTime(v.Ts)}
 						}
 					}
-					for i := range o.Domain {
-						_domain := NormalizeDomain(o.Domain[i].Domain)
+					for _, value := range o.Domain {
+						_domain := NormalizeDomain(value.Domain)
 						if _, ok := buf[_domain]; !ok {
 							DumpSnap.DeleteDomain(_domain, o.Id)
 						}
@@ -298,23 +298,23 @@ func Parse(dumpfile string) error {
 	DumpSnap.Content.Lock()
 	for id, o2 := range DumpSnap.Content.C {
 		if _, ok := SPass[id]; !ok {
-			for i := range o2.Ip {
-				DumpSnap.DeleteIp(o2.Ip[i].Ip, o2.Id)
+			for _, v := range o2.Ip {
+				DumpSnap.DeleteIp(v.Ip, o2.Id)
 			}
-			for i := range o2.Ip6 {
-				DumpSnap.DeleteIp6(o2.Ip6[i].Ip6, o2.Id)
+			for _, v := range o2.Ip6 {
+				DumpSnap.DeleteIp6(v.Ip6, o2.Id)
 			}
-			for i := range o2.Subnet6 {
-				DumpSnap.DeleteSubnet6(o2.Subnet6[i].Subnet6, o2.Id)
+			for _, v := range o2.Subnet6 {
+				DumpSnap.DeleteSubnet6(v.Subnet6, o2.Id)
 			}
-			for i := range o2.Subnet {
-				DumpSnap.DeleteSubnet(o2.Subnet[i].Subnet, o2.Id)
+			for _, v := range o2.Subnet {
+				DumpSnap.DeleteSubnet(v.Subnet, o2.Id)
 			}
-			for i := range o2.Url {
-				DumpSnap.DeleteUrl(NormalizeUrl(o2.Url[i].Url), o2.Id)
+			for _, v := range o2.Url {
+				DumpSnap.DeleteUrl(NormalizeUrl(v.Url), o2.Id)
 			}
-			for i := range o2.Domain {
-				DumpSnap.DeleteDomain(NormalizeDomain(o2.Domain[i].Domain), o2.Id)
+			for _, v := range o2.Domain {
+				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.Id)
 			}
 			delete(DumpSnap.Content.C, id)
 			stats.CntRemove++
