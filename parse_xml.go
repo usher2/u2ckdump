@@ -321,7 +321,7 @@ func Parse(dumpfile string) error {
 		}
 	}
 	DumpSnap.Content.Unlock()
-	Info.Printf("Records: %d Delete: %d Update: %d Remove: %d\n", stats.Cnt, stats.CntAdd, stats.CntUpdate, stats.CntRemove)
+	Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", stats.Cnt, stats.CntAdd, stats.CntUpdate, stats.CntRemove)
 	Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
 		len(DumpSnap.ip), len(DumpSnap.ip6), len(DumpSnap.subnet), len(DumpSnap.subnet6),
 		len(DumpSnap.domain), len(DumpSnap.url))
