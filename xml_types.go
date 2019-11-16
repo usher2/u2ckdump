@@ -1,9 +1,9 @@
 package main
 
 type TContent struct {
-	Id          int        `xml:"id,attr" json:"id"`
-	EntryType   int        `xml:"entryType,attr" json:"entryType"`
-	UrgencyType int        `xml:"urgencyType,attr,omitempty" json:"urgencyType,omitempty"`
+	Id          int32      `xml:"id,attr" json:"id"`
+	EntryType   int32      `xml:"entryType,attr" json:"entryType"`
+	UrgencyType int32      `xml:"urgencyType,attr,omitempty" json:"urgencyType,omitempty"`
 	Decision    TDecision  `xml:"decision" json:"decision"`
 	IncludeTime string     `xml:"includeTime,attr" json:"includeTime"`
 	BlockType   string     `xml:"blockType,attr,omitempty" json:"blockType,omitempty"`

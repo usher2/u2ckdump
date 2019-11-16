@@ -35,16 +35,17 @@ message Content {
         int64 registryUpdateTime = 4;
 	Decision decision = 5;
         int64 includeTime = 6;
-        string blockType = 7;
-        string hash = 8;
-        int64 ts = 9;
-        uint32 u2Hash = 10;
-        repeated URL url = 11;
-        repeated IPv4Address ip4 = 12;
-	repeated IPv6Address ip6= 13;
-	repeated Subnet subnet = 14;
-	repeated Subnet6 subnet6 = 15;
-	repeated Domain domain = 16;
+        int32 urgencyType = 7;
+        string blockType = 8;
+        string hash = 9;
+        int64 ts = 10;
+        uint32 u2Hash = 11;
+        repeated URL url = 12;
+        repeated IPv4Address ip4 = 13;
+	repeated IPv6Address ip6= 14;
+	repeated Subnet subnet = 15;
+	repeated Subnet6 subnet6 = 16;
+	repeated Domain domain = 17;
 }
 
 message Decision {

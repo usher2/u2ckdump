@@ -8,7 +8,7 @@ func NewStringSet(size int) StringSet {
 
 type StringIntSet map[string]IntSet
 
-func (a *StringIntSet) Delete(i string, id int) {
+func (a *StringIntSet) Delete(i string, id int32) {
 	if v, ok := (*a)[i]; ok {
 		delete(v, id)
 		if len(v) == 0 {
@@ -17,7 +17,7 @@ func (a *StringIntSet) Delete(i string, id int) {
 	}
 }
 
-func (a *StringIntSet) Add(i string, id int) {
+func (a *StringIntSet) Add(i string, id int32) {
 	if v, ok := (*a)[i]; !ok {
 		v = make(IntSet)
 		v[id] = NothingV
