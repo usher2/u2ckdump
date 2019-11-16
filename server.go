@@ -10,10 +10,25 @@ import (
 )
 
 type server struct {
-	pb.UnimplementedSearchServiceServer
+	pb.UnimplementedCheckServer
 }
 
-func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
+func (s *server) SearchIP4(ctx context.Context, in *pb.IP4Request) (*pb.SearchResponse, error) {
+	fmt.Printf("Received: %v", in.GetQuery())
+	return &pb.SearchResponse{Error: "Oops"}, nil
+}
+
+func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchResponse, error) {
+	fmt.Printf("Received: %v", in.GetQuery())
+	return &pb.SearchResponse{Error: "Oops"}, nil
+}
+
+func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchResponse, error) {
+	fmt.Printf("Received: %v", in.GetQuery())
+	return &pb.SearchResponse{Error: "Oops"}, nil
+}
+
+func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.SearchResponse, error) {
 	fmt.Printf("Received: %v", in.GetQuery())
 	return &pb.SearchResponse{Error: "Oops"}, nil
 }

@@ -24,47 +24,156 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type SearchRequest struct {
-	Type                 uint32   `protobuf:"varint,1,opt,name=type,proto3" json:"type,omitempty"`
-	Query                string   `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+type IP4Request struct {
+	Query                uint32   `protobuf:"varint,1,opt,name=query,proto3" json:"query,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SearchRequest) Reset()         { *m = SearchRequest{} }
-func (m *SearchRequest) String() string { return proto.CompactTextString(m) }
-func (*SearchRequest) ProtoMessage()    {}
-func (*SearchRequest) Descriptor() ([]byte, []int) {
+func (m *IP4Request) Reset()         { *m = IP4Request{} }
+func (m *IP4Request) String() string { return proto.CompactTextString(m) }
+func (*IP4Request) ProtoMessage()    {}
+func (*IP4Request) Descriptor() ([]byte, []int) {
 	return fileDescriptor_c06e4cca6c2cc899, []int{0}
 }
 
-func (m *SearchRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SearchRequest.Unmarshal(m, b)
+func (m *IP4Request) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_IP4Request.Unmarshal(m, b)
 }
-func (m *SearchRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SearchRequest.Marshal(b, m, deterministic)
+func (m *IP4Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_IP4Request.Marshal(b, m, deterministic)
 }
-func (m *SearchRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SearchRequest.Merge(m, src)
+func (m *IP4Request) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IP4Request.Merge(m, src)
 }
-func (m *SearchRequest) XXX_Size() int {
-	return xxx_messageInfo_SearchRequest.Size(m)
+func (m *IP4Request) XXX_Size() int {
+	return xxx_messageInfo_IP4Request.Size(m)
 }
-func (m *SearchRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_SearchRequest.DiscardUnknown(m)
+func (m *IP4Request) XXX_DiscardUnknown() {
+	xxx_messageInfo_IP4Request.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SearchRequest proto.InternalMessageInfo
+var xxx_messageInfo_IP4Request proto.InternalMessageInfo
 
-func (m *SearchRequest) GetType() uint32 {
+func (m *IP4Request) GetQuery() uint32 {
 	if m != nil {
-		return m.Type
+		return m.Query
 	}
 	return 0
 }
 
-func (m *SearchRequest) GetQuery() string {
+type IP6Request struct {
+	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *IP6Request) Reset()         { *m = IP6Request{} }
+func (m *IP6Request) String() string { return proto.CompactTextString(m) }
+func (*IP6Request) ProtoMessage()    {}
+func (*IP6Request) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{1}
+}
+
+func (m *IP6Request) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_IP6Request.Unmarshal(m, b)
+}
+func (m *IP6Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_IP6Request.Marshal(b, m, deterministic)
+}
+func (m *IP6Request) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IP6Request.Merge(m, src)
+}
+func (m *IP6Request) XXX_Size() int {
+	return xxx_messageInfo_IP6Request.Size(m)
+}
+func (m *IP6Request) XXX_DiscardUnknown() {
+	xxx_messageInfo_IP6Request.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_IP6Request proto.InternalMessageInfo
+
+func (m *IP6Request) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
+type URLRequest struct {
+	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *URLRequest) Reset()         { *m = URLRequest{} }
+func (m *URLRequest) String() string { return proto.CompactTextString(m) }
+func (*URLRequest) ProtoMessage()    {}
+func (*URLRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{2}
+}
+
+func (m *URLRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_URLRequest.Unmarshal(m, b)
+}
+func (m *URLRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_URLRequest.Marshal(b, m, deterministic)
+}
+func (m *URLRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_URLRequest.Merge(m, src)
+}
+func (m *URLRequest) XXX_Size() int {
+	return xxx_messageInfo_URLRequest.Size(m)
+}
+func (m *URLRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_URLRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_URLRequest proto.InternalMessageInfo
+
+func (m *URLRequest) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
+type DomainRequest struct {
+	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DomainRequest) Reset()         { *m = DomainRequest{} }
+func (m *DomainRequest) String() string { return proto.CompactTextString(m) }
+func (*DomainRequest) ProtoMessage()    {}
+func (*DomainRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{3}
+}
+
+func (m *DomainRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DomainRequest.Unmarshal(m, b)
+}
+func (m *DomainRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DomainRequest.Marshal(b, m, deterministic)
+}
+func (m *DomainRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DomainRequest.Merge(m, src)
+}
+func (m *DomainRequest) XXX_Size() int {
+	return xxx_messageInfo_DomainRequest.Size(m)
+}
+func (m *DomainRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DomainRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DomainRequest proto.InternalMessageInfo
+
+func (m *DomainRequest) GetQuery() string {
 	if m != nil {
 		return m.Query
 	}
@@ -83,7 +192,7 @@ func (m *SearchResponse) Reset()         { *m = SearchResponse{} }
 func (m *SearchResponse) String() string { return proto.CompactTextString(m) }
 func (*SearchResponse) ProtoMessage()    {}
 func (*SearchResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{1}
+	return fileDescriptor_c06e4cca6c2cc899, []int{4}
 }
 
 func (m *SearchResponse) XXX_Unmarshal(b []byte) error {
@@ -129,12 +238,12 @@ type Content struct {
 	Hash                 string         `protobuf:"bytes,8,opt,name=hash,proto3" json:"hash,omitempty"`
 	Ts                   int64          `protobuf:"varint,9,opt,name=ts,proto3" json:"ts,omitempty"`
 	U2Hash               uint32         `protobuf:"varint,10,opt,name=u2Hash,proto3" json:"u2Hash,omitempty"`
-	Urls                 []*URL         `protobuf:"bytes,11,rep,name=urls,proto3" json:"urls,omitempty"`
-	Ip4S                 []*IPv4Address `protobuf:"bytes,12,rep,name=ip4s,proto3" json:"ip4s,omitempty"`
-	Ip6S                 []*IPv6Address `protobuf:"bytes,13,rep,name=ip6s,proto3" json:"ip6s,omitempty"`
-	Subnets              []*Subnet      `protobuf:"bytes,14,rep,name=subnets,proto3" json:"subnets,omitempty"`
-	Subnet6S             []*Subnet6     `protobuf:"bytes,15,rep,name=subnet6s,proto3" json:"subnet6s,omitempty"`
-	Domains              []*Domain      `protobuf:"bytes,16,rep,name=domains,proto3" json:"domains,omitempty"`
+	Url                  []*URL         `protobuf:"bytes,11,rep,name=url,proto3" json:"url,omitempty"`
+	Ip4                  []*IPv4Address `protobuf:"bytes,12,rep,name=ip4,proto3" json:"ip4,omitempty"`
+	Ip6                  []*IPv6Address `protobuf:"bytes,13,rep,name=ip6,proto3" json:"ip6,omitempty"`
+	Subnet               []*Subnet      `protobuf:"bytes,14,rep,name=subnet,proto3" json:"subnet,omitempty"`
+	Subnet6              []*Subnet6     `protobuf:"bytes,15,rep,name=subnet6,proto3" json:"subnet6,omitempty"`
+	Domain               []*Domain      `protobuf:"bytes,16,rep,name=domain,proto3" json:"domain,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -144,7 +253,7 @@ func (m *Content) Reset()         { *m = Content{} }
 func (m *Content) String() string { return proto.CompactTextString(m) }
 func (*Content) ProtoMessage()    {}
 func (*Content) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{2}
+	return fileDescriptor_c06e4cca6c2cc899, []int{5}
 }
 
 func (m *Content) XXX_Unmarshal(b []byte) error {
@@ -235,44 +344,44 @@ func (m *Content) GetU2Hash() uint32 {
 	return 0
 }
 
-func (m *Content) GetUrls() []*URL {
+func (m *Content) GetUrl() []*URL {
 	if m != nil {
-		return m.Urls
+		return m.Url
 	}
 	return nil
 }
 
-func (m *Content) GetIp4S() []*IPv4Address {
+func (m *Content) GetIp4() []*IPv4Address {
 	if m != nil {
-		return m.Ip4S
+		return m.Ip4
 	}
 	return nil
 }
 
-func (m *Content) GetIp6S() []*IPv6Address {
+func (m *Content) GetIp6() []*IPv6Address {
 	if m != nil {
-		return m.Ip6S
+		return m.Ip6
 	}
 	return nil
 }
 
-func (m *Content) GetSubnets() []*Subnet {
+func (m *Content) GetSubnet() []*Subnet {
 	if m != nil {
-		return m.Subnets
+		return m.Subnet
 	}
 	return nil
 }
 
-func (m *Content) GetSubnet6S() []*Subnet6 {
+func (m *Content) GetSubnet6() []*Subnet6 {
 	if m != nil {
-		return m.Subnet6S
+		return m.Subnet6
 	}
 	return nil
 }
 
-func (m *Content) GetDomains() []*Domain {
+func (m *Content) GetDomain() []*Domain {
 	if m != nil {
-		return m.Domains
+		return m.Domain
 	}
 	return nil
 }
@@ -290,7 +399,7 @@ func (m *Decision) Reset()         { *m = Decision{} }
 func (m *Decision) String() string { return proto.CompactTextString(m) }
 func (*Decision) ProtoMessage()    {}
 func (*Decision) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{3}
+	return fileDescriptor_c06e4cca6c2cc899, []int{6}
 }
 
 func (m *Decision) XXX_Unmarshal(b []byte) error {
@@ -344,7 +453,7 @@ func (m *IPv4Address) Reset()         { *m = IPv4Address{} }
 func (m *IPv4Address) String() string { return proto.CompactTextString(m) }
 func (*IPv4Address) ProtoMessage()    {}
 func (*IPv4Address) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{4}
+	return fileDescriptor_c06e4cca6c2cc899, []int{7}
 }
 
 func (m *IPv4Address) XXX_Unmarshal(b []byte) error {
@@ -391,7 +500,7 @@ func (m *IPv6Address) Reset()         { *m = IPv6Address{} }
 func (m *IPv6Address) String() string { return proto.CompactTextString(m) }
 func (*IPv6Address) ProtoMessage()    {}
 func (*IPv6Address) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{5}
+	return fileDescriptor_c06e4cca6c2cc899, []int{8}
 }
 
 func (m *IPv6Address) XXX_Unmarshal(b []byte) error {
@@ -438,7 +547,7 @@ func (m *Subnet) Reset()         { *m = Subnet{} }
 func (m *Subnet) String() string { return proto.CompactTextString(m) }
 func (*Subnet) ProtoMessage()    {}
 func (*Subnet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{6}
+	return fileDescriptor_c06e4cca6c2cc899, []int{9}
 }
 
 func (m *Subnet) XXX_Unmarshal(b []byte) error {
@@ -485,7 +594,7 @@ func (m *Subnet6) Reset()         { *m = Subnet6{} }
 func (m *Subnet6) String() string { return proto.CompactTextString(m) }
 func (*Subnet6) ProtoMessage()    {}
 func (*Subnet6) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{7}
+	return fileDescriptor_c06e4cca6c2cc899, []int{10}
 }
 
 func (m *Subnet6) XXX_Unmarshal(b []byte) error {
@@ -532,7 +641,7 @@ func (m *URL) Reset()         { *m = URL{} }
 func (m *URL) String() string { return proto.CompactTextString(m) }
 func (*URL) ProtoMessage()    {}
 func (*URL) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{8}
+	return fileDescriptor_c06e4cca6c2cc899, []int{11}
 }
 
 func (m *URL) XXX_Unmarshal(b []byte) error {
@@ -579,7 +688,7 @@ func (m *Domain) Reset()         { *m = Domain{} }
 func (m *Domain) String() string { return proto.CompactTextString(m) }
 func (*Domain) ProtoMessage()    {}
 func (*Domain) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{9}
+	return fileDescriptor_c06e4cca6c2cc899, []int{12}
 }
 
 func (m *Domain) XXX_Unmarshal(b []byte) error {
@@ -615,7 +724,10 @@ func (m *Domain) GetTs() int64 {
 }
 
 func init() {
-	proto.RegisterType((*SearchRequest)(nil), "SearchRequest")
+	proto.RegisterType((*IP4Request)(nil), "IP4Request")
+	proto.RegisterType((*IP6Request)(nil), "IP6Request")
+	proto.RegisterType((*URLRequest)(nil), "URLRequest")
+	proto.RegisterType((*DomainRequest)(nil), "DomainRequest")
 	proto.RegisterType((*SearchResponse)(nil), "SearchResponse")
 	proto.RegisterType((*Content)(nil), "Content")
 	proto.RegisterType((*Decision)(nil), "Decision")
@@ -630,42 +742,44 @@ func init() {
 func init() { proto.RegisterFile("msg.proto", fileDescriptor_c06e4cca6c2cc899) }
 
 var fileDescriptor_c06e4cca6c2cc899 = []byte{
-	// 545 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x54, 0xd1, 0x6e, 0xd3, 0x30,
-	0x14, 0x55, 0x93, 0xb6, 0x69, 0x6e, 0xd7, 0x6e, 0xb2, 0x10, 0xb2, 0x10, 0x42, 0x21, 0x02, 0x51,
-	0x5e, 0x02, 0xea, 0xaa, 0x48, 0xf0, 0x06, 0xec, 0x61, 0xa0, 0x3d, 0x20, 0x77, 0xfd, 0x80, 0xb6,
-	0xb1, 0x5a, 0x8b, 0x34, 0xc9, 0x6c, 0x67, 0x52, 0xff, 0x9b, 0x0f, 0x40, 0xbe, 0xb6, 0xd7, 0x96,
-	0xee, 0xed, 0x9e, 0x73, 0xcf, 0xbd, 0x39, 0x3e, 0x4e, 0x02, 0xf1, 0x4e, 0x6d, 0xb2, 0x46, 0xd6,
-	0xba, 0x4e, 0xbf, 0xc0, 0x68, 0xce, 0x97, 0x72, 0xbd, 0x65, 0xfc, 0xa1, 0xe5, 0x4a, 0x13, 0x02,
-	0x5d, 0xbd, 0x6f, 0x38, 0xed, 0x24, 0x9d, 0xc9, 0x88, 0x61, 0x4d, 0x5e, 0x40, 0xef, 0xa1, 0xe5,
-	0x72, 0x4f, 0x83, 0xa4, 0x33, 0x89, 0x99, 0x05, 0xe9, 0x2f, 0x18, 0xfb, 0x51, 0xd5, 0xd4, 0x95,
-	0x42, 0x1d, 0x97, 0xb2, 0x96, 0x38, 0x1c, 0x33, 0x0b, 0x48, 0x0a, 0x91, 0xe4, 0xaa, 0x2d, 0xb5,
-	0xa2, 0x41, 0x12, 0x4e, 0x86, 0xd3, 0x41, 0xf6, 0xa3, 0xae, 0x34, 0xaf, 0x34, 0xf3, 0x8d, 0xf4,
-	0x6f, 0x08, 0x91, 0x23, 0xc9, 0x18, 0x02, 0x51, 0xe0, 0x8a, 0x1e, 0x0b, 0x44, 0x41, 0x5e, 0x43,
-	0xcc, 0x2b, 0x2d, 0xf7, 0xf7, 0xc6, 0x56, 0x80, 0xf4, 0x81, 0x20, 0x6f, 0x00, 0xb6, 0x5a, 0x37,
-	0xea, 0x7b, 0x59, 0xaf, 0xff, 0xd0, 0x10, 0xdb, 0x47, 0x0c, 0xc9, 0x80, 0x48, 0xbe, 0x11, 0x4a,
-	0xcb, 0xfd, 0xa2, 0x29, 0x96, 0x9a, 0xdf, 0x8b, 0x1d, 0xa7, 0xdd, 0xa4, 0x33, 0x09, 0xd9, 0x33,
-	0x1d, 0xf2, 0x1e, 0x06, 0x05, 0x5f, 0x0b, 0x25, 0xea, 0x8a, 0xf6, 0x92, 0xce, 0x64, 0x38, 0x8d,
-	0xb3, 0x1b, 0x47, 0xb0, 0xa7, 0x16, 0x49, 0x60, 0x28, 0xaa, 0x75, 0xd9, 0x16, 0x76, 0x5f, 0x1f,
-	0xf7, 0x1d, 0x53, 0xc6, 0xf6, 0xca, 0x38, 0x40, 0xdb, 0x11, 0x06, 0x72, 0x20, 0x4c, 0xcc, 0xdb,
-	0xa5, 0xda, 0xd2, 0x01, 0x36, 0xb0, 0x36, 0x07, 0xd7, 0x8a, 0xc6, 0xb8, 0x2a, 0xd0, 0x8a, 0xbc,
-	0x84, 0x7e, 0x3b, 0xbd, 0x35, 0x2a, 0xc0, 0xcb, 0x70, 0x88, 0x50, 0xe8, 0xb6, 0xb2, 0x54, 0x74,
-	0x88, 0x69, 0x76, 0xb3, 0x05, 0xbb, 0x63, 0xc8, 0x90, 0x04, 0xba, 0xa2, 0x99, 0x29, 0x7a, 0x81,
-	0x9d, 0x8b, 0xec, 0xe7, 0xef, 0xc7, 0xd9, 0xb7, 0xa2, 0x90, 0x5c, 0x29, 0x86, 0x1d, 0xab, 0xc8,
-	0x15, 0x1d, 0x1d, 0x14, 0xf9, 0x91, 0x22, 0x57, 0xe4, 0x2d, 0x44, 0xaa, 0x5d, 0x55, 0x5c, 0x2b,
-	0x3a, 0x46, 0x51, 0x94, 0xcd, 0x11, 0x33, 0xcf, 0x93, 0x77, 0x30, 0xb0, 0x65, 0xae, 0xe8, 0xa5,
-	0xbb, 0x52, 0xab, 0xc9, 0xd9, 0x53, 0xc7, 0x2c, 0x2a, 0xea, 0xdd, 0x52, 0x54, 0x8a, 0x5e, 0xb9,
-	0x45, 0x37, 0x88, 0x99, 0xe7, 0xd3, 0x5b, 0x18, 0xf8, 0x6c, 0x4d, 0x22, 0xe6, 0x12, 0xdc, 0xbb,
-	0x83, 0xb5, 0x49, 0xa0, 0x6a, 0x77, 0x2b, 0x2e, 0xdd, 0x9b, 0xe7, 0x10, 0xb9, 0x82, 0xb0, 0x96,
-	0x1b, 0xbc, 0xed, 0x98, 0x99, 0x32, 0xfd, 0x04, 0xc3, 0xa3, 0xc3, 0x1a, 0x81, 0x68, 0x66, 0xee,
-	0x25, 0x36, 0xa5, 0x0b, 0x37, 0xf0, 0xe1, 0xba, 0x81, 0xfc, 0x64, 0x20, 0x77, 0x0f, 0x37, 0xe5,
-	0xd9, 0xc0, 0x67, 0xe8, 0xdb, 0x33, 0x1a, 0x57, 0xf6, 0x90, 0x4e, 0xee, 0xd0, 0xd9, 0xc4, 0x35,
-	0x44, 0x2e, 0x15, 0x42, 0x7d, 0xa8, 0xfe, 0x11, 0x1e, 0x9e, 0x0d, 0x7d, 0x80, 0x70, 0xc1, 0xee,
-	0x8c, 0x9f, 0x56, 0x96, 0xde, 0x4f, 0x2b, 0xcb, 0xe7, 0xfc, 0xd8, 0x38, 0x8d, 0x1f, 0x1b, 0xa8,
-	0xf7, 0x63, 0xd1, 0xff, 0x13, 0xd3, 0xaf, 0xfe, 0x5b, 0x9f, 0x73, 0xf9, 0x28, 0xd6, 0x9c, 0x7c,
-	0x84, 0xbe, 0x25, 0xc8, 0x38, 0x3b, 0xf9, 0x0b, 0xbc, 0xba, 0xcc, 0x4e, 0x3f, 0xed, 0x55, 0x1f,
-	0x7f, 0x17, 0xd7, 0xff, 0x02, 0x00, 0x00, 0xff, 0xff, 0xd1, 0x93, 0x07, 0xca, 0x3b, 0x04, 0x00,
-	0x00,
+	// 582 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x54, 0xdd, 0x6a, 0xe3, 0x3c,
+	0x10, 0x25, 0x76, 0xf3, 0xe3, 0x71, 0x93, 0x16, 0xf1, 0x51, 0xc4, 0xc7, 0xd2, 0x0d, 0x86, 0xb2,
+	0xd9, 0x1b, 0x75, 0x49, 0x83, 0xef, 0x77, 0xdb, 0x8b, 0x66, 0xe9, 0x45, 0x50, 0x9b, 0x07, 0x48,
+	0x62, 0x91, 0x98, 0x26, 0xb6, 0x2b, 0xc9, 0x0b, 0x79, 0xb4, 0x7d, 0xa3, 0x7d, 0x8c, 0x45, 0x23,
+	0xb9, 0x76, 0xd3, 0xd0, 0xbd, 0xd3, 0x9c, 0x73, 0x66, 0x3c, 0x73, 0xc6, 0x12, 0x04, 0x3b, 0xb5,
+	0x66, 0x85, 0xcc, 0x75, 0x1e, 0x45, 0x00, 0xd3, 0xd9, 0x84, 0x8b, 0x97, 0x52, 0x28, 0x4d, 0xfe,
+	0x83, 0xf6, 0x4b, 0x29, 0xe4, 0x9e, 0xb6, 0x86, 0xad, 0x51, 0x9f, 0xdb, 0xc0, 0x6a, 0xe2, 0xa3,
+	0x9a, 0xa0, 0xa1, 0x99, 0xf3, 0x87, 0x8f, 0x35, 0x57, 0xd0, 0xbf, 0xcb, 0x77, 0x8b, 0x34, 0xfb,
+	0x58, 0xf6, 0x13, 0x06, 0x8f, 0x62, 0x21, 0x57, 0x1b, 0x2e, 0x54, 0x91, 0x67, 0x4a, 0x18, 0x9d,
+	0x90, 0x32, 0x97, 0x95, 0x0e, 0x03, 0x12, 0x41, 0x57, 0x0a, 0x55, 0x6e, 0xb5, 0xa2, 0xde, 0xd0,
+	0x1f, 0x85, 0xe3, 0x1e, 0xbb, 0xcd, 0x33, 0x2d, 0x32, 0xcd, 0x2b, 0x22, 0xfa, 0xe3, 0x43, 0xd7,
+	0x81, 0x64, 0x00, 0x5e, 0x9a, 0x60, 0x89, 0x36, 0xf7, 0xd2, 0x84, 0x7c, 0x82, 0x40, 0x64, 0x5a,
+	0xee, 0x9f, 0xf6, 0x85, 0xa0, 0x1e, 0xc2, 0x35, 0x40, 0x2e, 0x01, 0x36, 0x5a, 0x17, 0xea, 0xc7,
+	0x36, 0x5f, 0x3d, 0x53, 0x1f, 0xe9, 0x06, 0x42, 0x18, 0x10, 0x29, 0xd6, 0xa9, 0xd2, 0x72, 0x3f,
+	0x2f, 0x92, 0x85, 0x16, 0x4f, 0xe9, 0x4e, 0xd0, 0x93, 0x61, 0x6b, 0xe4, 0xf3, 0x23, 0x0c, 0xb9,
+	0x82, 0x5e, 0x22, 0x56, 0xa9, 0x4a, 0xf3, 0x8c, 0xb6, 0x87, 0xad, 0x51, 0x38, 0x0e, 0xd8, 0x9d,
+	0x03, 0xf8, 0x2b, 0x45, 0x86, 0x10, 0xa6, 0xd9, 0x6a, 0x5b, 0x26, 0xb6, 0x5e, 0x07, 0xeb, 0x35,
+	0x21, 0xd3, 0xf6, 0xd2, 0x74, 0x80, 0x6d, 0x77, 0xd1, 0x90, 0x1a, 0x20, 0x04, 0x4e, 0x36, 0x0b,
+	0xb5, 0xa1, 0x3d, 0x24, 0xf0, 0x6c, 0x06, 0xd7, 0x8a, 0x06, 0x58, 0xca, 0xd3, 0x8a, 0x5c, 0x40,
+	0xa7, 0x1c, 0xdf, 0x1b, 0x15, 0xe0, 0x9a, 0x5d, 0x44, 0x2e, 0xc0, 0x2f, 0xe5, 0x96, 0x86, 0x68,
+	0xe6, 0x09, 0x33, 0xfb, 0x34, 0x00, 0xb9, 0x04, 0x3f, 0x2d, 0x26, 0xf4, 0x14, 0xf1, 0x53, 0x36,
+	0x9d, 0xfd, 0x9a, 0x7c, 0x4f, 0x12, 0x29, 0x94, 0xe2, 0x86, 0xb0, 0x7c, 0x4c, 0xfb, 0x35, 0x1f,
+	0x37, 0xf8, 0x98, 0x7c, 0x86, 0x8e, 0x2a, 0x97, 0x99, 0xd0, 0x74, 0x80, 0x92, 0x2e, 0x7b, 0xc4,
+	0x90, 0x3b, 0xd8, 0x6c, 0xd2, 0x9e, 0x62, 0x7a, 0xe6, 0x36, 0x69, 0x15, 0x31, 0xaf, 0x08, 0x53,
+	0x24, 0xc1, 0x9f, 0x87, 0x9e, 0xbb, 0x22, 0xee, 0x5f, 0x72, 0x70, 0x74, 0x0f, 0xbd, 0xca, 0x4f,
+	0xe3, 0x82, 0x31, 0xde, 0xfd, 0x2f, 0x78, 0x36, 0x53, 0x67, 0xe5, 0x6e, 0x29, 0x24, 0xee, 0x3a,
+	0xe0, 0x2e, 0x22, 0xe7, 0xe0, 0xe7, 0x72, 0x8d, 0x1b, 0x0e, 0xb8, 0x39, 0x46, 0xd7, 0x10, 0x36,
+	0x66, 0x34, 0x02, 0x33, 0xbe, 0xbd, 0x12, 0x38, 0xb0, 0x35, 0xd4, 0xab, 0x0c, 0x75, 0x09, 0xf1,
+	0x9b, 0x84, 0xd8, 0x7d, 0x1c, 0x1d, 0x38, 0x4c, 0xf8, 0x06, 0x1d, 0x3b, 0xa0, 0xe9, 0xca, 0x79,
+	0x63, 0xe5, 0x95, 0x25, 0x87, 0x19, 0x37, 0xd0, 0x75, 0x96, 0x10, 0x5a, 0xbb, 0x65, 0x73, 0x5e,
+	0x3d, 0x3a, 0x4c, 0xfa, 0x02, 0xfe, 0x9c, 0x3f, 0x98, 0x7e, 0xcc, 0x5e, 0x5d, 0x3f, 0x66, 0xa3,
+	0x47, 0xfa, 0xb1, 0x6e, 0x9a, 0x7e, 0x9c, 0xcd, 0xae, 0x1f, 0x1b, 0x1d, 0x66, 0x8c, 0x7f, 0xb7,
+	0xa0, 0x7d, 0xbb, 0x11, 0xab, 0x67, 0xf2, 0x15, 0x02, 0x7b, 0x5d, 0xa7, 0xb3, 0x09, 0x09, 0x59,
+	0xfd, 0x9a, 0xfc, 0x7f, 0xc6, 0x0e, 0xee, 0x71, 0x43, 0x1a, 0xa3, 0x34, 0xfe, 0xb7, 0xd4, 0x0c,
+	0x10, 0xb2, 0xfa, 0x6d, 0x79, 0x2f, 0xbd, 0x86, 0x53, 0x8b, 0xb8, 0x11, 0x06, 0xec, 0xcd, 0x2b,
+	0xf3, 0x2e, 0x61, 0xd9, 0xc1, 0xa7, 0xef, 0xe6, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x24, 0x61,
+	0x25, 0xb5, 0x07, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -676,72 +790,180 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// SearchServiceClient is the client API for SearchService service.
+// CheckClient is the client API for Check service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type SearchServiceClient interface {
-	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+type CheckClient interface {
+	SearchIP4(ctx context.Context, in *IP4Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchIP6(ctx context.Context, in *IP6Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchURL(ctx context.Context, in *URLRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchDomain(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 }
 
-type searchServiceClient struct {
+type checkClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewSearchServiceClient(cc *grpc.ClientConn) SearchServiceClient {
-	return &searchServiceClient{cc}
+func NewCheckClient(cc *grpc.ClientConn) CheckClient {
+	return &checkClient{cc}
 }
 
-func (c *searchServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchIP4(ctx context.Context, in *IP4Request, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/SearchService/Search", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Check/SearchIP4", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// SearchServiceServer is the server API for SearchService service.
-type SearchServiceServer interface {
-	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+func (c *checkClient) SearchIP6(ctx context.Context, in *IP6Request, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/Check/SearchIP6", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-// UnimplementedSearchServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedSearchServiceServer struct {
+func (c *checkClient) SearchURL(ctx context.Context, in *URLRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/Check/SearchURL", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-func (*UnimplementedSearchServiceServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+func (c *checkClient) SearchDomain(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/Check/SearchDomain", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-func RegisterSearchServiceServer(s *grpc.Server, srv SearchServiceServer) {
-	s.RegisterService(&_SearchService_serviceDesc, srv)
+// CheckServer is the server API for Check service.
+type CheckServer interface {
+	SearchIP4(context.Context, *IP4Request) (*SearchResponse, error)
+	SearchIP6(context.Context, *IP6Request) (*SearchResponse, error)
+	SearchURL(context.Context, *URLRequest) (*SearchResponse, error)
+	SearchDomain(context.Context, *DomainRequest) (*SearchResponse, error)
 }
 
-func _SearchService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchRequest)
+// UnimplementedCheckServer can be embedded to have forward compatible implementations.
+type UnimplementedCheckServer struct {
+}
+
+func (*UnimplementedCheckServer) SearchIP4(ctx context.Context, req *IP4Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchIP4 not implemented")
+}
+func (*UnimplementedCheckServer) SearchIP6(ctx context.Context, req *IP6Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchIP6 not implemented")
+}
+func (*UnimplementedCheckServer) SearchURL(ctx context.Context, req *URLRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchURL not implemented")
+}
+func (*UnimplementedCheckServer) SearchDomain(ctx context.Context, req *DomainRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchDomain not implemented")
+}
+
+func RegisterCheckServer(s *grpc.Server, srv CheckServer) {
+	s.RegisterService(&_Check_serviceDesc, srv)
+}
+
+func _Check_SearchIP4_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IP4Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SearchServiceServer).Search(ctx, in)
+		return srv.(CheckServer).SearchIP4(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/SearchService/Search",
+		FullMethod: "/Check/SearchIP4",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SearchServiceServer).Search(ctx, req.(*SearchRequest))
+		return srv.(CheckServer).SearchIP4(ctx, req.(*IP4Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _SearchService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "SearchService",
-	HandlerType: (*SearchServiceServer)(nil),
+func _Check_SearchIP6_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IP6Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchIP6(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/SearchIP6",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchIP6(ctx, req.(*IP6Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Check_SearchURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(URLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/SearchURL",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchURL(ctx, req.(*URLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Check_SearchDomain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DomainRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchDomain(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/SearchDomain",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchDomain(ctx, req.(*DomainRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Check_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "Check",
+	HandlerType: (*CheckServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Search",
-			Handler:    _SearchService_Search_Handler,
+			MethodName: "SearchIP4",
+			Handler:    _Check_SearchIP4_Handler,
+		},
+		{
+			MethodName: "SearchIP6",
+			Handler:    _Check_SearchIP6_Handler,
+		},
+		{
+			MethodName: "SearchURL",
+			Handler:    _Check_SearchURL_Handler,
+		},
+		{
+			MethodName: "SearchDomain",
+			Handler:    _Check_SearchDomain_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,8 +1,19 @@
 syntax = "proto3";
 
-message SearchRequest {
-        uint32 type = 1;
-        string query = 2;
+message IP4Request {
+        uint32 query = 1;
+}
+
+message IP6Request {
+        string query = 1;
+}
+
+message URLRequest {
+        string query = 1;
+}
+
+message DomainRequest {
+        string query = 1;
 }
 
 message SearchResponse {
@@ -10,27 +21,30 @@ message SearchResponse {
         repeated Content results = 2;
 }
 
-service SearchService {
-  rpc Search (SearchRequest) returns (SearchResponse);
+service Check {
+  rpc SearchIP4 (IP4Request) returns (SearchResponse);
+  rpc SearchIP6 (IP6Request) returns (SearchResponse);
+  rpc SearchURL (URLRequest) returns (SearchResponse);
+  rpc SearchDomain (DomainRequest) returns (SearchResponse);
 }
 
 message Content {
         int32 id = 1;
         int32 entryType = 2;
         int32 httpsBlock = 3;
-        int64 registryUpdateTime =4;
+        int64 registryUpdateTime = 4;
 	Decision decision = 5;
         int64 includeTime = 6;
         string blockType = 7;
         string hash = 8;
-         int64 ts = 9;
+        int64 ts = 9;
         uint32 u2Hash = 10;
-        repeated URL urls = 11;
-        repeated IPv4Address ip4s = 12;
-	repeated IPv6Address ip6s= 13;
-	repeated Subnet subnets = 14;
-	repeated Subnet6 subnet6s = 15;
-	repeated Domain domains = 16;
+        repeated URL url = 11;
+        repeated IPv4Address ip4 = 12;
+	repeated IPv6Address ip6= 13;
+	repeated Subnet subnet = 14;
+	repeated Subnet6 subnet6 = 15;
+	repeated Domain domain = 16;
 }
 
 message Decision {

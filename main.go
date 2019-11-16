@@ -70,7 +70,7 @@ func main() {
 		os.Exit(1)
 	}
 	s := grpc.NewServer()
-	pb.RegisterSearchServiceServer(s, &server{})
+	pb.RegisterCheckServer(s, &server{})
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go DumpPoll(s, done, sigs, *confAPIURL, *confAPIKey, *confDumpCacheDir, 60)
 	if err := s.Serve(lis); err != nil {
