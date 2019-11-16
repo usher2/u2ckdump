@@ -6,11 +6,12 @@ package msg
 import (
 	context "context"
 	fmt "fmt"
+	math "math"
+
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -621,10 +622,10 @@ func init() {
 	proto.RegisterType((*Decision)(nil), "Decision")
 	proto.RegisterType((*IPv4Address)(nil), "IPv4Address")
 	proto.RegisterType((*IPv6Address)(nil), "IPv6Address")
-	proto.RegisterType((*Subnet)(nil), "Subnet")
-	proto.RegisterType((*Subnet6)(nil), "Subnet6")
+	proto.RegisterType((*Subnet)(nil), "subnet")
+	proto.RegisterType((*Subnet6)(nil), "subnet6")
 	proto.RegisterType((*URL)(nil), "URL")
-	proto.RegisterType((*Domain)(nil), "Domain")
+	proto.RegisterType((*Domain)(nil), "domain")
 }
 
 func init() { proto.RegisterFile("msg.proto", fileDescriptor_c06e4cca6c2cc899) }
