@@ -113,8 +113,8 @@ func Parse(dumpfile string) error {
 					if len(v.Ip6) > 0 {
 						v0.Ip6 = make([]*pb.IPv6Address, len(v.Ip6))
 						for i, value := range v.Ip6 {
-							ip6 := string(net.ParseIP(value.Ip6))
-							DumpSnap.AddIp6(ip6, v.Id)
+							ip6 := net.ParseIP(value.Ip6)
+							DumpSnap.AddIp6(string(ip6), v.Id)
 							v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(v.Ts)}
 						}
 					}
@@ -141,7 +141,7 @@ func Parse(dumpfile string) error {
 							v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(v.Ts)}
 							_url := NormalizeUrl(value.Url)
 							DumpSnap.AddUrl(_url, v.Id)
-							if _url[:8] == "https" {
+							if _url[:8] == "https://" {
 								v0.HttpsBlock += 1
 							}
 						}
@@ -200,16 +200,17 @@ func Parse(dumpfile string) error {
 					if len(v.Ip6) > 0 {
 						v0.Ip6 = make([]*pb.IPv6Address, len(v.Ip6))
 						for i, value := range v.Ip6 {
-							ip6 := string(net.ParseIP(value.Ip6))
-							DumpSnap.AddIp6(ip6, v.Id)
-							buf[ip6] = NothingV
+							ip6 := net.ParseIP(value.Ip6)
+							sip6 := string(ip6)
+							DumpSnap.AddIp6(sip6, v.Id)
+							buf[sip6] = NothingV
 							v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(v.Ts)}
 						}
 					}
 					for _, value := range o.Ip6 {
-						ip6 := string(net.ParseIP(value.Ip6))
-						if _, ok := buf[ip6]; !ok {
-							DumpSnap.DeleteIp6(ip6, o.Id)
+						sip6 := string(value.Ip6)
+						if _, ok := buf[sip6]; !ok {
+							DumpSnap.DeleteIp6(sip6, o.Id)
 						}
 					}
 
@@ -305,7 +306,7 @@ func Parse(dumpfile string) error {
 				DumpSnap.DeleteIp(v.Ip4, o2.Id)
 			}
 			for _, v := range o2.Ip6 {
-				DumpSnap.DeleteIp6(v.Ip6, o2.Id)
+				DumpSnap.DeleteIp6(string(v.Ip6), o2.Id)
 			}
 			for _, v := range o2.Subnet6 {
 				DumpSnap.DeleteSubnet6(v.Subnet6, o2.Id)

@@ -1,6 +1,7 @@
 /res/*
 !/res/*.zip-sample
 !/res/.keep-me
+/testc/testc
 *\~
 *.swp
 *.log

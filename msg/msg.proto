@@ -9,7 +9,7 @@ message IP4Request {
 }
 
 message IP6Request {
-        string query = 1;
+        bytes query = 1;
 }
 
 message URLRequest {
@@ -65,7 +65,7 @@ message IPv4Address {
 }
 
 message IPv6Address {
-	string ip6 = 1;
+	bytes ip6 = 1;
 	int64 ts = 2;
 }
 
