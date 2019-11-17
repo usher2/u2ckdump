@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+message IDRequest {
+        int32 query = 1;
+}
+
 message IP4Request {
         uint32 query = 1;
 }
@@ -22,6 +26,7 @@ message SearchResponse {
 }
 
 service Check {
+  rpc SearchID (IDRequest) returns (SearchResponse);
   rpc SearchIP4 (IP4Request) returns (SearchResponse);
   rpc SearchIP6 (IP6Request) returns (SearchResponse);
   rpc SearchURL (URLRequest) returns (SearchResponse);

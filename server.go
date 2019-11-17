@@ -13,6 +13,23 @@ type server struct {
 	pb.UnimplementedCheckServer
 }
 
+func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResponse, error) {
+	query := in.GetQuery()
+	fmt.Printf("Received content ID: %d\n", query)
+	if DumpSnap != nil && DumpSnap.utime > 0 {
+		DumpSnap.Content.RLock()
+		r := &pb.SearchResponse{}
+		if v, ok := DumpSnap.Content.C[query]; ok {
+			r.Results = make([]*pb.Content, 1)
+			r.Results[0] = v
+		}
+		DumpSnap.Content.RUnlock()
+		return r, nil
+	} else {
+		return &pb.SearchResponse{Error: "Data not ready"}, nil
+	}
+}
+
 func (s *server) SearchIP4(ctx context.Context, in *pb.IP4Request) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 	fmt.Printf("Received IPv4: %d.%d.%d.%d\n", (query&0xFF000000)>>24, (query&0x00FF0000)>>16, (query&0x0000FF00)>>8, query&0x000000FF)

@@ -44,6 +44,29 @@ func parseIp4(s string) uint32 {
 	return ip
 }
 
+func searchID(c pb.CheckClient) {
+	ids := []int32{13344, 100, 79682}
+	for _, id := range ids {
+		log.Printf("Looking for content: %d\n", id)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		r, err := c.SearchID(ctx, &pb.IDRequest{Query: id})
+		if err != nil {
+			log.Fatalf("%v.SearchID(_) = _, %v", c, err)
+		}
+		if r.Error != "" {
+			log.Printf("ERROR: %s\n", r.Error)
+		} else if len(r.Results) == 0 {
+			log.Printf("Nothing... \n")
+		} else {
+			for i := range r.Results {
+				b, _ := json.MarshalIndent(r.Results[i], "    ", "    ")
+				log.Printf(string(b))
+			}
+		}
+	}
+}
+
 func searchIP(c pb.CheckClient) {
 	ips := []string{"1.1.1.1", "8.8.8.8", "149.154.167.99"}
 	for _, ip := range ips {
@@ -78,5 +101,6 @@ func main() {
 	defer conn.Close()
 	log.Printf("Connect...\n")
 	c := pb.NewCheckClient(conn)
-	searchIP(c)
+	//searchIP(c)
+	searchID(c)
 }
