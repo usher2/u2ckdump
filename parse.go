@@ -2,9 +2,11 @@ package main
 
 import (
 	"hash/crc32"
+	"net"
 	"sync"
 
 	pb "github.com/usher-2/u2ckdump/msg"
+	"github.com/yl2chen/cidranger"
 )
 
 type (
@@ -32,6 +34,7 @@ type TDump struct {
 	ip6     StringIntSet
 	subnet  StringIntSet
 	subnet6 StringIntSet
+	net     cidranger.Ranger
 	url     StringIntSet
 	domain  StringIntSet
 	Content TContentMap
@@ -47,6 +50,7 @@ func NewTDump() *TDump {
 		url:     make(StringIntSet),
 		domain:  make(StringIntSet),
 		Content: TContentMap{C: make(map[int32]*pb.Content)},
+		net:     cidranger.NewPCTrieRanger(),
 	}
 }
 
@@ -66,17 +70,53 @@ func (t *TDump) DeleteIp6(i string, id int32) {
 }
 
 func (t *TDump) AddSubnet(i string, id int32) {
-	t.subnet.Add(i, id)
+	if t.subnet.Add(i, id) {
+		_, network, err := net.ParseCIDR(i)
+		if err != nil {
+			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+		}
+		err = t.net.Insert(cidranger.NewBasicRangerEntry(*network))
+		if err != nil {
+			Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
+		}
+	}
 }
 func (t *TDump) DeleteSubnet(i string, id int32) {
-	t.subnet.Delete(i, id)
+	if t.subnet.Delete(i, id) {
+		_, network, err := net.ParseCIDR(i)
+		if err != nil {
+			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+		}
+		_, err = t.net.Remove(*network)
+		if err != nil {
+			Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
+		}
+	}
 }
 
 func (t *TDump) AddSubnet6(i string, id int32) {
-	t.subnet6.Add(i, id)
+	if t.subnet6.Add(i, id) {
+		_, network, err := net.ParseCIDR(i)
+		if err != nil {
+			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+		}
+		err = t.net.Insert(cidranger.NewBasicRangerEntry(*network))
+		if err != nil {
+			Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
+		}
+	}
 }
 func (t *TDump) DeleteSubnet6(i string, id int32) {
-	t.subnet6.Delete(i, id)
+	if t.subnet6.Delete(i, id) {
+		_, network, err := net.ParseCIDR(i)
+		if err != nil {
+			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+		}
+		_, err = t.net.Remove(*network)
+		if err != nil {
+			Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
+		}
+	}
 }
 
 func (t *TDump) AddUrl(i string, id int32) {
