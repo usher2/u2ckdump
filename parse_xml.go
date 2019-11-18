@@ -150,101 +150,6 @@ func (v *TContent) handleAdd(u2Hash uint32, updateTime int64) {
 	v.handleAddDomain(v0)
 }
 
-func (v *TContent) handleUpdateDomain(v0 *pb.Content, o *pb.Content) {
-	buf := NewStringSet(len(v.Domain))
-	if len(v.Domain) > 0 {
-		v0.Domain = make([]*pb.Domain, len(v.Domain))
-		for i, value := range v.Domain {
-			_domain := NormalizeDomain(value.Domain)
-			DumpSnap.AddDomain(_domain, v.Id)
-			buf[_domain] = NothingV
-			v0.Domain[i] = &pb.Domain{Domain: value.Domain, Ts: parseTime(v.Ts)}
-		}
-	}
-	for _, value := range o.Domain {
-		_domain := NormalizeDomain(value.Domain)
-		if _, ok := buf[_domain]; !ok {
-			DumpSnap.DeleteDomain(_domain, o.Id)
-		}
-	}
-}
-
-func (v *TContent) handleUpdateUrl(v0 *pb.Content, o *pb.Content) {
-	buf := NewStringSet(len(v.Url))
-	if len(v.Url) > 0 {
-		v0.Url = make([]*pb.URL, len(v.Url))
-		for i, value := range v.Url {
-			_url := NormalizeUrl(value.Url)
-			DumpSnap.AddUrl(_url, v.Id)
-			buf[_url] = NothingV
-			v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(v.Ts)}
-			if _url[:8] == "https://" {
-				v0.HttpsBlock += 1
-			}
-		}
-	}
-	for _, value := range o.Url {
-		_url := NormalizeUrl(value.Url)
-		if _, ok := buf[_url]; !ok {
-			DumpSnap.DeleteUrl(_url, o.Id)
-		}
-	}
-}
-
-func (v *TContent) handleUpdateSubnet6(v0 *pb.Content, o *pb.Content) {
-	buf := NewStringSet(len(v.Subnet6))
-	if len(v.Subnet6) > 0 {
-		v0.Subnet6 = make([]*pb.Subnet6, len(v.Subnet6))
-		for i, value := range v.Subnet6 {
-			DumpSnap.AddSubnet(value.Subnet6, v.Id)
-			buf[value.Subnet6] = NothingV
-			v0.Subnet6[i] = &pb.Subnet6{Subnet6: value.Subnet6, Ts: parseTime(v.Ts)}
-		}
-	}
-	for _, value := range o.Subnet6 {
-		if _, ok := buf[value.Subnet6]; !ok {
-			DumpSnap.DeleteSubnet6(value.Subnet6, o.Id)
-		}
-	}
-}
-
-func (v *TContent) handleUpdateSubnet(v0 *pb.Content, o *pb.Content) {
-	buf := NewStringSet(len(v.Subnet))
-	if len(v.Subnet) > 0 {
-		v0.Subnet = make([]*pb.Subnet, len(v.Subnet))
-		for i, value := range v.Subnet {
-			DumpSnap.AddSubnet(value.Subnet, v.Id)
-			buf[value.Subnet] = NothingV
-			v0.Subnet[i] = &pb.Subnet{Subnet: value.Subnet, Ts: parseTime(v.Ts)}
-		}
-	}
-	for _, value := range o.Subnet {
-		if _, ok := buf[value.Subnet]; !ok {
-			DumpSnap.DeleteSubnet(value.Subnet, o.Id)
-		}
-	}
-}
-
-func (v *TContent) handleUpdateIp6(v0 *pb.Content, o *pb.Content) {
-	buf := NewStringSet(len(v.Ip6))
-	if len(v.Ip6) > 0 {
-		v0.Ip6 = make([]*pb.IPv6Address, len(v.Ip6))
-		for i, value := range v.Ip6 {
-			ip6 := net.ParseIP(value.Ip6)
-			sip6 := string(ip6)
-			DumpSnap.AddIp6(sip6, v.Id)
-			buf[sip6] = NothingV
-			v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(v.Ts)}
-		}
-	}
-	for _, value := range o.Ip6 {
-		sip6 := string(value.Ip6)
-		if _, ok := buf[sip6]; !ok {
-			DumpSnap.DeleteIp6(sip6, o.Id)
-		}
-	}
-}
-
 func (v *TContent) handleAddIp(v0 *pb.Content) {
 	if len(v.Ip) > 0 {
 		v0.Ip4 = make([]*pb.IPv4Address, len(v.Ip))
@@ -257,19 +162,18 @@ func (v *TContent) handleAddIp(v0 *pb.Content) {
 }
 
 func (v *TContent) handleUpdateIp(v0 *pb.Content, o *pb.Content) {
-	bufi := make(map[uint32]Nothing, len(v.Ip))
+	ipSet := make(map[uint32]Nothing, len(v.Ip))
 	if len(v.Ip) > 0 {
 		v0.Ip4 = make([]*pb.IPv4Address, len(v.Ip))
 		for i, value := range v.Ip {
 			ip := parseIp4(value.Ip)
 			DumpSnap.AddIp(ip, v.Id)
-			bufi[ip] = NothingV
 			v0.Ip4[i] = &pb.IPv4Address{Ip4: ip, Ts: parseTime(v.Ts)}
 		}
 	}
 	for _, value := range o.Ip4 {
 		ip := value.Ip4
-		if _, ok := bufi[ip]; !ok {
+		if _, ok := ipSet[ip]; !ok {
 			DumpSnap.DeleteIp(ip, o.Id)
 		}
 	}
@@ -279,8 +183,27 @@ func (v *TContent) handleAddDomain(v0 *pb.Content) {
 	if len(v.Domain) > 0 {
 		v0.Domain = make([]*pb.Domain, len(v.Domain))
 		for i, value := range v.Domain {
-			DumpSnap.AddDomain(NormalizeDomain(value.Domain), v.Id)
+			domain := NormalizeDomain(value.Domain)
+			DumpSnap.AddDomain(domain, v.Id)
 			v0.Domain[i] = &pb.Domain{Domain: value.Domain, Ts: parseTime(v.Ts)}
+		}
+	}
+}
+
+func (v *TContent) handleUpdateDomain(v0 *pb.Content, o *pb.Content) {
+	domainSet := NewStringSet(len(v.Domain))
+	if len(v.Domain) > 0 {
+		v0.Domain = make([]*pb.Domain, len(v.Domain))
+		for i, value := range v.Domain {
+			domain := NormalizeDomain(value.Domain)
+			DumpSnap.AddDomain(domain, v.Id)
+			v0.Domain[i] = &pb.Domain{Domain: value.Domain, Ts: parseTime(v.Ts)}
+		}
+	}
+	for _, value := range o.Domain {
+		domain := NormalizeDomain(value.Domain)
+		if _, ok := domainSet[domain]; !ok {
+			DumpSnap.DeleteDomain(domain, o.Id)
 		}
 	}
 }
@@ -290,11 +213,32 @@ func (v *TContent) handleAddUrl(v0 *pb.Content) {
 		v0.Url = make([]*pb.URL, len(v.Url))
 		for i, value := range v.Url {
 			v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(v.Ts)}
-			_url := NormalizeUrl(value.Url)
-			DumpSnap.AddUrl(_url, v.Id)
-			if _url[:8] == "https://" {
+			url := NormalizeUrl(value.Url)
+			DumpSnap.AddUrl(url, v.Id)
+			if url[:8] == "https://" {
 				v0.HttpsBlock += 1
 			}
+		}
+	}
+}
+
+func (v *TContent) handleUpdateUrl(v0 *pb.Content, o *pb.Content) {
+	urlSet := NewStringSet(len(v.Url))
+	if len(v.Url) > 0 {
+		v0.Url = make([]*pb.URL, len(v.Url))
+		for i, value := range v.Url {
+			url := NormalizeUrl(value.Url)
+			DumpSnap.AddUrl(url, v.Id)
+			v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(v.Ts)}
+			if url[:8] == "https://" {
+				v0.HttpsBlock += 1
+			}
+		}
+	}
+	for _, value := range o.Url {
+		url := NormalizeUrl(value.Url)
+		if _, ok := urlSet[url]; !ok {
+			DumpSnap.DeleteUrl(url, o.Id)
 		}
 	}
 }
@@ -309,12 +253,44 @@ func (v *TContent) handleAddSubnet(v0 *pb.Content) {
 	}
 }
 
+func (v *TContent) handleUpdateSubnet(v0 *pb.Content, o *pb.Content) {
+	subnetSet := NewStringSet(len(v.Subnet))
+	if len(v.Subnet) > 0 {
+		v0.Subnet = make([]*pb.Subnet, len(v.Subnet))
+		for i, value := range v.Subnet {
+			DumpSnap.AddSubnet(value.Subnet, v.Id)
+			v0.Subnet[i] = &pb.Subnet{Subnet: value.Subnet, Ts: parseTime(v.Ts)}
+		}
+	}
+	for _, value := range o.Subnet {
+		if _, ok := subnetSet[value.Subnet]; !ok {
+			DumpSnap.DeleteSubnet(value.Subnet, o.Id)
+		}
+	}
+}
+
 func (v *TContent) handleAddSubnet6(v0 *pb.Content) {
 	if len(v.Subnet6) > 0 {
 		v0.Subnet6 = make([]*pb.Subnet6, len(v.Subnet6))
 		for i, value := range v.Subnet6 {
 			DumpSnap.AddSubnet6(value.Subnet6, v.Id)
 			v0.Subnet6[i] = &pb.Subnet6{Subnet6: v.Subnet6[i].Subnet6, Ts: parseTime(v.Ts)}
+		}
+	}
+}
+
+func (v *TContent) handleUpdateSubnet6(v0 *pb.Content, o *pb.Content) {
+	subnet6Set := NewStringSet(len(v.Subnet6))
+	if len(v.Subnet6) > 0 {
+		v0.Subnet6 = make([]*pb.Subnet6, len(v.Subnet6))
+		for i, value := range v.Subnet6 {
+			DumpSnap.AddSubnet(value.Subnet6, v.Id)
+			v0.Subnet6[i] = &pb.Subnet6{Subnet6: value.Subnet6, Ts: parseTime(v.Ts)}
+		}
+	}
+	for _, value := range o.Subnet6 {
+		if _, ok := subnet6Set[value.Subnet6]; !ok {
+			DumpSnap.DeleteSubnet6(value.Subnet6, o.Id)
 		}
 	}
 }
@@ -326,6 +302,25 @@ func (v *TContent) handleAddIp6(v0 *pb.Content) {
 			ip6 := net.ParseIP(value.Ip6)
 			DumpSnap.AddIp6(string(ip6), v.Id)
 			v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(v.Ts)}
+		}
+	}
+}
+
+func (v *TContent) handleUpdateIp6(v0 *pb.Content, o *pb.Content) {
+	ip6Set := NewStringSet(len(v.Ip6))
+	if len(v.Ip6) > 0 {
+		v0.Ip6 = make([]*pb.IPv6Address, len(v.Ip6))
+		for i, value := range v.Ip6 {
+			ip6 := net.ParseIP(value.Ip6)
+			sip6 := string(ip6)
+			DumpSnap.AddIp6(sip6, v.Id)
+			v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(v.Ts)}
+		}
+	}
+	for _, value := range o.Ip6 {
+		sip6 := string(value.Ip6)
+		if _, ok := ip6Set[sip6]; !ok {
+			DumpSnap.DeleteIp6(sip6, o.Id)
 		}
 	}
 }
