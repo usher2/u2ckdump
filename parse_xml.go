@@ -153,8 +153,8 @@ func (v *TContent) handleAdd(u2Hash uint32, updateTime int64) {
 func (v *TContent) handleAddIp(v0 *pb.Content) {
 	if len(v.Ip) > 0 {
 		v0.Ip4 = make([]*pb.IPv4Address, len(v.Ip))
-		for i := range v.Ip {
-			ip := parseIp4(v.Ip[i].Ip)
+		for i, value := range v.Ip {
+			ip := parseIp4(value.Ip)
 			DumpSnap.AddIp(ip, v.Id)
 			v0.Ip4[i] = &pb.IPv4Address{Ip4: ip, Ts: parseTime(v.Ts)}
 		}
