@@ -12,11 +12,11 @@ This program is a part of [https://usher2.club](Usher2) ecosystem. The gRPC serv
 USE
 ---
 
-* First the program try to unzip dump.zip if exists
-* Second the program try to parse dump.xml if exists
-* Than the program try to fetch and parse dump from dump sources server periodically
+* At first the program tries to unzip dump.zip if exists
+* At second the program tries to parse dump.xml if exists
+* Then the program tries to fetch and parse dump from dump sources server periodically
 
-FUTURES
+FEATURES
 -------
 
 * Native IPv4 string to 32-bit integer implementation
