@@ -30,7 +30,7 @@ func Parse(dumpfile string) error {
 	defer dumpFile.Close()
 
 	decoder := xml.NewDecoder(dumpFile)
-	offsetCorrection := newCharsetDecoder(decoder, 0, buffer)
+	offsetCorrection := newCharsetDecoder(decoder, 0, &buffer)
 
 	SPass := make(IntSet, len(DumpSnap.Content.C)+1000)
 	for {
@@ -335,14 +335,14 @@ func handleRegister(_a xml.Attr, r *TReg) {
 	}
 }
 
-func newCharsetDecoder(decoder *xml.Decoder, offsetCorrection int64, buffer bytes.Buffer) int64 {
+func newCharsetDecoder(decoder *xml.Decoder, offsetCorrection int64, buffer *bytes.Buffer) int64 {
 	decoder.CharsetReader = func(label string, input io.Reader) (io.Reader, error) {
 		r, err := charset.NewReaderLabel(label, input)
 		if err != nil {
 			return nil, err
 		}
 		offsetCorrection = decoder.InputOffset()
-		return io.TeeReader(r, &buffer), nil
+		return io.TeeReader(r, buffer), nil
 	}
 	return offsetCorrection
 }
