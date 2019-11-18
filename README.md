@@ -20,6 +20,8 @@ FEATURES
 -------
 
 * Native IPv4 string to 32-bit integer implementation
+* gRPC service for check IPv4, IPv6, URL, Domain
+* Parse subnets to RADIX tree
 
 WARNING
 -------
@@ -31,9 +33,10 @@ TODO
 ----
 
 * Native RFC3339 parsing
-* Parse subnet to RADIX tree
-* gRPC service for check IPv4, IPv6, URL, Domain
+* ~~Parse subnets to RADIX tree~~
+* ~~gRPC service for check IPv4, IPv6, URL, Domain~~
 * Stream parsing every `<content>...</content>` object including unchanged is the subject for discussion
+* RADIX tree code refactoring
 
 ---
 [![UNLICENSE](noc.png)](UNLICENSE)
