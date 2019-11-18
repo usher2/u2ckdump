@@ -12,9 +12,9 @@ This program is a part of [https://usher2.club](Usher2) ecosystem. The gRPC serv
 USE
 ---
 
-* First the program tries to unzip dump.zip file if it exists
-* Second the program tries to parse dump.xml file if it exists
-* Then the program periodically tries to fetch and parse a dump from a dump sources server
+* First the program tries to decompress a dump.zip file if it exists
+* Second the program tries to parse a dump.xml file if it exists
+* Then the program periodically tries to fetch a dump from a dump sources server
 
 FEATURES
 -------
