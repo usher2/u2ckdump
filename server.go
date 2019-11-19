@@ -30,7 +30,7 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 }
 
 func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResponse, error) {
-	var v1 []IntSet
+	var v1 []ArrayIntSet
 	query := in.GetQuery()
 	ipb := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, byte((query & 0xFF000000) >> 24), byte((query & 0x00FF0000) >> 16), byte((query & 0x0000FF00) >> 8), byte(query & 0x000000FF)}
 	Debug.Printf("Received IPv4: %d.%d.%d.%d\n", ipb[12], ipb[13], ipb[14], ipb[15])
@@ -53,12 +53,12 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 		}
 		r.Results = make([]*pb.Content, len(v)+vc)
 		i := 0
-		for id, _ := range v {
+		for _, id := range v {
 			r.Results[i] = DumpSnap.Content.C[id]
 			i++
 		}
 		for j, _ := range v1 {
-			for id, _ := range v1[j] {
+			for _, id := range v1[j] {
 				r.Results[i] = DumpSnap.Content.C[id]
 				i++
 			}
@@ -79,7 +79,7 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 		v := DumpSnap.ip6[string(query)]
 		r.Results = make([]*pb.Content, len(v))
 		i := 0
-		for id, _ := range v {
+		for _, id := range v {
 			r.Results[i] = DumpSnap.Content.C[id]
 			i++
 		}
@@ -99,7 +99,7 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 		v := DumpSnap.url[query]
 		r.Results = make([]*pb.Content, len(v))
 		i := 0
-		for id, _ := range v {
+		for _, id := range v {
 			r.Results[i] = DumpSnap.Content.C[id]
 			i++
 		}
@@ -119,7 +119,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 		v := DumpSnap.domain[query]
 		r.Results = make([]*pb.Content, len(v))
 		i := 0
-		for id, _ := range v {
+		for _, id := range v {
 			r.Results[i] = DumpSnap.Content.C[id]
 			i++
 		}

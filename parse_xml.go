@@ -6,28 +6,20 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
-	"os"
 
 	"golang.org/x/net/html/charset"
 
 	pb "github.com/usher-2/u2ckdump/msg"
 )
 
-func Parse(dumpfile string) error {
+func Parse(dumpFile io.Reader) error {
 	var (
 		err          error
-		dumpFile     *os.File
 		stats        Stats
 		r            TReg
 		buffer       bytes.Buffer
 		bufferOffset int64
 	)
-
-	// parse xml
-	if dumpFile, err = os.Open(dumpfile); err != nil {
-		return err
-	}
-	defer dumpFile.Close()
 
 	decoder := xml.NewDecoder(dumpFile)
 	offsetCorrection := newCharsetDecoder(decoder, 0, &buffer)
@@ -120,11 +112,43 @@ func Parse(dumpfile string) error {
 		}
 	}
 	DumpSnap.utime = r.UpdateTime
+	CntArrayIntSet := 0
+	for _, a := range DumpSnap.ip {
+		if CntArrayIntSet < len(a) {
+			CntArrayIntSet = len(a)
+		}
+	}
+	for _, a := range DumpSnap.ip6 {
+		if CntArrayIntSet < len(a) {
+			CntArrayIntSet = len(a)
+		}
+	}
+	for _, a := range DumpSnap.subnet {
+		if CntArrayIntSet < len(a) {
+			CntArrayIntSet = len(a)
+		}
+	}
+	for _, a := range DumpSnap.subnet6 {
+		if CntArrayIntSet < len(a) {
+			CntArrayIntSet = len(a)
+		}
+	}
+	for _, a := range DumpSnap.url {
+		if CntArrayIntSet < len(a) {
+			CntArrayIntSet = len(a)
+		}
+	}
+	for _, a := range DumpSnap.domain {
+		if CntArrayIntSet < len(a) {
+			CntArrayIntSet = len(a)
+		}
+	}
 	DumpSnap.Content.Unlock()
 	Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", stats.Cnt, stats.CntAdd, stats.CntUpdate, stats.CntRemove)
 	Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
 		len(DumpSnap.ip), len(DumpSnap.ip6), len(DumpSnap.subnet), len(DumpSnap.subnet6),
 		len(DumpSnap.domain), len(DumpSnap.url))
+	Info.Printf("Biggest array: %d\n", CntArrayIntSet)
 	return err
 }
 
@@ -153,10 +177,10 @@ func (v *TContent) handleAdd(u2Hash uint32, updateTime int64) {
 func (v *TContent) handleAddIp(v0 *pb.Content) {
 	if len(v.Ip) > 0 {
 		v0.Ip4 = make([]*pb.IPv4Address, len(v.Ip))
-		for i, value := range v.Ip {
-			ip := parseIp4(value.Ip)
+		for i, _ := range v.Ip {
+			ip := parseIp4(v.Ip[i].Ip)
 			DumpSnap.AddIp(ip, v.Id)
-			v0.Ip4[i] = &pb.IPv4Address{Ip4: ip, Ts: parseTime(v.Ts)}
+			v0.Ip4[i] = &pb.IPv4Address{Ip4: ip, Ts: parseTime(v.Ip[i].Ts)}
 		}
 	}
 }
@@ -165,14 +189,15 @@ func (v *TContent) handleUpdateIp(v0 *pb.Content, o *pb.Content) {
 	ipSet := make(map[uint32]Nothing, len(v.Ip))
 	if len(v.Ip) > 0 {
 		v0.Ip4 = make([]*pb.IPv4Address, len(v.Ip))
-		for i, value := range v.Ip {
-			ip := parseIp4(value.Ip)
+		for i, _ := range v.Ip {
+			ip := parseIp4(v.Ip[i].Ip)
 			DumpSnap.AddIp(ip, v.Id)
-			v0.Ip4[i] = &pb.IPv4Address{Ip4: ip, Ts: parseTime(v.Ts)}
+			v0.Ip4[i] = &pb.IPv4Address{Ip4: ip, Ts: parseTime(v.Ip[i].Ts)}
+			ipSet[ip] = NothingV
 		}
 	}
-	for _, value := range o.Ip4 {
-		ip := value.Ip4
+	for i, _ := range o.Ip4 {
+		ip := o.Ip4[i].Ip4
 		if _, ok := ipSet[ip]; !ok {
 			DumpSnap.DeleteIp(ip, o.Id)
 		}
@@ -185,7 +210,7 @@ func (v *TContent) handleAddDomain(v0 *pb.Content) {
 		for i, value := range v.Domain {
 			domain := NormalizeDomain(value.Domain)
 			DumpSnap.AddDomain(domain, v.Id)
-			v0.Domain[i] = &pb.Domain{Domain: value.Domain, Ts: parseTime(v.Ts)}
+			v0.Domain[i] = &pb.Domain{Domain: value.Domain, Ts: parseTime(value.Ts)}
 		}
 	}
 }
@@ -197,7 +222,8 @@ func (v *TContent) handleUpdateDomain(v0 *pb.Content, o *pb.Content) {
 		for i, value := range v.Domain {
 			domain := NormalizeDomain(value.Domain)
 			DumpSnap.AddDomain(domain, v.Id)
-			v0.Domain[i] = &pb.Domain{Domain: value.Domain, Ts: parseTime(v.Ts)}
+			v0.Domain[i] = &pb.Domain{Domain: value.Domain, Ts: parseTime(value.Ts)}
+			domainSet[domain] = NothingV
 		}
 	}
 	for _, value := range o.Domain {
@@ -212,7 +238,7 @@ func (v *TContent) handleAddUrl(v0 *pb.Content) {
 	if len(v.Url) > 0 {
 		v0.Url = make([]*pb.URL, len(v.Url))
 		for i, value := range v.Url {
-			v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(v.Ts)}
+			v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(value.Ts)}
 			url := NormalizeUrl(value.Url)
 			DumpSnap.AddUrl(url, v.Id)
 			if url[:8] == "https://" {
@@ -229,10 +255,11 @@ func (v *TContent) handleUpdateUrl(v0 *pb.Content, o *pb.Content) {
 		for i, value := range v.Url {
 			url := NormalizeUrl(value.Url)
 			DumpSnap.AddUrl(url, v.Id)
-			v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(v.Ts)}
+			v0.Url[i] = &pb.URL{Url: value.Url, Ts: parseTime(value.Ts)}
 			if url[:8] == "https://" {
 				v0.HttpsBlock += 1
 			}
+			urlSet[url] = NothingV
 		}
 	}
 	for _, value := range o.Url {
@@ -248,7 +275,7 @@ func (v *TContent) handleAddSubnet(v0 *pb.Content) {
 		v0.Subnet = make([]*pb.Subnet, len(v.Subnet))
 		for i, value := range v.Subnet {
 			DumpSnap.AddSubnet(value.Subnet, v.Id)
-			v0.Subnet[i] = &pb.Subnet{Subnet: v.Subnet[i].Subnet, Ts: parseTime(v.Ts)}
+			v0.Subnet[i] = &pb.Subnet{Subnet: v.Subnet[i].Subnet, Ts: parseTime(value.Ts)}
 		}
 	}
 }
@@ -259,7 +286,8 @@ func (v *TContent) handleUpdateSubnet(v0 *pb.Content, o *pb.Content) {
 		v0.Subnet = make([]*pb.Subnet, len(v.Subnet))
 		for i, value := range v.Subnet {
 			DumpSnap.AddSubnet(value.Subnet, v.Id)
-			v0.Subnet[i] = &pb.Subnet{Subnet: value.Subnet, Ts: parseTime(v.Ts)}
+			v0.Subnet[i] = &pb.Subnet{Subnet: value.Subnet, Ts: parseTime(value.Ts)}
+			subnetSet[value.Subnet] = NothingV
 		}
 	}
 	for _, value := range o.Subnet {
@@ -274,7 +302,7 @@ func (v *TContent) handleAddSubnet6(v0 *pb.Content) {
 		v0.Subnet6 = make([]*pb.Subnet6, len(v.Subnet6))
 		for i, value := range v.Subnet6 {
 			DumpSnap.AddSubnet6(value.Subnet6, v.Id)
-			v0.Subnet6[i] = &pb.Subnet6{Subnet6: v.Subnet6[i].Subnet6, Ts: parseTime(v.Ts)}
+			v0.Subnet6[i] = &pb.Subnet6{Subnet6: v.Subnet6[i].Subnet6, Ts: parseTime(value.Ts)}
 		}
 	}
 }
@@ -285,7 +313,8 @@ func (v *TContent) handleUpdateSubnet6(v0 *pb.Content, o *pb.Content) {
 		v0.Subnet6 = make([]*pb.Subnet6, len(v.Subnet6))
 		for i, value := range v.Subnet6 {
 			DumpSnap.AddSubnet(value.Subnet6, v.Id)
-			v0.Subnet6[i] = &pb.Subnet6{Subnet6: value.Subnet6, Ts: parseTime(v.Ts)}
+			v0.Subnet6[i] = &pb.Subnet6{Subnet6: value.Subnet6, Ts: parseTime(value.Ts)}
+			subnet6Set[value.Subnet6] = NothingV
 		}
 	}
 	for _, value := range o.Subnet6 {
@@ -301,7 +330,7 @@ func (v *TContent) handleAddIp6(v0 *pb.Content) {
 		for i, value := range v.Ip6 {
 			ip6 := net.ParseIP(value.Ip6)
 			DumpSnap.AddIp6(string(ip6), v.Id)
-			v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(v.Ts)}
+			v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(value.Ts)}
 		}
 	}
 }
@@ -314,7 +343,8 @@ func (v *TContent) handleUpdateIp6(v0 *pb.Content, o *pb.Content) {
 			ip6 := net.ParseIP(value.Ip6)
 			sip6 := string(ip6)
 			DumpSnap.AddIp6(sip6, v.Id)
-			v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(v.Ts)}
+			v0.Ip6[i] = &pb.IPv6Address{Ip6: ip6, Ts: parseTime(value.Ts)}
+			ip6Set[sip6] = NothingV
 		}
 	}
 	for _, value := range o.Ip6 {

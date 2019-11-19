@@ -55,11 +55,17 @@ func main() {
 	}
 	if _, err := os.Stat(*confDumpCacheDir + "/dump.xml"); !os.IsNotExist(err) {
 		Debug.Println("Saved dump detecteded")
-		err = Parse(*confDumpCacheDir + "/dump.xml")
-		if err != nil {
-			Error.Printf("Parse error: %s\n", err.Error())
+		// parse xml
+		if dumpFile, err := os.Open(*confDumpCacheDir + "/dump.xml"); err != nil {
+			Error.Printf("Can't open last dump: %s\n", err.Error())
 		} else {
-			Info.Printf("Dump parsed")
+			err = Parse(dumpFile)
+			if err != nil {
+				Error.Printf("Parse error: %s\n", err.Error())
+			} else {
+				Info.Printf("Dump parsed")
+			}
+			dumpFile.Close()
 		}
 	}
 	sigs := make(chan os.Signal, 1)
