@@ -6,6 +6,7 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
+	"strconv"
 
 	"golang.org/x/net/html/charset"
 
@@ -14,16 +15,23 @@ import (
 
 func Parse(dumpFile io.Reader) error {
 	var (
-		err          error
-		stats        Stats
-		r            TReg
-		buffer       bytes.Buffer
-		bufferOffset int64
+		err                            error
+		stats                          Stats
+		r                              TReg
+		buffer                         bytes.Buffer
+		bufferOffset, offsetCorrection int64
 	)
 
 	decoder := xml.NewDecoder(dumpFile)
-	offsetCorrection := newCharsetDecoder(decoder, 0, &buffer)
-
+	// we need this closure, we don't want constructor
+	decoder.CharsetReader = func(label string, input io.Reader) (io.Reader, error) {
+		r, err := charset.NewReaderLabel(label, input)
+		if err != nil {
+			return nil, err
+		}
+		offsetCorrection = decoder.InputOffset()
+		return io.TeeReader(r, &buffer), nil
+	}
 	SPass := make(IntSet, len(DumpSnap.Content.C)+1000)
 	for {
 		tokenStartOffset := decoder.InputOffset() - offsetCorrection
@@ -38,40 +46,43 @@ func Parse(dumpFile io.Reader) error {
 		case xml.StartElement:
 			switch _e.Name.Local {
 			case "register":
-				for _, _a := range _e.Attr {
-					handleRegister(_a, &r)
-				}
+				handleRegister(_e, &r)
 			case "content":
-				v := &TContent{}
-				// parse <content>...</content>
-				if err := decoder.DecodeElement(v, &_e); err != nil {
-					Error.Printf("Decode Error: %s\n", err.Error())
-					continue
-				}
+				id := getContentId(_e)
+				// parse <content>...</content> only if need
+				decoder.Skip()
 				dif := tokenStartOffset - bufferOffset
 				buffer.Next(int(dif))
 				bufferOffset += dif
 				tokenStartOffset = decoder.InputOffset() - offsetCorrection
 				// create hash of <content>...</content> for comp
-				u2Hash := crc32.Checksum(buffer.Next(int(tokenStartOffset-bufferOffset)), crc32Table)
+				tempBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
+				u2Hash := crc32.Checksum(tempBuf, crc32Table)
 				bufferOffset = tokenStartOffset
+				v := TContent{}
 				// create or update
 				DumpSnap.Content.Lock()
-				o, exists := DumpSnap.Content.C[v.Id]
+				o, exists := DumpSnap.Content.C[id]
 				if !exists {
-					v.handleAdd(u2Hash, r.UpdateTime)
-					stats.CntAdd++
-
+					err := xml.Unmarshal(tempBuf, &v)
+					if err != nil {
+						Error.Printf("Decode Error: %s\n", err.Error())
+					} else {
+						v.handleAdd(u2Hash, r.UpdateTime)
+						stats.CntAdd++
+					}
 					SPass[v.Id] = NothingV
 				} else if o.U2Hash != u2Hash {
-					v.handleUpdate(u2Hash, o, r.UpdateTime)
-					stats.CntUpdate++
-
+					err := xml.Unmarshal(tempBuf, &v)
+					if err != nil {
+						Error.Printf("Decode Error: %s\n", err.Error())
+					} else {
+						v.handleUpdate(u2Hash, o, r.UpdateTime)
+						stats.CntUpdate++
+					}
 					SPass[v.Id] = NothingV
-
 				} else {
 					o.RegistryUpdateTime = r.UpdateTime
-
 					SPass[o.Id] = NothingV
 					//v = nil
 				}
@@ -355,26 +366,32 @@ func (v *TContent) handleUpdateIp6(v0 *pb.Content, o *pb.Content) {
 	}
 }
 
-func handleRegister(_a xml.Attr, r *TReg) {
-	if _a.Name.Local == "formatVersion" {
-		r.FormatVersion = _a.Value
-	} else if _a.Name.Local == "updateTime" {
-		r.UpdateTime = parseTime(_a.Value)
-	} else if _a.Name.Local == "updateTimeUrgently" {
-		r.UpdateTimeUrgently = _a.Value
+func getContentId(_e xml.StartElement) int32 {
+	var (
+		id  int
+		err error
+	)
+	for _, _a := range _e.Attr {
+		if _a.Name.Local == "id" {
+			id, err = strconv.Atoi(_a.Value)
+			if err != nil {
+				Debug.Printf("Can't fetch id: %s: %s\n", _a.Value, err.Error())
+			}
+		}
 	}
+	return int32(id)
 }
 
-func newCharsetDecoder(decoder *xml.Decoder, offsetCorrection int64, buffer *bytes.Buffer) int64 {
-	decoder.CharsetReader = func(label string, input io.Reader) (io.Reader, error) {
-		r, err := charset.NewReaderLabel(label, input)
-		if err != nil {
-			return nil, err
+func handleRegister(_e xml.StartElement, r *TReg) {
+	for _, _a := range _e.Attr {
+		if _a.Name.Local == "formatVersion" {
+			r.FormatVersion = _a.Value
+		} else if _a.Name.Local == "updateTime" {
+			r.UpdateTime = parseTime(_a.Value)
+		} else if _a.Name.Local == "updateTimeUrgently" {
+			r.UpdateTimeUrgently = _a.Value
 		}
-		offsetCorrection = decoder.InputOffset()
-		return io.TeeReader(r, buffer), nil
 	}
-	return offsetCorrection
 }
 
 func newPbContent(v *TContent, u2Hash uint32, utime int64) *pb.Content {
