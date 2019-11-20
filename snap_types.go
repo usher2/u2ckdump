@@ -8,7 +8,7 @@ type TMinContent struct {
 	Subnet4 []TSubnet4 `json:"sb4,omitempty"`
 	Subnet6 []TSubnet6 `json:"sb6,omitempty"`
 	Domain  []TDomain  `json:"dm,omitempty"`
-	U2Hash  uint32     `json:"u2h"`
+	U2Hash  uint64     `json:"u2h"`
 }
 
 type TContent struct {
@@ -27,7 +27,7 @@ type TContent struct {
 	Subnet6     []TSubnet6 `json:"sb6,omitempty"`
 	Domain      []TDomain  `json:"dm,omitempty"`
 	HttpsBlock  int        `json:"hb"`
-	U2Hash      uint32     `json:"u2h"`
+	U2Hash      uint64     `json:"u2h"`
 }
 
 type TSubnet6 struct {

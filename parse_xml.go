@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"hash/crc32"
+	"hash/fnv"
 	"io"
 	"net"
 	"strconv"
@@ -159,7 +159,10 @@ func Parse(dumpFile io.Reader) error {
 				tokenStartOffset = decoder.InputOffset() - offsetCorrection
 				// create hash of <content>...</content> for comp
 				tempBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
-				u2Hash := crc32.Checksum(tempBuf, crc32Table)
+				//u2Hash := crc32.Checksum(tempBuf, crc32Table)
+				hash := fnv.New64a()
+				hash.Write(tempBuf)
+				u2Hash := hash.Sum64()
 				bufferOffset = tokenStartOffset
 				v := TContent{}
 				// create or update
@@ -274,7 +277,7 @@ func (v *TContent) Marshal() []byte {
 	return b
 }
 
-func (v *TContent) Update(u2Hash uint32, o *TMinContent, updateTime int64) {
+func (v *TContent) Update(u2Hash uint64, o *TMinContent, updateTime int64) {
 	v1 := newMinContent(v.Id, u2Hash)
 	v2 := newPbContent(v, updateTime)
 	DumpSnap.Content[v.Id] = v1
@@ -287,7 +290,7 @@ func (v *TContent) Update(u2Hash uint32, o *TMinContent, updateTime int64) {
 	v1.handleUpdateDomain(v, o)
 }
 
-func (v *TContent) Add(u2Hash uint32, updateTime int64) {
+func (v *TContent) Add(u2Hash uint64, updateTime int64) {
 	v1 := newMinContent(v.Id, u2Hash)
 	v2 := newPbContent(v, updateTime)
 	DumpSnap.Content[v.Id] = v1
@@ -491,7 +494,7 @@ func handleRegister(_e xml.StartElement, r *TReg) {
 	}
 }
 
-func newMinContent(id int32, hash uint32) *TMinContent {
+func newMinContent(id int32, hash uint64) *TMinContent {
 	return &TMinContent{Id: id, U2Hash: hash}
 }
 
