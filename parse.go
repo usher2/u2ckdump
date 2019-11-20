@@ -1,7 +1,6 @@
 package main
 
 import (
-	"hash/crc32"
 	"net"
 	"sync"
 
@@ -140,8 +139,6 @@ type TReg struct {
 	UpdateTimeUrgently string
 	FormatVersion      string
 }
-
-var crc32Table = crc32.MakeTable(crc32.Castagnoli)
 
 func Parse2(UpdateTime int64) {
 	DumpSnap.Lock()
