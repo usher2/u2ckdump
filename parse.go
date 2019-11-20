@@ -17,12 +17,16 @@ type (
 
 var NothingV = Nothing{}
 
-type Stats struct {
-	Cnt       int
-	CntAdd    int
-	CntUpdate int
-	CntRemove int
+type Stat struct {
+	Cnt            int
+	CntAdd         int
+	CntUpdate      int
+	CntRemove      int
+	MaxArrayIntSet int
+	MaxContentSize int
 }
+
+var Stats Stat
 
 type TDump struct {
 	sync.RWMutex

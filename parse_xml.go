@@ -118,12 +118,12 @@ func UnmarshalContent(b []byte, v *TContent) error {
 func Parse(dumpFile io.Reader) error {
 	var (
 		err                            error
-		stats                          Stats
 		r                              TReg
 		buffer                         bytes.Buffer
 		bufferOffset, offsetCorrection int64
 	)
 
+	Stats = Stat{}
 	decoder := xml.NewDecoder(dumpFile)
 	// we need this closure, we don't want constructor
 	decoder.CharsetReader = func(label string, input io.Reader) (io.Reader, error) {
@@ -159,7 +159,9 @@ func Parse(dumpFile io.Reader) error {
 				tokenStartOffset = decoder.InputOffset() - offsetCorrection
 				// create hash of <content>...</content> for comp
 				tempBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
-				//u2Hash := crc32.Checksum(tempBuf, crc32Table)
+				if Stats.MaxContentSize < len(tempBuf) {
+					Stats.MaxContentSize = len(tempBuf)
+				}
 				hash := fnv.New64a()
 				hash.Write(tempBuf)
 				u2Hash := hash.Sum64()
@@ -174,7 +176,7 @@ func Parse(dumpFile io.Reader) error {
 						Error.Printf("Decode Error: %s\n", err.Error())
 					} else {
 						v.Add(u2Hash, r.UpdateTime)
-						stats.CntAdd++
+						Stats.CntAdd++
 					}
 					SPass[v.Id] = NothingV
 				} else if v0.U2Hash != u2Hash {
@@ -183,7 +185,7 @@ func Parse(dumpFile io.Reader) error {
 						Error.Printf("Decode Error: %s\n", err.Error())
 					} else {
 						v.Update(u2Hash, v0, r.UpdateTime)
-						stats.CntUpdate++
+						Stats.CntUpdate++
 					}
 					SPass[v.Id] = NothingV
 				} else {
@@ -192,7 +194,7 @@ func Parse(dumpFile io.Reader) error {
 					//v = nil
 				}
 				DumpSnap.Unlock()
-				stats.Cnt++
+				Stats.Cnt++
 			}
 		default:
 			//fmt.printf("%v\n", _e)
@@ -225,47 +227,48 @@ func Parse(dumpFile io.Reader) error {
 			}
 			delete(DumpSnap.Content, id)
 			delete(DumpSnap.Protobuf, id)
-			stats.CntRemove++
+			Stats.CntRemove++
 		}
 	}
 	DumpSnap.utime = r.UpdateTime
-	CntArrayIntSet := 0
+	Stats.MaxArrayIntSet = 0
 	for _, a := range DumpSnap.ip {
-		if CntArrayIntSet < len(a) {
-			CntArrayIntSet = len(a)
+		if Stats.MaxArrayIntSet < len(a) {
+			Stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.ip6 {
-		if CntArrayIntSet < len(a) {
-			CntArrayIntSet = len(a)
+		if Stats.MaxArrayIntSet < len(a) {
+			Stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.subnet {
-		if CntArrayIntSet < len(a) {
-			CntArrayIntSet = len(a)
+		if Stats.MaxArrayIntSet < len(a) {
+			Stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.subnet6 {
-		if CntArrayIntSet < len(a) {
-			CntArrayIntSet = len(a)
+		if Stats.MaxArrayIntSet < len(a) {
+			Stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.url {
-		if CntArrayIntSet < len(a) {
-			CntArrayIntSet = len(a)
+		if Stats.MaxArrayIntSet < len(a) {
+			Stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.domain {
-		if CntArrayIntSet < len(a) {
-			CntArrayIntSet = len(a)
+		if Stats.MaxArrayIntSet < len(a) {
+			Stats.MaxArrayIntSet = len(a)
 		}
 	}
 	DumpSnap.Unlock()
-	Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", stats.Cnt, stats.CntAdd, stats.CntUpdate, stats.CntRemove)
+	Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", Stats.Cnt, Stats.CntAdd, Stats.CntUpdate, Stats.CntRemove)
 	Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
 		len(DumpSnap.ip), len(DumpSnap.ip6), len(DumpSnap.subnet), len(DumpSnap.subnet6),
 		len(DumpSnap.domain), len(DumpSnap.url))
-	Info.Printf("Biggest array: %d\n", CntArrayIntSet)
+	Info.Printf("Biggest array: %d\n", Stats.MaxArrayIntSet)
+	Info.Printf("Biggest content: %d\n", Stats.MaxContentSize)
 	return err
 }
 
