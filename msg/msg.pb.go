@@ -267,26 +267,11 @@ func (m *SearchResponse) GetResults() []*Content {
 }
 
 type Content struct {
-	Id                   int32          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	EntryType            int32          `protobuf:"varint,2,opt,name=entryType,proto3" json:"entryType,omitempty"`
-	HttpsBlock           int32          `protobuf:"varint,3,opt,name=httpsBlock,proto3" json:"httpsBlock,omitempty"`
-	RegistryUpdateTime   int64          `protobuf:"varint,4,opt,name=registryUpdateTime,proto3" json:"registryUpdateTime,omitempty"`
-	Decision             *Decision      `protobuf:"bytes,5,opt,name=decision,proto3" json:"decision,omitempty"`
-	IncludeTime          int64          `protobuf:"varint,6,opt,name=includeTime,proto3" json:"includeTime,omitempty"`
-	UrgencyType          int32          `protobuf:"varint,7,opt,name=urgencyType,proto3" json:"urgencyType,omitempty"`
-	BlockType            string         `protobuf:"bytes,8,opt,name=blockType,proto3" json:"blockType,omitempty"`
-	Hash                 string         `protobuf:"bytes,9,opt,name=hash,proto3" json:"hash,omitempty"`
-	Ts                   int64          `protobuf:"varint,10,opt,name=ts,proto3" json:"ts,omitempty"`
-	U2Hash               uint32         `protobuf:"varint,11,opt,name=u2Hash,proto3" json:"u2Hash,omitempty"`
-	Url                  []*URL         `protobuf:"bytes,12,rep,name=url,proto3" json:"url,omitempty"`
-	Ip4                  []*IPv4Address `protobuf:"bytes,13,rep,name=ip4,proto3" json:"ip4,omitempty"`
-	Ip6                  []*IPv6Address `protobuf:"bytes,14,rep,name=ip6,proto3" json:"ip6,omitempty"`
-	Subnet               []*Subnet      `protobuf:"bytes,15,rep,name=subnet,proto3" json:"subnet,omitempty"`
-	Subnet6              []*Subnet6     `protobuf:"bytes,16,rep,name=subnet6,proto3" json:"subnet6,omitempty"`
-	Domain               []*Domain      `protobuf:"bytes,17,rep,name=domain,proto3" json:"domain,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+	RegistryUpdateTime   int64    `protobuf:"varint,1,opt,name=registryUpdateTime,proto3" json:"registryUpdateTime,omitempty"`
+	Pack                 []byte   `protobuf:"bytes,2,opt,name=pack,proto3" json:"pack,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *Content) Reset()         { *m = Content{} }
@@ -314,27 +299,6 @@ func (m *Content) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Content proto.InternalMessageInfo
 
-func (m *Content) GetId() int32 {
-	if m != nil {
-		return m.Id
-	}
-	return 0
-}
-
-func (m *Content) GetEntryType() int32 {
-	if m != nil {
-		return m.EntryType
-	}
-	return 0
-}
-
-func (m *Content) GetHttpsBlock() int32 {
-	if m != nil {
-		return m.HttpsBlock
-	}
-	return 0
-}
-
 func (m *Content) GetRegistryUpdateTime() int64 {
 	if m != nil {
 		return m.RegistryUpdateTime
@@ -342,432 +306,11 @@ func (m *Content) GetRegistryUpdateTime() int64 {
 	return 0
 }
 
-func (m *Content) GetDecision() *Decision {
+func (m *Content) GetPack() []byte {
 	if m != nil {
-		return m.Decision
+		return m.Pack
 	}
 	return nil
-}
-
-func (m *Content) GetIncludeTime() int64 {
-	if m != nil {
-		return m.IncludeTime
-	}
-	return 0
-}
-
-func (m *Content) GetUrgencyType() int32 {
-	if m != nil {
-		return m.UrgencyType
-	}
-	return 0
-}
-
-func (m *Content) GetBlockType() string {
-	if m != nil {
-		return m.BlockType
-	}
-	return ""
-}
-
-func (m *Content) GetHash() string {
-	if m != nil {
-		return m.Hash
-	}
-	return ""
-}
-
-func (m *Content) GetTs() int64 {
-	if m != nil {
-		return m.Ts
-	}
-	return 0
-}
-
-func (m *Content) GetU2Hash() uint32 {
-	if m != nil {
-		return m.U2Hash
-	}
-	return 0
-}
-
-func (m *Content) GetUrl() []*URL {
-	if m != nil {
-		return m.Url
-	}
-	return nil
-}
-
-func (m *Content) GetIp4() []*IPv4Address {
-	if m != nil {
-		return m.Ip4
-	}
-	return nil
-}
-
-func (m *Content) GetIp6() []*IPv6Address {
-	if m != nil {
-		return m.Ip6
-	}
-	return nil
-}
-
-func (m *Content) GetSubnet() []*Subnet {
-	if m != nil {
-		return m.Subnet
-	}
-	return nil
-}
-
-func (m *Content) GetSubnet6() []*Subnet6 {
-	if m != nil {
-		return m.Subnet6
-	}
-	return nil
-}
-
-func (m *Content) GetDomain() []*Domain {
-	if m != nil {
-		return m.Domain
-	}
-	return nil
-}
-
-type Decision struct {
-	Date                 string   `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
-	Number               string   `protobuf:"bytes,2,opt,name=number,proto3" json:"number,omitempty"`
-	Org                  string   `protobuf:"bytes,3,opt,name=org,proto3" json:"org,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Decision) Reset()         { *m = Decision{} }
-func (m *Decision) String() string { return proto.CompactTextString(m) }
-func (*Decision) ProtoMessage()    {}
-func (*Decision) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{7}
-}
-
-func (m *Decision) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Decision.Unmarshal(m, b)
-}
-func (m *Decision) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Decision.Marshal(b, m, deterministic)
-}
-func (m *Decision) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Decision.Merge(m, src)
-}
-func (m *Decision) XXX_Size() int {
-	return xxx_messageInfo_Decision.Size(m)
-}
-func (m *Decision) XXX_DiscardUnknown() {
-	xxx_messageInfo_Decision.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Decision proto.InternalMessageInfo
-
-func (m *Decision) GetDate() string {
-	if m != nil {
-		return m.Date
-	}
-	return ""
-}
-
-func (m *Decision) GetNumber() string {
-	if m != nil {
-		return m.Number
-	}
-	return ""
-}
-
-func (m *Decision) GetOrg() string {
-	if m != nil {
-		return m.Org
-	}
-	return ""
-}
-
-type IPv4Address struct {
-	Ip4                  uint32   `protobuf:"varint,1,opt,name=ip4,proto3" json:"ip4,omitempty"`
-	Ts                   int64    `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *IPv4Address) Reset()         { *m = IPv4Address{} }
-func (m *IPv4Address) String() string { return proto.CompactTextString(m) }
-func (*IPv4Address) ProtoMessage()    {}
-func (*IPv4Address) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{8}
-}
-
-func (m *IPv4Address) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_IPv4Address.Unmarshal(m, b)
-}
-func (m *IPv4Address) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_IPv4Address.Marshal(b, m, deterministic)
-}
-func (m *IPv4Address) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IPv4Address.Merge(m, src)
-}
-func (m *IPv4Address) XXX_Size() int {
-	return xxx_messageInfo_IPv4Address.Size(m)
-}
-func (m *IPv4Address) XXX_DiscardUnknown() {
-	xxx_messageInfo_IPv4Address.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_IPv4Address proto.InternalMessageInfo
-
-func (m *IPv4Address) GetIp4() uint32 {
-	if m != nil {
-		return m.Ip4
-	}
-	return 0
-}
-
-func (m *IPv4Address) GetTs() int64 {
-	if m != nil {
-		return m.Ts
-	}
-	return 0
-}
-
-type IPv6Address struct {
-	Ip6                  []byte   `protobuf:"bytes,1,opt,name=ip6,proto3" json:"ip6,omitempty"`
-	Ts                   int64    `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *IPv6Address) Reset()         { *m = IPv6Address{} }
-func (m *IPv6Address) String() string { return proto.CompactTextString(m) }
-func (*IPv6Address) ProtoMessage()    {}
-func (*IPv6Address) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{9}
-}
-
-func (m *IPv6Address) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_IPv6Address.Unmarshal(m, b)
-}
-func (m *IPv6Address) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_IPv6Address.Marshal(b, m, deterministic)
-}
-func (m *IPv6Address) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IPv6Address.Merge(m, src)
-}
-func (m *IPv6Address) XXX_Size() int {
-	return xxx_messageInfo_IPv6Address.Size(m)
-}
-func (m *IPv6Address) XXX_DiscardUnknown() {
-	xxx_messageInfo_IPv6Address.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_IPv6Address proto.InternalMessageInfo
-
-func (m *IPv6Address) GetIp6() []byte {
-	if m != nil {
-		return m.Ip6
-	}
-	return nil
-}
-
-func (m *IPv6Address) GetTs() int64 {
-	if m != nil {
-		return m.Ts
-	}
-	return 0
-}
-
-type Subnet struct {
-	Subnet               string   `protobuf:"bytes,1,opt,name=subnet,proto3" json:"subnet,omitempty"`
-	Ts                   int64    `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Subnet) Reset()         { *m = Subnet{} }
-func (m *Subnet) String() string { return proto.CompactTextString(m) }
-func (*Subnet) ProtoMessage()    {}
-func (*Subnet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{10}
-}
-
-func (m *Subnet) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Subnet.Unmarshal(m, b)
-}
-func (m *Subnet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Subnet.Marshal(b, m, deterministic)
-}
-func (m *Subnet) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Subnet.Merge(m, src)
-}
-func (m *Subnet) XXX_Size() int {
-	return xxx_messageInfo_Subnet.Size(m)
-}
-func (m *Subnet) XXX_DiscardUnknown() {
-	xxx_messageInfo_Subnet.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Subnet proto.InternalMessageInfo
-
-func (m *Subnet) GetSubnet() string {
-	if m != nil {
-		return m.Subnet
-	}
-	return ""
-}
-
-func (m *Subnet) GetTs() int64 {
-	if m != nil {
-		return m.Ts
-	}
-	return 0
-}
-
-type Subnet6 struct {
-	Subnet6              string   `protobuf:"bytes,1,opt,name=subnet6,proto3" json:"subnet6,omitempty"`
-	Ts                   int64    `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Subnet6) Reset()         { *m = Subnet6{} }
-func (m *Subnet6) String() string { return proto.CompactTextString(m) }
-func (*Subnet6) ProtoMessage()    {}
-func (*Subnet6) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{11}
-}
-
-func (m *Subnet6) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Subnet6.Unmarshal(m, b)
-}
-func (m *Subnet6) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Subnet6.Marshal(b, m, deterministic)
-}
-func (m *Subnet6) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Subnet6.Merge(m, src)
-}
-func (m *Subnet6) XXX_Size() int {
-	return xxx_messageInfo_Subnet6.Size(m)
-}
-func (m *Subnet6) XXX_DiscardUnknown() {
-	xxx_messageInfo_Subnet6.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Subnet6 proto.InternalMessageInfo
-
-func (m *Subnet6) GetSubnet6() string {
-	if m != nil {
-		return m.Subnet6
-	}
-	return ""
-}
-
-func (m *Subnet6) GetTs() int64 {
-	if m != nil {
-		return m.Ts
-	}
-	return 0
-}
-
-type URL struct {
-	Url                  string   `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	Ts                   int64    `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *URL) Reset()         { *m = URL{} }
-func (m *URL) String() string { return proto.CompactTextString(m) }
-func (*URL) ProtoMessage()    {}
-func (*URL) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{12}
-}
-
-func (m *URL) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_URL.Unmarshal(m, b)
-}
-func (m *URL) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_URL.Marshal(b, m, deterministic)
-}
-func (m *URL) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_URL.Merge(m, src)
-}
-func (m *URL) XXX_Size() int {
-	return xxx_messageInfo_URL.Size(m)
-}
-func (m *URL) XXX_DiscardUnknown() {
-	xxx_messageInfo_URL.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_URL proto.InternalMessageInfo
-
-func (m *URL) GetUrl() string {
-	if m != nil {
-		return m.Url
-	}
-	return ""
-}
-
-func (m *URL) GetTs() int64 {
-	if m != nil {
-		return m.Ts
-	}
-	return 0
-}
-
-type Domain struct {
-	Domain               string   `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
-	Ts                   int64    `protobuf:"varint,2,opt,name=ts,proto3" json:"ts,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Domain) Reset()         { *m = Domain{} }
-func (m *Domain) String() string { return proto.CompactTextString(m) }
-func (*Domain) ProtoMessage()    {}
-func (*Domain) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{13}
-}
-
-func (m *Domain) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Domain.Unmarshal(m, b)
-}
-func (m *Domain) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Domain.Marshal(b, m, deterministic)
-}
-func (m *Domain) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Domain.Merge(m, src)
-}
-func (m *Domain) XXX_Size() int {
-	return xxx_messageInfo_Domain.Size(m)
-}
-func (m *Domain) XXX_DiscardUnknown() {
-	xxx_messageInfo_Domain.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Domain proto.InternalMessageInfo
-
-func (m *Domain) GetDomain() string {
-	if m != nil {
-		return m.Domain
-	}
-	return ""
-}
-
-func (m *Domain) GetTs() int64 {
-	if m != nil {
-		return m.Ts
-	}
-	return 0
 }
 
 func init() {
@@ -778,58 +321,30 @@ func init() {
 	proto.RegisterType((*DomainRequest)(nil), "DomainRequest")
 	proto.RegisterType((*SearchResponse)(nil), "SearchResponse")
 	proto.RegisterType((*Content)(nil), "Content")
-	proto.RegisterType((*Decision)(nil), "Decision")
-	proto.RegisterType((*IPv4Address)(nil), "IPv4Address")
-	proto.RegisterType((*IPv6Address)(nil), "IPv6Address")
-	proto.RegisterType((*Subnet)(nil), "Subnet")
-	proto.RegisterType((*Subnet6)(nil), "Subnet6")
-	proto.RegisterType((*URL)(nil), "URL")
-	proto.RegisterType((*Domain)(nil), "Domain")
 }
 
 func init() { proto.RegisterFile("msg.proto", fileDescriptor_c06e4cca6c2cc899) }
 
 var fileDescriptor_c06e4cca6c2cc899 = []byte{
-	// 613 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x54, 0xdd, 0x4e, 0xdb, 0x30,
-	0x14, 0x56, 0x9b, 0xfe, 0xe5, 0xa4, 0x14, 0x66, 0x4d, 0xc8, 0x9a, 0x26, 0xd6, 0x45, 0x42, 0x74,
-	0x37, 0x66, 0x2a, 0x55, 0xee, 0x37, 0x7a, 0x41, 0x27, 0x2e, 0x90, 0x81, 0x07, 0x68, 0x1b, 0xab,
-	0x8d, 0x68, 0x93, 0x60, 0x3b, 0x93, 0xfa, 0x0a, 0x7b, 0xcc, 0x3d, 0xc9, 0xe4, 0x63, 0x87, 0x84,
-	0x52, 0xb1, 0xbb, 0x9c, 0xef, 0xfb, 0x8e, 0x73, 0xce, 0x77, 0x8e, 0x0d, 0xfe, 0x56, 0xad, 0x58,
-	0x2e, 0x33, 0x9d, 0x85, 0x5f, 0xc1, 0x9f, 0x4d, 0xb9, 0x78, 0x2e, 0x84, 0xd2, 0xe4, 0x23, 0xb4,
-	0x9f, 0x0b, 0x21, 0x77, 0xb4, 0x31, 0x6c, 0x8c, 0xda, 0xdc, 0x06, 0x61, 0x08, 0x30, 0xbb, 0x9b,
-	0x1c, 0xd4, 0x1c, 0xbd, 0xd2, 0x44, 0x07, 0x35, 0xfd, 0x9a, 0xe6, 0x91, 0xdf, 0x1e, 0xd4, 0xf8,
-	0xa5, 0xe6, 0x1c, 0x8e, 0xa6, 0xd9, 0x76, 0x9e, 0xa4, 0xef, 0xcb, 0x7e, 0xc1, 0xe0, 0x5e, 0xcc,
-	0xe5, 0x72, 0xcd, 0x85, 0xca, 0xb3, 0x54, 0x09, 0xa3, 0x13, 0x52, 0x66, 0xb2, 0xd4, 0x61, 0x40,
-	0x42, 0xe8, 0x4a, 0xa1, 0x8a, 0x8d, 0x56, 0xb4, 0x39, 0xf4, 0x46, 0xc1, 0xb8, 0xc7, 0xae, 0xb3,
-	0x54, 0x8b, 0x54, 0xf3, 0x92, 0x08, 0xff, 0xb4, 0xa0, 0xeb, 0x40, 0x32, 0x80, 0x66, 0x12, 0xbb,
-	0xee, 0x9b, 0x49, 0x4c, 0x3e, 0x83, 0x2f, 0x52, 0x2d, 0x77, 0x0f, 0xbb, 0x5c, 0xd0, 0x26, 0xc2,
-	0x15, 0x40, 0xce, 0x00, 0xd6, 0x5a, 0xe7, 0xea, 0xe7, 0x26, 0x5b, 0x3e, 0x51, 0x0f, 0xe9, 0x1a,
-	0x42, 0x18, 0x10, 0x29, 0x56, 0x89, 0xd2, 0x72, 0xf7, 0x98, 0xc7, 0x73, 0x2d, 0x1e, 0x92, 0xad,
-	0xa0, 0xad, 0x61, 0x63, 0xe4, 0xf1, 0x03, 0x0c, 0x39, 0x87, 0x5e, 0x2c, 0x96, 0x89, 0x4a, 0xb2,
-	0x94, 0xb6, 0x87, 0x8d, 0x51, 0x30, 0xf6, 0xd9, 0xd4, 0x01, 0xfc, 0x85, 0x22, 0x43, 0x08, 0x92,
-	0x74, 0xb9, 0x29, 0x62, 0x7b, 0x5e, 0x07, 0xcf, 0xab, 0x43, 0x46, 0x51, 0xc8, 0x95, 0x48, 0x97,
-	0xb6, 0xf0, 0x2e, 0x56, 0x56, 0x87, 0x4c, 0x63, 0x0b, 0x53, 0x23, 0xf2, 0x3d, 0xb4, 0xac, 0x02,
-	0x08, 0x81, 0xd6, 0x7a, 0xae, 0xd6, 0xd4, 0x47, 0x02, 0xbf, 0x8d, 0x35, 0x5a, 0x51, 0xc0, 0x9f,
-	0x35, 0xb5, 0x22, 0xa7, 0xd0, 0x29, 0xc6, 0x37, 0x46, 0x15, 0xe0, 0x22, 0xb8, 0x88, 0x9c, 0x82,
-	0x57, 0xc8, 0x0d, 0xed, 0xa3, 0xdd, 0x2d, 0x66, 0x26, 0x6e, 0x00, 0x72, 0x06, 0x5e, 0x92, 0x4f,
-	0xe8, 0x11, 0xe2, 0x7d, 0x36, 0xbb, 0xfb, 0x3d, 0xf9, 0x11, 0xc7, 0x52, 0x28, 0xc5, 0x0d, 0x61,
-	0xf9, 0x88, 0x0e, 0x2a, 0x3e, 0xaa, 0xf1, 0x11, 0xf9, 0x02, 0x1d, 0x55, 0x2c, 0x52, 0xa1, 0xe9,
-	0x31, 0x4a, 0xba, 0xec, 0x1e, 0x43, 0xee, 0x60, 0x33, 0x6b, 0xfb, 0x15, 0xd1, 0x13, 0x37, 0x6b,
-	0xab, 0x88, 0x78, 0x49, 0x98, 0x43, 0x62, 0x5c, 0x2f, 0xfa, 0xc1, 0x1d, 0xe2, 0xb6, 0xcd, 0xc1,
-	0xe1, 0x0d, 0xf4, 0x4a, 0xc7, 0x8d, 0x0b, 0x66, 0x34, 0x6e, 0xa3, 0xf0, 0xdb, 0x74, 0x9d, 0x16,
-	0xdb, 0x85, 0x90, 0xb8, 0x0d, 0x3e, 0x77, 0x11, 0x39, 0x01, 0x2f, 0x93, 0x2b, 0xdc, 0x01, 0x9f,
-	0x9b, 0xcf, 0xf0, 0x12, 0x82, 0x5a, 0x8f, 0x46, 0x60, 0xda, 0xb7, 0x97, 0x06, 0x1b, 0xb6, 0x86,
-	0x36, 0x4b, 0x43, 0x5d, 0x42, 0xf4, 0x2a, 0x21, 0x72, 0x37, 0x08, 0x1d, 0xd8, 0x4f, 0xf8, 0x0e,
-	0x1d, 0xdb, 0xa0, 0xa9, 0xca, 0x79, 0x63, 0x6b, 0x2d, 0x2d, 0xd9, 0xcf, 0xb8, 0x82, 0xae, 0xb3,
-	0x84, 0xd0, 0xca, 0x2d, 0x9b, 0xf3, 0xe2, 0xd1, 0x7e, 0xd2, 0x05, 0x78, 0x8f, 0xfc, 0xd6, 0xd4,
-	0x63, 0xe6, 0x6a, 0xc5, 0x38, 0xd1, 0x03, 0xf5, 0x58, 0x37, 0x4d, 0x3d, 0xce, 0x66, 0x57, 0x8f,
-	0x8d, 0xf6, 0x33, 0xc6, 0x7f, 0x1b, 0xd0, 0xbe, 0x5e, 0x8b, 0xe5, 0x13, 0xb9, 0x80, 0x9e, 0xbd,
-	0xd0, 0xb3, 0x29, 0x01, 0xf6, 0xf2, 0x22, 0x7d, 0x3a, 0x66, 0x7b, 0xf7, 0xfc, 0x1b, 0xf8, 0x4e,
-	0x78, 0x37, 0x21, 0x01, 0xab, 0x1e, 0xa6, 0x77, 0xa5, 0x11, 0x4a, 0xa3, 0xff, 0x4b, 0x4d, 0xa7,
-	0x01, 0xab, 0x9e, 0xa9, 0xb7, 0xd2, 0x4b, 0xe8, 0x5b, 0xc4, 0xf5, 0x3a, 0x60, 0xaf, 0x1e, 0xac,
-	0x37, 0x09, 0x8b, 0x0e, 0x3e, 0xb4, 0x57, 0xff, 0x02, 0x00, 0x00, 0xff, 0xff, 0x5a, 0xec, 0x75,
-	0x87, 0x75, 0x05, 0x00, 0x00,
+	// 284 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0xd2, 0xc1, 0x6e, 0xb2, 0x40,
+	0x10, 0x07, 0xf0, 0xa0, 0x1f, 0x9f, 0x32, 0xa8, 0x4d, 0x26, 0x3d, 0x90, 0x9e, 0x2c, 0x49, 0x53,
+	0x7b, 0xd9, 0x26, 0xd6, 0xf0, 0x02, 0x72, 0xa1, 0xb1, 0x89, 0xd9, 0x96, 0x07, 0xa0, 0x74, 0xa2,
+	0xc4, 0xc2, 0xe2, 0xee, 0x72, 0xf0, 0x75, 0xfb, 0x24, 0x4d, 0x17, 0xa9, 0xb5, 0x12, 0x7b, 0x63,
+	0x66, 0x7e, 0x90, 0xe1, 0xbf, 0x0b, 0x4e, 0xae, 0x56, 0xac, 0x94, 0x42, 0x0b, 0xff, 0x1a, 0x9c,
+	0x28, 0xe4, 0xb4, 0xad, 0x48, 0x69, 0xbc, 0x04, 0x7b, 0x5b, 0x91, 0xdc, 0x79, 0xd6, 0xd8, 0x9a,
+	0xd8, 0xbc, 0x2e, 0x7c, 0x1f, 0x20, 0x5a, 0xce, 0x5a, 0xcd, 0xf0, 0xc8, 0x04, 0xad, 0x66, 0xf0,
+	0xc3, 0xc4, 0x7c, 0xd1, 0x6a, 0x9c, 0xc6, 0xdc, 0xc0, 0x30, 0x14, 0x79, 0x92, 0x15, 0xe7, 0xd9,
+	0x23, 0x8c, 0x9e, 0x29, 0x91, 0xe9, 0x9a, 0x93, 0x2a, 0x45, 0xa1, 0xe8, 0xcb, 0x91, 0x94, 0x42,
+	0x36, 0xce, 0x14, 0xe8, 0x43, 0x4f, 0x92, 0xaa, 0xde, 0xb5, 0xf2, 0x3a, 0xe3, 0xee, 0xc4, 0x9d,
+	0xf6, 0xd9, 0x5c, 0x14, 0x9a, 0x0a, 0xcd, 0x9b, 0x81, 0xff, 0x04, 0xbd, 0x7d, 0x0f, 0x19, 0xa0,
+	0xa4, 0x55, 0xa6, 0xb4, 0xdc, 0xc5, 0xe5, 0x5b, 0xa2, 0xe9, 0x25, 0xcb, 0xc9, 0x7c, 0xb1, 0xcb,
+	0x5b, 0x26, 0x88, 0xf0, 0xaf, 0x4c, 0xd2, 0x8d, 0xd7, 0x31, 0xbf, 0x69, 0x9e, 0xa7, 0x1f, 0x16,
+	0xd8, 0xf3, 0x35, 0xa5, 0x1b, 0xbc, 0x85, 0x7e, 0xbd, 0x64, 0x14, 0x22, 0xb0, 0xef, 0x94, 0xaf,
+	0x2e, 0xd8, 0xaf, 0xdd, 0xef, 0xc0, 0xd9, 0xc3, 0xe5, 0x0c, 0x5d, 0x76, 0x08, 0xfb, 0x2c, 0x0d,
+	0x0c, 0x0d, 0xfe, 0xa6, 0x31, 0x5f, 0xa0, 0xcb, 0x0e, 0xd1, 0x9f, 0xd2, 0x7b, 0x18, 0xd4, 0x9d,
+	0x3a, 0x7b, 0x1c, 0xb1, 0xa3, 0x43, 0x38, 0x79, 0xe1, 0xf5, 0xbf, 0xb9, 0x3c, 0x0f, 0x9f, 0x01,
+	0x00, 0x00, 0xff, 0xff, 0x71, 0x9f, 0xac, 0x45, 0x49, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.

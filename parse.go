@@ -10,8 +10,10 @@ import (
 )
 
 type (
-	Nothing struct{}
-	IntSet  map[int32]Nothing
+	Nothing        struct{}
+	IntSet         map[int32]Nothing
+	TMinContentMap map[int32]*TMinContent
+	TPbContentMap  map[int32]*pb.Content
 )
 
 var NothingV = Nothing{}
@@ -23,34 +25,32 @@ type Stats struct {
 	CntRemove int
 }
 
-type TContentMap struct {
-	sync.RWMutex
-	C map[int32]*pb.Content
-}
-
 type TDump struct {
-	utime   int64
-	ip      Ip4Set
-	ip6     StringIntSet
-	subnet  StringIntSet
-	subnet6 StringIntSet
-	net     cidranger.Ranger
-	url     StringIntSet
-	domain  StringIntSet
-	Content TContentMap
+	sync.RWMutex
+	utime    int64
+	ip       Ip4Set
+	ip6      StringIntSet
+	subnet   StringIntSet
+	subnet6  StringIntSet
+	net      cidranger.Ranger
+	url      StringIntSet
+	domain   StringIntSet
+	Content  TMinContentMap
+	Protobuf TPbContentMap
 }
 
 func NewTDump() *TDump {
 	return &TDump{
-		utime:   0,
-		ip:      make(Ip4Set),
-		ip6:     make(StringIntSet),
-		subnet:  make(StringIntSet),
-		subnet6: make(StringIntSet),
-		url:     make(StringIntSet),
-		domain:  make(StringIntSet),
-		Content: TContentMap{C: make(map[int32]*pb.Content)},
-		net:     cidranger.NewPCTrieRanger(),
+		utime:    0,
+		ip:       make(Ip4Set),
+		ip6:      make(StringIntSet),
+		subnet:   make(StringIntSet),
+		subnet6:  make(StringIntSet),
+		url:      make(StringIntSet),
+		domain:   make(StringIntSet),
+		Content:  make(TMinContentMap),
+		Protobuf: make(TPbContentMap),
+		net:      cidranger.NewPCTrieRanger(),
 	}
 }
 
@@ -144,9 +144,9 @@ type TReg struct {
 var crc32Table = crc32.MakeTable(crc32.Castagnoli)
 
 func Parse2(UpdateTime int64) {
-	DumpSnap.Content.Lock()
-	for _, v := range DumpSnap.Content.C {
+	DumpSnap.Lock()
+	for _, v := range DumpSnap.Protobuf {
 		v.RegistryUpdateTime = UpdateTime
 	}
-	DumpSnap.Content.Unlock()
+	DumpSnap.Unlock()
 }

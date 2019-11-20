@@ -34,58 +34,8 @@ service Check {
 }
 
 message Content {
-        int32 id = 1;
-        int32 entryType = 2;
-        int32 httpsBlock = 3;
-        int64 registryUpdateTime = 4;
-	Decision decision = 5;
-        int64 includeTime = 6;
-        int32 urgencyType = 7;
-        string blockType = 8;
-        string hash = 9;
-        int64 ts = 10;
-        uint32 u2Hash = 11;
-        repeated URL url = 12;
-        repeated IPv4Address ip4 = 13;
-	repeated IPv6Address ip6= 14;
-	repeated Subnet subnet = 15;
-	repeated Subnet6 subnet6 = 16;
-	repeated Domain domain = 17;
+        int64 registryUpdateTime = 1;
+        bytes pack = 2;
 }
 
-message Decision {
-	string date = 1;
-	string number = 2;
-	string org = 3;
-}
-
-message IPv4Address {
-	uint32 ip4 = 1;
-	int64 ts = 2;
-}
-
-message IPv6Address {
-	bytes ip6 = 1;
-	int64 ts = 2;
-}
-
-message Subnet {
-	string subnet = 1;
-	int64 ts = 2;
-}
-
-message Subnet6 {
-	string subnet6 = 1;
-	int64 ts = 2;
-}
-
-message URL {
-	string url = 1;
-	int64 ts = 2;
-}
-
-message Domain {
-	string domain = 1;
-	int64 ts = 2;
-}
 
