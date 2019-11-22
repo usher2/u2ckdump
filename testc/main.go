@@ -308,6 +308,16 @@ func searchDomain(c pb.CheckClient) {
 	}
 }
 
+func makePing(c pb.CheckClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	r, err := c.Ping(ctx, &pb.PingRequest{Ping: "How are you?"})
+	if err != nil {
+		fmt.Printf("%v.Ping(_) = _, %v\n", c, err)
+	}
+	fmt.Printf("Pong: %s\n", r.Pong)
+}
+
 func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -319,9 +329,11 @@ func main() {
 	defer conn.Close()
 	fmt.Printf("Connect...\n")
 	c := pb.NewCheckClient(conn)
+	makePing(c)
 	searchID(c)
 	searchIP(c)
 	searchIP6(c)
 	searchURL(c)
 	searchDomain(c)
+	makePing(c)
 }

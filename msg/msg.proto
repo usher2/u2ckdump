@@ -25,12 +25,21 @@ message SearchResponse {
         repeated Content results = 2;
 }
 
+message PingRequest {
+        string ping = 1;
+}
+
+message PingResponse {
+        string pong = 1;
+}
+
 service Check {
   rpc SearchID (IDRequest) returns (SearchResponse);
   rpc SearchIP4 (IP4Request) returns (SearchResponse);
   rpc SearchIP6 (IP6Request) returns (SearchResponse);
   rpc SearchURL (URLRequest) returns (SearchResponse);
   rpc SearchDomain (DomainRequest) returns (SearchResponse);
+  rpc Ping (PingRequest) returns (PingResponse);
 }
 
 message Content {

@@ -129,3 +129,9 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 		return &pb.SearchResponse{Error: "Data not ready"}, nil
 	}
 }
+func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingResponse, error) {
+	ping := in.GetPing()
+	Debug.Printf("Received Ping: %v\n", ping)
+	r := &pb.PingResponse{Pong: "I heed my lord"}
+	return r, nil
+}
