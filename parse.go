@@ -4,7 +4,6 @@ import (
 	"net"
 	"sync"
 
-	pb "github.com/usher-2/u2ckdump/msg"
 	"github.com/yl2chen/cidranger"
 )
 
@@ -12,7 +11,6 @@ type (
 	Nothing        struct{}
 	IntSet         map[int32]Nothing
 	TMinContentMap map[int32]*TMinContent
-	TPbContentMap  map[int32]*pb.Content
 )
 
 var NothingV = Nothing{}
@@ -30,30 +28,28 @@ var Stats Stat
 
 type TDump struct {
 	sync.RWMutex
-	utime    int64
-	ip       Ip4Set
-	ip6      StringIntSet
-	subnet   StringIntSet
-	subnet6  StringIntSet
-	net      cidranger.Ranger
-	url      StringIntSet
-	domain   StringIntSet
-	Content  TMinContentMap
-	Protobuf TPbContentMap
+	utime   int64
+	ip      Ip4Set
+	ip6     StringIntSet
+	subnet  StringIntSet
+	subnet6 StringIntSet
+	net     cidranger.Ranger
+	url     StringIntSet
+	domain  StringIntSet
+	Content TMinContentMap
 }
 
 func NewTDump() *TDump {
 	return &TDump{
-		utime:    0,
-		ip:       make(Ip4Set),
-		ip6:      make(StringIntSet),
-		subnet:   make(StringIntSet),
-		subnet6:  make(StringIntSet),
-		url:      make(StringIntSet),
-		domain:   make(StringIntSet),
-		Content:  make(TMinContentMap),
-		Protobuf: make(TPbContentMap),
-		net:      cidranger.NewPCTrieRanger(),
+		utime:   0,
+		ip:      make(Ip4Set),
+		ip6:     make(StringIntSet),
+		subnet:  make(StringIntSet),
+		subnet6: make(StringIntSet),
+		url:     make(StringIntSet),
+		domain:  make(StringIntSet),
+		Content: make(TMinContentMap),
+		net:     cidranger.NewPCTrieRanger(),
 	}
 }
 
@@ -146,7 +142,7 @@ type TReg struct {
 
 func Parse2(UpdateTime int64) {
 	DumpSnap.Lock()
-	for _, v := range DumpSnap.Protobuf {
+	for _, v := range DumpSnap.Content {
 		v.RegistryUpdateTime = UpdateTime
 	}
 	DumpSnap.Unlock()

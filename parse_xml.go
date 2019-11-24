@@ -189,7 +189,7 @@ func Parse(dumpFile io.Reader) error {
 					}
 					SPass[v.Id] = NothingV
 				} else {
-					DumpSnap.Protobuf[id].RegistryUpdateTime = r.UpdateTime
+					DumpSnap.Content[id].RegistryUpdateTime = r.UpdateTime
 					SPass[v0.Id] = NothingV
 					//v = nil
 				}
@@ -226,7 +226,6 @@ func Parse(dumpFile io.Reader) error {
 				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.Id)
 			}
 			delete(DumpSnap.Content, id)
-			delete(DumpSnap.Protobuf, id)
 			Stats.CntRemove++
 		}
 	}
@@ -280,11 +279,29 @@ func (v *TContent) Marshal() []byte {
 	return b
 }
 
+func (v *TContent) constructBlockType() int32 {
+	if v.BlockType == "ip" {
+		return TBLOCK_IP
+	} else if v.BlockType == "domain" {
+		return TBLOCK_DOMAIN
+	} else if v.BlockType == "domain-mask" {
+		return TBLOCK_MASK
+	} else {
+		if v.BlockType != "default" && v.BlockType != "" {
+			Error.Printf("Unknown block type: %s\n", v.BlockType)
+		}
+		if v.HttpsBlock == 0 {
+			return TBLOCK_URL
+		} else {
+			return TBLOCK_HTTPS
+		}
+	}
+}
+
 func (v *TContent) Update(u2Hash uint64, o *TMinContent, updateTime int64) {
-	v1 := newMinContent(v.Id, u2Hash)
-	v2 := newPbContent(v, updateTime)
+	pack := v.Marshal()
+	v1 := newMinContent(v.Id, u2Hash, updateTime, pack)
 	DumpSnap.Content[v.Id] = v1
-	DumpSnap.Protobuf[v.Id] = v2
 	v1.handleUpdateIp(v, o)
 	v1.handleUpdateIp6(v, o)
 	v1.handleUpdateSubnet(v, o)
@@ -294,10 +311,9 @@ func (v *TContent) Update(u2Hash uint64, o *TMinContent, updateTime int64) {
 }
 
 func (v *TContent) Add(u2Hash uint64, updateTime int64) {
-	v1 := newMinContent(v.Id, u2Hash)
-	v2 := newPbContent(v, updateTime)
+	pack := v.Marshal()
+	v1 := newMinContent(v.Id, u2Hash, updateTime, pack)
 	DumpSnap.Content[v.Id] = v1
-	DumpSnap.Protobuf[v.Id] = v2
 	v1.handleAddIp(v)
 	v1.handleAddIp6(v)
 	v1.handleAddSubnet6(v)
@@ -497,13 +513,16 @@ func handleRegister(_e xml.StartElement, r *TReg) {
 	}
 }
 
-func newMinContent(id int32, hash uint64) *TMinContent {
-	return &TMinContent{Id: id, U2Hash: hash}
+func newMinContent(id int32, hash uint64, utime int64, pack []byte) *TMinContent {
+	v := TMinContent{Id: id, U2Hash: hash, RegistryUpdateTime: utime, Pack: pack}
+	return &v
 }
 
-func newPbContent(v *TContent, utime int64) *pb.Content {
+func (v *TMinContent) newPbContent(aggr string) *pb.Content {
 	v0 := pb.Content{}
-	v0.Pack = v.Marshal()
-	v0.RegistryUpdateTime = utime
+	v0.BlockType = v.blockType
+	v0.RegistryUpdateTime = v.RegistryUpdateTime
+	v0.Aggr = aggr
+	v0.Pack = v.Pack
 	return &v0
 }

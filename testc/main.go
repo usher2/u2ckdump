@@ -178,6 +178,9 @@ func printContent(packet *pb.Content) {
 	fmt.Printf("#%d %s №%s %s\n", content.Id, content.Decision.Org, content.Decision.Number, content.Decision.Date)
 	fmt.Printf("    \\_IPv4: %d, IPv6: %d, URL: %d, Domains: %d, Subnet: %d, Subnet6: %d\n",
 		len(content.Ip4), len(content.Ip6), len(content.Url), len(content.Domain), len(content.Subnet4), len(content.Subnet6))
+	if packet.Aggr != "" {
+		fmt.Printf("    by %s\n", packet.Aggr)
+	}
 
 }
 
@@ -190,6 +193,7 @@ func searchID(c pb.CheckClient) {
 		r, err := c.SearchID(ctx, &pb.IDRequest{Query: id})
 		if err != nil {
 			fmt.Printf("%v.SearchID(_) = _, %v\n", c, err)
+			return
 		}
 		if r.Error != "" {
 			fmt.Printf("ERROR: %s\n", r.Error)
@@ -213,6 +217,7 @@ func searchIP(c pb.CheckClient) {
 		r, err := c.SearchIP4(ctx, &pb.IP4Request{Query: parseIp4(ip)})
 		if err != nil {
 			fmt.Printf("%v.SearchIP4(_) = _, %v\n", c, err)
+			return
 		}
 		if r.Error != "" {
 			fmt.Printf("ERROR: %s\n", r.Error)
@@ -240,6 +245,7 @@ func searchIP6(c pb.CheckClient) {
 		r, err := c.SearchIP6(ctx, &pb.IP6Request{Query: ip6})
 		if err != nil {
 			fmt.Printf("%v.SearchIP6(_) = _, %v\n", c, err)
+			return
 		}
 		if r.Error != "" {
 			fmt.Printf("ERROR: %s\n", r.Error)
@@ -267,6 +273,7 @@ func searchURL(c pb.CheckClient) {
 		r, err := c.SearchURL(ctx, &pb.URLRequest{Query: _url})
 		if err != nil {
 			fmt.Printf("%v.SearchURL(_) = _, %v\n", c, err)
+			return
 		}
 		if r.Error != "" {
 			fmt.Printf("ERROR: %s\n", r.Error)
@@ -294,6 +301,7 @@ func searchDomain(c pb.CheckClient) {
 		r, err := c.SearchDomain(ctx, &pb.DomainRequest{Query: NormalizeDomain(domain)})
 		if err != nil {
 			fmt.Printf("%v.SearchURL(_) = _, %v\n", c, err)
+			return
 		}
 		if r.Error != "" {
 			fmt.Printf("ERROR: %s\n", r.Error)

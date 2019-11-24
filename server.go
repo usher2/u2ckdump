@@ -18,9 +18,9 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 		r := &pb.SearchResponse{}
-		if v, ok := DumpSnap.Protobuf[query]; ok {
+		if v, ok := DumpSnap.Content[query]; ok {
 			r.Results = make([]*pb.Content, 1)
-			r.Results[0] = v
+			r.Results[0] = v.newPbContent("")
 		}
 		DumpSnap.RUnlock()
 		return r, nil
@@ -30,37 +30,60 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 }
 
 func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResponse, error) {
-	var v1 []ArrayIntSet
+	var v1, v2 ArrayIntSet
+	var vnw []string
 	query := in.GetQuery()
 	ipb := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, byte((query & 0xFF000000) >> 24), byte((query & 0x00FF0000) >> 16), byte((query & 0x0000FF00) >> 8), byte(query & 0x000000FF)}
 	Debug.Printf("Received IPv4: %d.%d.%d.%d\n", ipb[12], ipb[13], ipb[14], ipb[15])
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 		r := &pb.SearchResponse{}
-		v := DumpSnap.ip[query]
-		vc := 0
 		cnw, err := DumpSnap.net.ContainingNetworks(ipb)
 		if err != nil {
 			Debug.Printf("Can't get containing networks: %d.%d.%d.%d: %s\n", ipb[12], ipb[13], ipb[14], ipb[15], err.Error())
 		} else {
 			for _, nw := range cnw {
 				_nw := nw.Network()
-				if _v, ok := DumpSnap.subnet[_nw.String()]; ok {
-					v1 = append(v1, _v)
-					vc += len(_v)
+				nwstr := _nw.String()
+				if _a, ok := DumpSnap.subnet[nwstr]; ok {
+					for _, id := range _a {
+						_c := len(v1)
+						v1 = v1.Add(id)
+						if len(v1) != _c {
+							vnw = append(vnw, nwstr)
+						} else {
+							for i, _id := range v1 {
+								if _id == id {
+									vnw[i] += "," + nwstr
+								}
+							}
+						}
+					}
 				}
 			}
 		}
-		r.Results = make([]*pb.Content, len(v)+vc)
-		i := 0
-		for _, id := range v {
-			r.Results[i] = DumpSnap.Protobuf[id]
-			i++
+		a := DumpSnap.ip[query]
+	Loop1:
+		for _, v := range a {
+			for _, id := range v1 {
+				if v == id {
+					continue Loop1
+				}
+				v2 = v2.Add(v)
+			}
 		}
-		for j, _ := range v1 {
-			for _, id := range v1[j] {
-				r.Results[i] = DumpSnap.Protobuf[id]
-				i++
+		r.Results = make([]*pb.Content, len(v1)+len(v2))
+		j := 0
+		for i, id := range v1 {
+			if v, ok := DumpSnap.Content[id]; ok {
+				r.Results[j] = v.newPbContent(vnw[i])
+				j++
+			}
+		}
+		for _, id := range v2 {
+			if v, ok := DumpSnap.Content[id]; ok {
+				r.Results[j] = v.newPbContent("")
+				j++
 			}
 		}
 		DumpSnap.RUnlock()
@@ -76,12 +99,14 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 		r := &pb.SearchResponse{}
-		v := DumpSnap.ip6[string(query)]
-		r.Results = make([]*pb.Content, len(v))
+		a := DumpSnap.ip6[string(query)]
+		r.Results = make([]*pb.Content, len(a))
 		i := 0
-		for _, id := range v {
-			r.Results[i] = DumpSnap.Protobuf[id]
-			i++
+		for _, id := range a {
+			if v, ok := DumpSnap.Content[id]; ok {
+				r.Results[i] = v.newPbContent("")
+				i++
+			}
 		}
 		DumpSnap.RUnlock()
 		return r, nil
@@ -96,12 +121,14 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 		r := &pb.SearchResponse{}
-		v := DumpSnap.url[query]
-		r.Results = make([]*pb.Content, len(v))
+		a := DumpSnap.url[query]
+		r.Results = make([]*pb.Content, len(a))
 		i := 0
-		for _, id := range v {
-			r.Results[i] = DumpSnap.Protobuf[id]
-			i++
+		for _, id := range a {
+			if v, ok := DumpSnap.Content[id]; ok {
+				r.Results[i] = v.newPbContent("")
+				i++
+			}
 		}
 		DumpSnap.RUnlock()
 		return r, nil
@@ -116,12 +143,14 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 		r := &pb.SearchResponse{}
-		v := DumpSnap.domain[query]
-		r.Results = make([]*pb.Content, len(v))
+		a := DumpSnap.domain[query]
+		r.Results = make([]*pb.Content, len(a))
 		i := 0
-		for _, id := range v {
-			r.Results[i] = DumpSnap.Protobuf[id]
-			i++
+		for _, id := range a {
+			if v, ok := DumpSnap.Content[id]; ok {
+				r.Results[i] = v.newPbContent("")
+				i++
+			}
 		}
 		DumpSnap.RUnlock()
 		return r, nil

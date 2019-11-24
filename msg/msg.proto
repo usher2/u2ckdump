@@ -44,7 +44,9 @@ service Check {
 
 message Content {
         int64 registryUpdateTime = 1;
-        bytes pack = 2;
+        int32 blockType = 2;
+        string aggr = 3;
+        bytes pack = 4;
 }
 
 

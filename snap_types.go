@@ -1,14 +1,25 @@
 package main
 
+const (
+	TBLOCK_URL = iota
+	TBLOCK_HTTPS
+	TBLOCK_DOMAIN
+	TBLOCK_MASK
+	TBLOCK_IP
+)
+
 type TMinContent struct {
-	Id      int32      `json:"id"`
-	Url     []TUrl     `json:"url,omitempty"`
-	Ip4     []TIp4     `json:"ip4,omitempty"`
-	Ip6     []TIp6     `json:"ip6,omitempty"`
-	Subnet4 []TSubnet4 `json:"sb4,omitempty"`
-	Subnet6 []TSubnet6 `json:"sb6,omitempty"`
-	Domain  []TDomain  `json:"dm,omitempty"`
-	U2Hash  uint64     `json:"u2h"`
+	Id                 int32
+	blockType          int32 // for protobuf
+	RegistryUpdateTime int64
+	Url                []TUrl
+	Ip4                []TIp4
+	Ip6                []TIp6
+	Subnet4            []TSubnet4
+	Subnet6            []TSubnet6
+	Domain             []TDomain
+	Pack               []byte
+	U2Hash             uint64
 }
 
 type TContent struct {

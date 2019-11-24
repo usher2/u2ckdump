@@ -142,8 +142,7 @@ func Test_Parse(t *testing.T) {
 		len(DumpSnap.domain) != 2 {
 		t.Errorf("Count error")
 	}
-	if len(DumpSnap.Content) != len(DumpSnap.Protobuf) ||
-		len(DumpSnap.Content) != 5 ||
+	if len(DumpSnap.Content) != 5 ||
 		len(DumpSnap.Content) != Stats.Cnt {
 		t.Errorf("DumpSnap integrity error")
 	}
