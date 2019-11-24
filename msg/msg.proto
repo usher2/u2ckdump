@@ -43,10 +43,15 @@ service Check {
 }
 
 message Content {
-        int64 registryUpdateTime = 1;
-        int32 blockType = 2;
-        string aggr = 3;
-        bytes pack = 4;
+        int32 id = 1;
+        int64 registryUpdateTime = 2;
+        int32 blockType = 3;
+        uint32 ip4 = 4;
+        bytes ip6 = 5;
+        string domain = 6;
+        string url = 7;
+        string aggr = 8;
+        bytes pack = 9;
 }
 
 

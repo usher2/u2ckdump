@@ -10,7 +10,7 @@ const (
 
 type TMinContent struct {
 	Id                 int32
-	blockType          int32 // for protobuf
+	BlockType          int32 // for protobuf
 	RegistryUpdateTime int64
 	Url                []TUrl
 	Ip4                []TIp4

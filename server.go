@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	pb "github.com/usher-2/u2ckdump/msg"
 )
@@ -20,7 +21,7 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 		r := &pb.SearchResponse{}
 		if v, ok := DumpSnap.Content[query]; ok {
 			r.Results = make([]*pb.Content, 1)
-			r.Results[0] = v.newPbContent("")
+			r.Results[0] = v.newPbContent(0, nil, "", "", "")
 		}
 		DumpSnap.RUnlock()
 		return r, nil
@@ -45,44 +46,30 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 			for _, nw := range cnw {
 				_nw := nw.Network()
 				nwstr := _nw.String()
-				if _a, ok := DumpSnap.subnet[nwstr]; ok {
-					for _, id := range _a {
-						_c := len(v1)
-						v1 = v1.Add(id)
-						if len(v1) != _c {
-							vnw = append(vnw, nwstr)
-						} else {
-							for i, _id := range v1 {
-								if _id == id {
-									vnw[i] += "," + nwstr
-								}
-							}
-						}
+				if a, ok := DumpSnap.subnet[nwstr]; ok {
+					for _, id := range a {
+						v1 = append(v1, id)
+						vnw = append(vnw, nwstr)
 					}
 				}
 			}
 		}
-		a := DumpSnap.ip[query]
-	Loop1:
-		for _, v := range a {
-			for _, id := range v1 {
-				if v == id {
-					continue Loop1
-				}
-				v2 = v2.Add(v)
+		if a, ok := DumpSnap.ip[query]; ok {
+			for _, id := range a {
+				v2 = append(v2, id)
 			}
 		}
 		r.Results = make([]*pb.Content, len(v1)+len(v2))
 		j := 0
 		for i, id := range v1 {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[j] = v.newPbContent(vnw[i])
+				r.Results[j] = v.newPbContent(0, nil, "", "", vnw[i])
 				j++
 			}
 		}
 		for _, id := range v2 {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[j] = v.newPbContent("")
+				r.Results[j] = v.newPbContent(query, nil, "", "", "")
 				j++
 			}
 		}
@@ -104,7 +91,7 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 		i := 0
 		for _, id := range a {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[i] = v.newPbContent("")
+				r.Results[i] = v.newPbContent(0, query, "", "", "")
 				i++
 			}
 		}
@@ -126,7 +113,7 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 		i := 0
 		for _, id := range a {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[i] = v.newPbContent("")
+				r.Results[i] = v.newPbContent(0, nil, "", query, "")
 				i++
 			}
 		}
@@ -148,7 +135,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 		i := 0
 		for _, id := range a {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[i] = v.newPbContent("")
+				r.Results[i] = v.newPbContent(0, nil, query, "", "")
 				i++
 			}
 		}
@@ -161,6 +148,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingResponse, error) {
 	ping := in.GetPing()
 	Debug.Printf("Received Ping: %v\n", ping)
-	r := &pb.PingResponse{Pong: "I heed my lord"}
+	dumptime := time.Unix(DumpSnap.utime, 0).In(time.FixedZone("MSK", 3)).Format(time.RFC3339)
+	r := &pb.PingResponse{Pong: "I heed my lord\n" + "Last dump: " + dumptime + "\n"}
 	return r, nil
 }

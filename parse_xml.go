@@ -308,6 +308,7 @@ func (v *TContent) Update(u2Hash uint64, o *TMinContent, updateTime int64) {
 	v1.handleUpdateSubnet6(v, o)
 	v1.handleUpdateUrl(v, o)
 	v1.handleUpdateDomain(v, o)
+	v1.BlockType = v.constructBlockType()
 }
 
 func (v *TContent) Add(u2Hash uint64, updateTime int64) {
@@ -320,6 +321,7 @@ func (v *TContent) Add(u2Hash uint64, updateTime int64) {
 	v1.handleAddSubnet(v)
 	v1.handleAddUrl(v)
 	v1.handleAddDomain(v)
+	v1.BlockType = v.constructBlockType()
 }
 
 func (v *TMinContent) handleAddIp(v0 *TContent) {
@@ -518,10 +520,15 @@ func newMinContent(id int32, hash uint64, utime int64, pack []byte) *TMinContent
 	return &v
 }
 
-func (v *TMinContent) newPbContent(aggr string) *pb.Content {
+func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, domain string, url string, aggr string) *pb.Content {
 	v0 := pb.Content{}
-	v0.BlockType = v.blockType
+	v0.BlockType = v.BlockType
 	v0.RegistryUpdateTime = v.RegistryUpdateTime
+	v0.Id = v.Id
+	v0.Ip4 = ip4
+	v0.Ip6 = ip6
+	v0.Domain = domain
+	v0.Url = url
 	v0.Aggr = aggr
 	v0.Pack = v.Pack
 	return &v0
