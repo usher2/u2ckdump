@@ -45,16 +45,16 @@ func main() {
 		}
 	}
 	if _, err := os.Stat(*confDumpCacheDir + "/dump.zip"); !os.IsNotExist(err) {
-		Debug.Println("Zipped dump detecteded")
+		Info.Println("Zipped dump detecteded")
 		err = DumpUnzip(*confDumpCacheDir+"/dump.zip", *confDumpCacheDir+"/dump.xml")
 		if err != nil {
 			Error.Printf("Can't extract last dump: %s\n", err.Error())
 		} else {
-			Debug.Println("Dump extracted")
+			Info.Println("Dump extracted")
 		}
 	}
 	if _, err := os.Stat(*confDumpCacheDir + "/dump.xml"); !os.IsNotExist(err) {
-		Debug.Println("Saved dump detecteded")
+		Info.Println("Saved dump detecteded")
 		// parse xml
 		if dumpFile, err := os.Open(*confDumpCacheDir + "/dump.xml"); err != nil {
 			Error.Printf("Can't open last dump: %s\n", err.Error())

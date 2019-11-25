@@ -52,13 +52,13 @@ func DumpRefresh(url, token, dir string) {
 			Error.Printf("Can't fetch last dump: %s\n", err.Error())
 			return
 		}
-		Debug.Println("Last dump fetched")
+		Info.Println("Last dump fetched")
 		err = DumpUnzip(dir+"/dump.zip", dir+"/dump.xml")
 		if err != nil {
 			Error.Printf("Can't extract last dump: %s\n", err.Error())
 			return
 		}
-		Debug.Println("Last dump extracted")
+		Info.Println("Last dump extracted")
 		// parse xml
 		if dumpFile, err := os.Open(dir + "/dump.xml"); err != nil {
 			Error.Printf("Can't open dump file: %s\n", err.Error())
@@ -80,7 +80,7 @@ func DumpRefresh(url, token, dir string) {
 				Error.Printf("Can't write currentdump file: %s\n", err.Error())
 				return
 			}
-			Debug.Println("Last dump metainfo saved")
+			Info.Println("Last dump metainfo saved")
 		}
 	} else if lastDump.Id != cachedDump.Id {
 		Info.Printf("Not changed, but new dump metainfo")
