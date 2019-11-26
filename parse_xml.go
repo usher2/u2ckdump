@@ -14,6 +14,17 @@ import (
 	pb "github.com/usher-2/u2ckdump/msg"
 )
 
+const (
+	elementContent    = "content"
+	elementDecision   = "decision"
+	elementUrl        = "url"
+	elementDomain     = "domain"
+	elementIp         = "ip"
+	elementIpv6       = "ipv6"
+	elementIpSubnet   = "ipSubnet"
+	elementIpv6Subnet = "ipv6Subnet"
+)
+
 func UnmarshalContent(b []byte, v *TContent) error {
 	buf := bytes.NewReader(b)
 	decoder := xml.NewDecoder(buf)
@@ -25,91 +36,82 @@ func UnmarshalContent(b []byte, v *TContent) error {
 			}
 			break
 		}
-		switch _e := t.(type) {
+		switch element := t.(type) {
 		case xml.StartElement:
-			switch _e.Name.Local {
-			case "content":
-				var (
-					i   int
-					err error
-				)
-				for _, _a := range _e.Attr {
-					if _a.Name.Local == "id" {
-						i, err = strconv.Atoi(_a.Value)
-						if err != nil {
-							return err
-						}
-						v.Id = int32(i)
-					} else if _a.Name.Local == "entryType" {
-						i, err = strconv.Atoi(_a.Value)
-						if err != nil {
-							return err
-						}
-						v.EntryType = int32(i)
-					} else if _a.Name.Local == "urgencyType" {
-						i, err = strconv.Atoi(_a.Value)
-						if err != nil {
-							return err
-						}
-						v.UrgencyType = int32(i)
-					} else if _a.Name.Local == "includeTime" {
-						v.IncludeTime = parseTime2(_a.Value)
-					} else if _a.Name.Local == "blockType" {
-						v.BlockType = _a.Value
-					} else if _a.Name.Local == "hash" {
-						v.Hash = _a.Value
-					} else if _a.Name.Local == "ts" {
-						v.Ts = parseTime(_a.Value)
-					}
-				}
-			case "decision":
-				err := decoder.DecodeElement(&v.Decision, &_e)
-				if err != nil {
+			switch element.Name.Local {
+			case elementContent:
+				if err := parseContentElement(element, v); err != nil {
 					return err
 				}
-			case "url":
+			case elementDecision:
+				if err := decoder.DecodeElement(&v.Decision, &element); err != nil {
+					return err
+				}
+			case elementUrl:
 				u := TXMLUrl{}
-				err := decoder.DecodeElement(&u, &_e)
-				if err != nil {
+				if err := decoder.DecodeElement(&u, &element); err != nil {
 					return err
 				}
 				v.Url = append(v.Url, TUrl{Url: u.Url, Ts: parseTime(u.Ts)})
-			case "domain":
+			case elementDomain:
 				d := TXMLDomain{}
-				err := decoder.DecodeElement(&d, &_e)
-				if err != nil {
+				if err := decoder.DecodeElement(&d, &element); err != nil {
 					return err
 				}
 				v.Domain = append(v.Domain, TDomain{Domain: d.Domain, Ts: parseTime(d.Ts)})
-			case "ip":
+			case elementIp:
 				ip := TXMLIp{}
-				err := decoder.DecodeElement(&ip, &_e)
-				if err != nil {
+				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return err
 				}
 				v.Ip4 = append(v.Ip4, TIp4{Ip4: parseIp4(ip.Ip), Ts: parseTime(ip.Ts)})
-			case "ipv6":
+			case elementIpv6:
 				ip := TXMLIp6{}
-				err := decoder.DecodeElement(&ip, &_e)
-				if err != nil {
+				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return err
 				}
 				v.Ip6 = append(v.Ip6, TIp6{Ip6: string(net.ParseIP(ip.Ip6)), Ts: parseTime(ip.Ts)})
-			case "ipSubnet":
+			case elementIpSubnet:
 				s := TXMLSubnet{}
-				err := decoder.DecodeElement(&s, &_e)
-				if err != nil {
+				if err := decoder.DecodeElement(&s, &element); err != nil {
 					return err
 				}
 				v.Subnet4 = append(v.Subnet4, TSubnet4{Subnet4: s.Subnet, Ts: parseTime(s.Ts)})
-			case "ipv6Subnet":
+			case elementIpv6Subnet:
 				s := TXMLSubnet6{}
-				err := decoder.DecodeElement(&s, &_e)
-				if err != nil {
+				if err := decoder.DecodeElement(&s, &element); err != nil {
 					return err
 				}
 				v.Subnet6 = append(v.Subnet6, TSubnet6{Subnet6: s.Subnet6, Ts: parseTime(s.Ts)})
 			}
+		}
+	}
+	return nil
+}
+
+func parseContentElement(element xml.StartElement, v *TContent) error {
+	for _, attr := range element.Attr {
+		switch attr.Name.Local {
+		case "id":
+			if err := parseInt32(&v.Id, attr.Value); err != nil {
+				return err
+			}
+		case "entryType":
+			if err := parseInt32(&v.EntryType, attr.Value); err != nil {
+				return err
+			}
+		case "urgencyType":
+			if err := parseInt32(&v.UrgencyType, attr.Value); err != nil {
+				return err
+			}
+		case "includeTime":
+			v.IncludeTime = parseTime2(attr.Value)
+		case "blockType":
+			v.BlockType = attr.Value
+		case "hash":
+			v.Hash = attr.Value
+		case "ts":
+			v.Ts = parseTime(attr.Value)
 		}
 	}
 	return nil
@@ -211,7 +213,7 @@ func Parse(dumpFile io.Reader) error {
 				DumpSnap.DeleteIp(v.Ip4, o2.Id)
 			}
 			for _, v := range o2.Ip6 {
-				DumpSnap.DeleteIp6(string(v.Ip6), o2.Id)
+				DumpSnap.DeleteIp6(v.Ip6, o2.Id)
 			}
 			for _, v := range o2.Subnet6 {
 				DumpSnap.DeleteSubnet6(v.Subnet6, o2.Id)
@@ -503,14 +505,14 @@ func getContentId(_e xml.StartElement) int32 {
 	return int32(id)
 }
 
-func handleRegister(_e xml.StartElement, r *TReg) {
-	for _, _a := range _e.Attr {
-		if _a.Name.Local == "formatVersion" {
-			r.FormatVersion = _a.Value
-		} else if _a.Name.Local == "updateTime" {
-			r.UpdateTime = parseTime(_a.Value)
-		} else if _a.Name.Local == "updateTimeUrgently" {
-			r.UpdateTimeUrgently = _a.Value
+func handleRegister(element xml.StartElement, r *TReg) {
+	for _, attr := range element.Attr {
+		if attr.Name.Local == "formatVersion" {
+			r.FormatVersion = attr.Value
+		} else if attr.Name.Local == "updateTime" {
+			r.UpdateTime = parseTime(attr.Value)
+		} else if attr.Name.Local == "updateTimeUrgently" {
+			r.UpdateTimeUrgently = attr.Value
 		}
 	}
 }
@@ -532,4 +534,13 @@ func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, domain string, url st
 	v0.Aggr = aggr
 	v0.Pack = v.Pack
 	return &v0
+}
+
+func parseInt32(to *int32, value string) error {
+	i, err := strconv.Atoi(value)
+	if err != nil {
+		return err
+	}
+	*to = int32(i)
+	return nil
 }
