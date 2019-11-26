@@ -1,7 +1,7 @@
 Parse and serve fresh Roscomnadzor dump
 =======================================
 
-* Use https://github.com/usher-2/vigruzki as dump sources server
+* Use https://github.com/usher2/vigruzki as dump sources server
 * Natural signed Roscomnadzor dumps in the `res` folder for test purpose (git lfs)
 
 IMPORTANT NOTE

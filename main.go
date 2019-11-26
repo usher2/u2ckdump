@@ -13,7 +13,7 @@ import (
 	"runtime/debug"
 	"syscall"
 
-	pb "github.com/usher-2/u2ckdump/msg"
+	pb "github.com/usher2/u2ckdump/msg"
 	"google.golang.org/grpc"
 )
 

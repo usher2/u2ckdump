@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/net/html/charset"
 
-	pb "github.com/usher-2/u2ckdump/msg"
+	pb "github.com/usher2/u2ckdump/msg"
 )
 
 const (
