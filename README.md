@@ -7,7 +7,7 @@ Parse and serve fresh Roscomnadzor dump
 IMPORTANT NOTE
 --------------
 
-This program is a part of [https://usher2.club](Usher2) ecosystem. The gRPC service will never be published
+This program is a part of [Usher2](https://usher2.club) ecosystem. The gRPC service will never be published
 
 USE
 ---
