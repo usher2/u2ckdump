@@ -70,7 +70,7 @@ func UnmarshalContent(b []byte, v *TContent) error {
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return err
 				}
-				v.Ip6 = append(v.Ip6, TIp6{Ip6: string(net.ParseIP(ip.Ip6)), Ts: parseTime(ip.Ts)})
+				v.Ip6 = append(v.Ip6, TIp6{Ip6: net.ParseIP(ip.Ip6), Ts: parseTime(ip.Ts)})
 			case elementIpSubnet:
 				s := TXMLSubnet{}
 				if err := decoder.DecodeElement(&s, &element); err != nil {
@@ -213,7 +213,8 @@ func Parse(dumpFile io.Reader) error {
 				DumpSnap.DeleteIp(v.Ip4, o2.Id)
 			}
 			for _, v := range o2.Ip6 {
-				DumpSnap.DeleteIp6(v.Ip6, o2.Id)
+				ip6 := string(v.Ip6)
+				DumpSnap.DeleteIp6(ip6, o2.Id)
 			}
 			for _, v := range o2.Subnet6 {
 				DumpSnap.DeleteSubnet6(v.Subnet6, o2.Id)
@@ -468,7 +469,8 @@ func (v *TMinContent) handleAddIp6(v0 *TContent) {
 	if len(v0.Ip6) > 0 {
 		v.Ip6 = v0.Ip6
 		for _, value := range v.Ip6 {
-			DumpSnap.AddIp6(value.Ip6, v.Id)
+			ip6 := string(value.Ip6)
+			DumpSnap.AddIp6(ip6, v.Id)
 		}
 	}
 }
@@ -478,13 +480,15 @@ func (v *TMinContent) handleUpdateIp6(v0 *TContent, o *TMinContent) {
 	if len(v0.Ip6) > 0 {
 		v.Ip6 = v0.Ip6
 		for _, value := range v.Ip6 {
-			DumpSnap.AddIp6(value.Ip6, v.Id)
-			ip6Set[value.Ip6] = NothingV
+			ip6 := string(value.Ip6)
+			DumpSnap.AddIp6(ip6, v.Id)
+			ip6Set[ip6] = NothingV
 		}
 	}
 	for _, value := range o.Ip6 {
-		if _, ok := ip6Set[value.Ip6]; !ok {
-			DumpSnap.DeleteIp6(value.Ip6, o.Id)
+		ip6 := string(value.Ip6)
+		if _, ok := ip6Set[ip6]; !ok {
+			DumpSnap.DeleteIp6(ip6, o.Id)
 		}
 	}
 }

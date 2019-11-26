@@ -67,7 +67,7 @@ type TIp4 struct {
 }
 
 type TIp6 struct {
-	Ip6 string `json:"ip6"`
+	Ip6 []byte `json:"ip6"`
 	Ts  int64  `json:"ts,omitempty"`
 }
 
