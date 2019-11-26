@@ -28,13 +28,14 @@ func main() {
 	confDumpCacheDir := flag.String("d", "res", "Dump cache dir")
 	confLogLevel := flag.String("l", "Debug", "Logging level")
 	flag.Parse()
-	if *confLogLevel == "Info" {
+	switch *confLogLevel {
+	case "Info":
 		logInit(ioutil.Discard, os.Stdout, os.Stderr, os.Stderr)
-	} else if *confLogLevel == "Warning" {
+	case "Warning":
 		logInit(ioutil.Discard, ioutil.Discard, os.Stderr, os.Stderr)
-	} else if *confLogLevel == "Error" {
+	case "Error":
 		logInit(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
-	} else {
+	default:
 		logInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
 	}
 	if _, err := os.Stat(*confDumpCacheDir + "/current"); !os.IsNotExist(err) {

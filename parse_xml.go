@@ -283,13 +283,14 @@ func (v *TContent) Marshal() []byte {
 }
 
 func (v *TContent) constructBlockType() int32 {
-	if v.BlockType == "ip" {
+	switch v.BlockType {
+	case "ip":
 		return TBLOCK_IP
-	} else if v.BlockType == "domain" {
+	case "domain":
 		return TBLOCK_DOMAIN
-	} else if v.BlockType == "domain-mask" {
+	case "domain-mask":
 		return TBLOCK_MASK
-	} else {
+	default:
 		if v.BlockType != "default" && v.BlockType != "" {
 			Error.Printf("Unknown block type: %s\n", v.BlockType)
 		}
@@ -511,11 +512,12 @@ func getContentId(_e xml.StartElement) int32 {
 
 func handleRegister(element xml.StartElement, r *TReg) {
 	for _, attr := range element.Attr {
-		if attr.Name.Local == "formatVersion" {
+		switch attr.Name.Local {
+		case "formatVersion":
 			r.FormatVersion = attr.Value
-		} else if attr.Name.Local == "updateTime" {
+		case "updateTime":
 			r.UpdateTime = parseTime(attr.Value)
-		} else if attr.Name.Local == "updateTimeUrgently" {
+		case "updateTimeUrgently":
 			r.UpdateTimeUrgently = attr.Value
 		}
 	}
