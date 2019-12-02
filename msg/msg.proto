@@ -22,7 +22,8 @@ message DomainRequest {
 
 message SearchResponse {
         string error = 1;
-        repeated Content results = 2;
+        int64 registryUpdateTime = 2;
+        repeated Content results = 3;
 }
 
 message PingRequest {
@@ -49,9 +50,10 @@ message Content {
         uint32 ip4 = 4;
         bytes ip6 = 5;
         string domain = 6;
-        string url = 7;
-        string aggr = 8;
-        bytes pack = 9;
+        string decision = 7;
+        string url = 8;
+        string aggr = 9;
+        bytes pack = 10;
 }
 
 

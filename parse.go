@@ -145,5 +145,6 @@ func Parse2(UpdateTime int64) {
 	for _, v := range DumpSnap.Content {
 		v.RegistryUpdateTime = UpdateTime
 	}
+	DumpSnap.utime = UpdateTime
 	DumpSnap.Unlock()
 }

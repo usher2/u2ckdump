@@ -18,7 +18,7 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 	Debug.Printf("Received content ID: %d\n", query)
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
-		r := &pb.SearchResponse{}
+		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 		if v, ok := DumpSnap.Content[query]; ok {
 			r.Results = make([]*pb.Content, 1)
 			r.Results[0] = v.newPbContent(0, nil, "", "", "")
@@ -38,7 +38,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 	Debug.Printf("Received IPv4: %d.%d.%d.%d\n", ipb[12], ipb[13], ipb[14], ipb[15])
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
-		r := &pb.SearchResponse{}
+		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 		cnw, err := DumpSnap.net.ContainingNetworks(ipb)
 		if err != nil {
 			Debug.Printf("Can't get containing networks: %d.%d.%d.%d: %s\n", ipb[12], ipb[13], ipb[14], ipb[15], err.Error())
@@ -85,7 +85,7 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 	Debug.Printf("Received IPv6: %v\n", query)
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
-		r := &pb.SearchResponse{}
+		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 		a := DumpSnap.ip6[string(query)]
 		r.Results = make([]*pb.Content, len(a))
 		i := 0
@@ -107,7 +107,7 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 	Debug.Printf("Received URL: %v\n", query)
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
-		r := &pb.SearchResponse{}
+		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 		a := DumpSnap.url[query]
 		r.Results = make([]*pb.Content, len(a))
 		i := 0
@@ -129,7 +129,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 	Debug.Printf("Received Domain: %v\n", query)
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
-		r := &pb.SearchResponse{}
+		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 		a := DumpSnap.domain[query]
 		r.Results = make([]*pb.Content, len(a))
 		i := 0
