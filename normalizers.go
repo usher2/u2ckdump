@@ -10,13 +10,14 @@ import (
 func NormalizeDomain(domain string) string {
 	domain = strings.Replace(domain, ",", ".", -1)
 	domain = strings.Replace(domain, " ", "", -1)
-	if _c := strings.IndexByte(domain, '/'); _c >= 0 {
-		domain = domain[:_c]
+	if c := strings.IndexByte(domain, '/'); c >= 0 {
+		domain = domain[:c]
 	}
-	if _c := strings.IndexByte(domain, '\\'); _c >= 0 {
-		domain = domain[:_c]
+	if c := strings.IndexByte(domain, '\\'); c >= 0 {
+		domain = domain[:c]
 	}
 	domain = strings.TrimPrefix(domain, "*.")
+	domain = strings.TrimSuffix(domain, ".")
 	domain, _ = idna.ToASCII(domain)
 	domain = strings.ToLower(domain)
 	return domain
