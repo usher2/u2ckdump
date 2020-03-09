@@ -28,28 +28,30 @@ var Stats Stat
 
 type TDump struct {
 	sync.RWMutex
-	utime   int64
-	ip      Ip4Set
-	ip6     StringIntSet
-	subnet  StringIntSet
-	subnet6 StringIntSet
-	net     cidranger.Ranger
-	url     StringIntSet
-	domain  StringIntSet
-	Content TMinContentMap
+	utime    int64
+	ip       Ip4Set
+	ip6      StringIntSet
+	subnet   StringIntSet
+	subnet6  StringIntSet
+	net      cidranger.Ranger
+	url      StringIntSet
+	domain   StringIntSet
+	decision DecisionSet
+	Content  TMinContentMap
 }
 
 func NewTDump() *TDump {
 	return &TDump{
-		utime:   0,
-		ip:      make(Ip4Set),
-		ip6:     make(StringIntSet),
-		subnet:  make(StringIntSet),
-		subnet6: make(StringIntSet),
-		url:     make(StringIntSet),
-		domain:  make(StringIntSet),
-		Content: make(TMinContentMap),
-		net:     cidranger.NewPCTrieRanger(),
+		utime:    0,
+		ip:       make(Ip4Set),
+		ip6:      make(StringIntSet),
+		subnet:   make(StringIntSet),
+		subnet6:  make(StringIntSet),
+		url:      make(StringIntSet),
+		domain:   make(StringIntSet),
+		decision: make(DecisionSet),
+		Content:  make(TMinContentMap),
+		net:      cidranger.NewPCTrieRanger(),
 	}
 }
 
@@ -130,6 +132,13 @@ func (t *TDump) AddDomain(i string, id int32) {
 }
 func (t *TDump) DeleteDomain(i string, id int32) {
 	t.domain.Delete(i, id)
+}
+
+func (t *TDump) AddDecision(i uint64, id int32) {
+	t.decision.Add(i, id)
+}
+func (t *TDump) DeleteDecision(i uint64, id int32) {
+	t.decision.Delete(i, id)
 }
 
 var DumpSnap = NewTDump()

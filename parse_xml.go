@@ -312,6 +312,7 @@ func (v *TContent) Update(u2Hash uint64, o *TMinContent, updateTime int64) {
 	v1.handleUpdateSubnet6(v, o)
 	v1.handleUpdateUrl(v, o)
 	v1.handleUpdateDomain(v, o)
+	v1.handleUpdateDecision(v, o) // reason for ALARM!!!
 	v1.BlockType = v.constructBlockType()
 }
 
@@ -325,7 +326,36 @@ func (v *TContent) Add(u2Hash uint64, updateTime int64) {
 	v1.handleAddSubnet(v)
 	v1.handleAddUrl(v)
 	v1.handleAddDomain(v)
+	v1.handleAddDecision(v)
 	v1.BlockType = v.constructBlockType()
+}
+
+func (v *TMinContent) handleAddDecision(v0 *TContent) {
+	c := []byte(" ")
+	hash := fnv.New64a()
+	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
+	hash.Write([]byte(v0.Decision.Org))
+	hash.Write(c)
+	hash.Write([]byte(v0.Decision.Number))
+	hash.Write(c)
+	hash.Write([]byte(v0.Decision.Date))
+	v.Decision = hash.Sum64()
+	DumpSnap.AddDecision(v.Decision, v.Id)
+}
+
+// IT IS REASON FOR ALARM!!!!
+func (v *TMinContent) handleUpdateDecision(v0 *TContent, o *TMinContent) {
+	c := []byte(" ")
+	hash := fnv.New64a()
+	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
+	hash.Write([]byte(v0.Decision.Org))
+	hash.Write(c)
+	hash.Write([]byte(v0.Decision.Number))
+	hash.Write(c)
+	hash.Write([]byte(v0.Decision.Date))
+	v.Decision = hash.Sum64()
+	DumpSnap.AddDecision(v.Decision, v.Id)
+	DumpSnap.DeleteDecision(o.Decision, o.Id)
 }
 
 func (v *TMinContent) handleAddIp(v0 *TContent) {

@@ -12,6 +12,7 @@ type TMinContent struct {
 	Id                 int32
 	BlockType          int32 // for protobuf
 	RegistryUpdateTime int64
+	Decision           uint64
 	Url                []TUrl
 	Ip4                []TIp4
 	Ip6                []TIp6
