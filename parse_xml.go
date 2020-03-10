@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"hash"
 	"hash/fnv"
 	"io"
 	"net"
@@ -24,6 +25,8 @@ const (
 	elementIpSubnet   = "ipSubnet"
 	elementIpv6Subnet = "ipv6Subnet"
 )
+
+var __h64 hash.Hash64
 
 func UnmarshalContent(b []byte, v *TContent) error {
 	buf := bytes.NewReader(b)
@@ -124,7 +127,7 @@ func Parse(dumpFile io.Reader) error {
 		buffer                         bytes.Buffer
 		bufferOffset, offsetCorrection int64
 	)
-
+	__h64 = fnv.New64a()
 	Stats = Stat{}
 	decoder := xml.NewDecoder(dumpFile)
 	// we need this closure, we don't want constructor
@@ -164,9 +167,9 @@ func Parse(dumpFile io.Reader) error {
 				if Stats.MaxContentSize < len(tempBuf) {
 					Stats.MaxContentSize = len(tempBuf)
 				}
-				hash := fnv.New64a()
-				hash.Write(tempBuf)
-				u2Hash := hash.Sum64()
+				__h64.Reset()
+				__h64.Write(tempBuf)
+				u2Hash := __h64.Sum64()
 				bufferOffset = tokenStartOffset
 				v := TContent{}
 				// create or update
@@ -332,28 +335,28 @@ func (v *TContent) Add(u2Hash uint64, updateTime int64) {
 
 func (v *TMinContent) handleAddDecision(v0 *TContent) {
 	c := []byte(" ")
-	hash := fnv.New64a()
 	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
-	hash.Write([]byte(v0.Decision.Org))
-	hash.Write(c)
-	hash.Write([]byte(v0.Decision.Number))
-	hash.Write(c)
-	hash.Write([]byte(v0.Decision.Date))
-	v.Decision = hash.Sum64()
+	__h64.Reset()
+	__h64.Write([]byte(v0.Decision.Org))
+	__h64.Write(c)
+	__h64.Write([]byte(v0.Decision.Number))
+	__h64.Write(c)
+	__h64.Write([]byte(v0.Decision.Date))
+	v.Decision = __h64.Sum64()
 	DumpSnap.AddDecision(v.Decision, v.Id)
 }
 
 // IT IS REASON FOR ALARM!!!!
 func (v *TMinContent) handleUpdateDecision(v0 *TContent, o *TMinContent) {
 	c := []byte(" ")
-	hash := fnv.New64a()
 	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
-	hash.Write([]byte(v0.Decision.Org))
-	hash.Write(c)
-	hash.Write([]byte(v0.Decision.Number))
-	hash.Write(c)
-	hash.Write([]byte(v0.Decision.Date))
-	v.Decision = hash.Sum64()
+	__h64.Reset()
+	__h64.Write([]byte(v0.Decision.Org))
+	__h64.Write(c)
+	__h64.Write([]byte(v0.Decision.Number))
+	__h64.Write(c)
+	__h64.Write([]byte(v0.Decision.Date))
+	v.Decision = __h64.Sum64()
 	DumpSnap.AddDecision(v.Decision, v.Id)
 	DumpSnap.DeleteDecision(o.Decision, o.Id)
 }
@@ -558,7 +561,7 @@ func newMinContent(id int32, hash uint64, utime int64, pack []byte) *TMinContent
 	return &v
 }
 
-func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, domain string, url string, aggr string) *pb.Content {
+func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, decision uint64, domain, url, aggr string) *pb.Content {
 	v0 := pb.Content{}
 	v0.BlockType = v.BlockType
 	v0.RegistryUpdateTime = v.RegistryUpdateTime
@@ -568,6 +571,7 @@ func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, domain string, url st
 	v0.Domain = domain
 	v0.Url = url
 	v0.Aggr = aggr
+	v0.Decision = decision
 	v0.Pack = v.Pack
 	return &v0
 }

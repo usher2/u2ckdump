@@ -13,6 +13,28 @@ type server struct {
 	pb.UnimplementedCheckServer
 }
 
+func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*pb.SearchResponse, error) {
+	query := in.GetQuery()
+	Debug.Printf("Received decision: %d\n", query)
+	if DumpSnap != nil && DumpSnap.utime > 0 {
+		DumpSnap.RLock()
+		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		a := DumpSnap.decision[query]
+		r.Results = make([]*pb.Content, len(a))
+		i := 0
+		for _, id := range a {
+			if v, ok := DumpSnap.Content[id]; ok {
+				r.Results[i] = v.newPbContent(0, nil, query, "", "", "")
+				i++
+			}
+		}
+		DumpSnap.RUnlock()
+		return r, nil
+	} else {
+		return &pb.SearchResponse{Error: "Data not ready"}, nil
+	}
+}
+
 func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 	Debug.Printf("Received content ID: %d\n", query)
@@ -21,7 +43,7 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 		if v, ok := DumpSnap.Content[query]; ok {
 			r.Results = make([]*pb.Content, 1)
-			r.Results[0] = v.newPbContent(0, nil, "", "", "")
+			r.Results[0] = v.newPbContent(0, nil, 0, "", "", "")
 		}
 		DumpSnap.RUnlock()
 		return r, nil
@@ -63,13 +85,13 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 		j := 0
 		for i, id := range v1 {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[j] = v.newPbContent(0, nil, "", "", vnw[i])
+				r.Results[j] = v.newPbContent(0, nil, 0, "", "", vnw[i])
 				j++
 			}
 		}
 		for _, id := range v2 {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[j] = v.newPbContent(query, nil, "", "", "")
+				r.Results[j] = v.newPbContent(query, nil, 0, "", "", "")
 				j++
 			}
 		}
@@ -91,7 +113,7 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 		i := 0
 		for _, id := range a {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[i] = v.newPbContent(0, query, "", "", "")
+				r.Results[i] = v.newPbContent(0, query, 0, "", "", "")
 				i++
 			}
 		}
@@ -113,7 +135,7 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 		i := 0
 		for _, id := range a {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[i] = v.newPbContent(0, nil, "", query, "")
+				r.Results[i] = v.newPbContent(0, nil, 0, "", query, "")
 				i++
 			}
 		}
@@ -135,7 +157,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 		i := 0
 		for _, id := range a {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results[i] = v.newPbContent(0, nil, query, "", "")
+				r.Results[i] = v.newPbContent(0, nil, 0, query, "", "")
 				i++
 			}
 		}
@@ -145,10 +167,16 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 		return &pb.SearchResponse{Error: "Data not ready"}, nil
 	}
 }
-func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PingResponse, error) {
+func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PongResponse, error) {
 	ping := in.GetPing()
 	Debug.Printf("Received Ping: %v\n", ping)
-	dumptime := time.Unix(DumpSnap.utime, 0).In(time.FixedZone("MSK", 3)).Format(time.RFC3339)
-	r := &pb.PingResponse{Pong: "I heed my lord\n" + "Last dump: " + dumptime + "\n"}
-	return r, nil
+	if DumpSnap != nil && DumpSnap.utime > 0 {
+		DumpSnap.RLock()
+		dumptime := time.Unix(DumpSnap.utime, 0).In(time.FixedZone("MSK", 3)).Format(time.RFC3339)
+		r := &pb.PongResponse{Pong: "I heed my lord\n" + "Last dump: " + dumptime + "\n"}
+		DumpSnap.RUnlock()
+		return r, nil
+	} else {
+		return &pb.PongResponse{Error: "Data not ready"}, nil
+	}
 }

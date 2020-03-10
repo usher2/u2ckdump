@@ -219,6 +219,162 @@ func (m *DomainRequest) GetQuery() string {
 	return ""
 }
 
+type DecisionRequest struct {
+	Query                uint64   `protobuf:"varint,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DecisionRequest) Reset()         { *m = DecisionRequest{} }
+func (m *DecisionRequest) String() string { return proto.CompactTextString(m) }
+func (*DecisionRequest) ProtoMessage()    {}
+func (*DecisionRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{5}
+}
+
+func (m *DecisionRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DecisionRequest.Unmarshal(m, b)
+}
+func (m *DecisionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DecisionRequest.Marshal(b, m, deterministic)
+}
+func (m *DecisionRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DecisionRequest.Merge(m, src)
+}
+func (m *DecisionRequest) XXX_Size() int {
+	return xxx_messageInfo_DecisionRequest.Size(m)
+}
+func (m *DecisionRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DecisionRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DecisionRequest proto.InternalMessageInfo
+
+func (m *DecisionRequest) GetQuery() uint64 {
+	if m != nil {
+		return m.Query
+	}
+	return 0
+}
+
+type TextDecisionRequest struct {
+	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TextDecisionRequest) Reset()         { *m = TextDecisionRequest{} }
+func (m *TextDecisionRequest) String() string { return proto.CompactTextString(m) }
+func (*TextDecisionRequest) ProtoMessage()    {}
+func (*TextDecisionRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{6}
+}
+
+func (m *TextDecisionRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TextDecisionRequest.Unmarshal(m, b)
+}
+func (m *TextDecisionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TextDecisionRequest.Marshal(b, m, deterministic)
+}
+func (m *TextDecisionRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TextDecisionRequest.Merge(m, src)
+}
+func (m *TextDecisionRequest) XXX_Size() int {
+	return xxx_messageInfo_TextDecisionRequest.Size(m)
+}
+func (m *TextDecisionRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_TextDecisionRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TextDecisionRequest proto.InternalMessageInfo
+
+func (m *TextDecisionRequest) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
+type Subnet4Request struct {
+	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Subnet4Request) Reset()         { *m = Subnet4Request{} }
+func (m *Subnet4Request) String() string { return proto.CompactTextString(m) }
+func (*Subnet4Request) ProtoMessage()    {}
+func (*Subnet4Request) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{7}
+}
+
+func (m *Subnet4Request) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Subnet4Request.Unmarshal(m, b)
+}
+func (m *Subnet4Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Subnet4Request.Marshal(b, m, deterministic)
+}
+func (m *Subnet4Request) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Subnet4Request.Merge(m, src)
+}
+func (m *Subnet4Request) XXX_Size() int {
+	return xxx_messageInfo_Subnet4Request.Size(m)
+}
+func (m *Subnet4Request) XXX_DiscardUnknown() {
+	xxx_messageInfo_Subnet4Request.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Subnet4Request proto.InternalMessageInfo
+
+func (m *Subnet4Request) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
+type Subnet6Request struct {
+	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Subnet6Request) Reset()         { *m = Subnet6Request{} }
+func (m *Subnet6Request) String() string { return proto.CompactTextString(m) }
+func (*Subnet6Request) ProtoMessage()    {}
+func (*Subnet6Request) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{8}
+}
+
+func (m *Subnet6Request) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Subnet6Request.Unmarshal(m, b)
+}
+func (m *Subnet6Request) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Subnet6Request.Marshal(b, m, deterministic)
+}
+func (m *Subnet6Request) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Subnet6Request.Merge(m, src)
+}
+func (m *Subnet6Request) XXX_Size() int {
+	return xxx_messageInfo_Subnet6Request.Size(m)
+}
+func (m *Subnet6Request) XXX_DiscardUnknown() {
+	xxx_messageInfo_Subnet6Request.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Subnet6Request proto.InternalMessageInfo
+
+func (m *Subnet6Request) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
 type SearchResponse struct {
 	Error                string     `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
 	RegistryUpdateTime   int64      `protobuf:"varint,2,opt,name=registryUpdateTime,proto3" json:"registryUpdateTime,omitempty"`
@@ -232,7 +388,7 @@ func (m *SearchResponse) Reset()         { *m = SearchResponse{} }
 func (m *SearchResponse) String() string { return proto.CompactTextString(m) }
 func (*SearchResponse) ProtoMessage()    {}
 func (*SearchResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{5}
+	return fileDescriptor_c06e4cca6c2cc899, []int{9}
 }
 
 func (m *SearchResponse) XXX_Unmarshal(b []byte) error {
@@ -274,6 +430,92 @@ func (m *SearchResponse) GetResults() []*Content {
 	return nil
 }
 
+type StatRequest struct {
+	Query                string   `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StatRequest) Reset()         { *m = StatRequest{} }
+func (m *StatRequest) String() string { return proto.CompactTextString(m) }
+func (*StatRequest) ProtoMessage()    {}
+func (*StatRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{10}
+}
+
+func (m *StatRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StatRequest.Unmarshal(m, b)
+}
+func (m *StatRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StatRequest.Marshal(b, m, deterministic)
+}
+func (m *StatRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StatRequest.Merge(m, src)
+}
+func (m *StatRequest) XXX_Size() int {
+	return xxx_messageInfo_StatRequest.Size(m)
+}
+func (m *StatRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StatRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StatRequest proto.InternalMessageInfo
+
+func (m *StatRequest) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
+type StatResponse struct {
+	Error                string   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
+	Stats                []byte   `protobuf:"bytes,2,opt,name=stats,proto3" json:"stats,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StatResponse) Reset()         { *m = StatResponse{} }
+func (m *StatResponse) String() string { return proto.CompactTextString(m) }
+func (*StatResponse) ProtoMessage()    {}
+func (*StatResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{11}
+}
+
+func (m *StatResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StatResponse.Unmarshal(m, b)
+}
+func (m *StatResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StatResponse.Marshal(b, m, deterministic)
+}
+func (m *StatResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StatResponse.Merge(m, src)
+}
+func (m *StatResponse) XXX_Size() int {
+	return xxx_messageInfo_StatResponse.Size(m)
+}
+func (m *StatResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_StatResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StatResponse proto.InternalMessageInfo
+
+func (m *StatResponse) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
+func (m *StatResponse) GetStats() []byte {
+	if m != nil {
+		return m.Stats
+	}
+	return nil
+}
+
 type PingRequest struct {
 	Ping                 string   `protobuf:"bytes,1,opt,name=ping,proto3" json:"ping,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -285,7 +527,7 @@ func (m *PingRequest) Reset()         { *m = PingRequest{} }
 func (m *PingRequest) String() string { return proto.CompactTextString(m) }
 func (*PingRequest) ProtoMessage()    {}
 func (*PingRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{6}
+	return fileDescriptor_c06e4cca6c2cc899, []int{12}
 }
 
 func (m *PingRequest) XXX_Unmarshal(b []byte) error {
@@ -313,39 +555,47 @@ func (m *PingRequest) GetPing() string {
 	return ""
 }
 
-type PingResponse struct {
-	Pong                 string   `protobuf:"bytes,1,opt,name=pong,proto3" json:"pong,omitempty"`
+type PongResponse struct {
+	Error                string   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
+	Pong                 string   `protobuf:"bytes,2,opt,name=pong,proto3" json:"pong,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PingResponse) Reset()         { *m = PingResponse{} }
-func (m *PingResponse) String() string { return proto.CompactTextString(m) }
-func (*PingResponse) ProtoMessage()    {}
-func (*PingResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{7}
+func (m *PongResponse) Reset()         { *m = PongResponse{} }
+func (m *PongResponse) String() string { return proto.CompactTextString(m) }
+func (*PongResponse) ProtoMessage()    {}
+func (*PongResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c06e4cca6c2cc899, []int{13}
 }
 
-func (m *PingResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PingResponse.Unmarshal(m, b)
+func (m *PongResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PongResponse.Unmarshal(m, b)
 }
-func (m *PingResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PingResponse.Marshal(b, m, deterministic)
+func (m *PongResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PongResponse.Marshal(b, m, deterministic)
 }
-func (m *PingResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PingResponse.Merge(m, src)
+func (m *PongResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PongResponse.Merge(m, src)
 }
-func (m *PingResponse) XXX_Size() int {
-	return xxx_messageInfo_PingResponse.Size(m)
+func (m *PongResponse) XXX_Size() int {
+	return xxx_messageInfo_PongResponse.Size(m)
 }
-func (m *PingResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_PingResponse.DiscardUnknown(m)
+func (m *PongResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_PongResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_PingResponse proto.InternalMessageInfo
+var xxx_messageInfo_PongResponse proto.InternalMessageInfo
 
-func (m *PingResponse) GetPong() string {
+func (m *PongResponse) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
+func (m *PongResponse) GetPong() string {
 	if m != nil {
 		return m.Pong
 	}
@@ -357,9 +607,9 @@ type Content struct {
 	RegistryUpdateTime   int64    `protobuf:"varint,2,opt,name=registryUpdateTime,proto3" json:"registryUpdateTime,omitempty"`
 	BlockType            int32    `protobuf:"varint,3,opt,name=blockType,proto3" json:"blockType,omitempty"`
 	Ip4                  uint32   `protobuf:"varint,4,opt,name=ip4,proto3" json:"ip4,omitempty"`
-	Ip6                  []byte   `protobuf:"bytes,5,opt,name=ip6,proto3" json:"ip6,omitempty"`
-	Domain               string   `protobuf:"bytes,6,opt,name=domain,proto3" json:"domain,omitempty"`
-	Decision             string   `protobuf:"bytes,7,opt,name=decision,proto3" json:"decision,omitempty"`
+	Decision             uint64   `protobuf:"varint,5,opt,name=decision,proto3" json:"decision,omitempty"`
+	Ip6                  []byte   `protobuf:"bytes,6,opt,name=ip6,proto3" json:"ip6,omitempty"`
+	Domain               string   `protobuf:"bytes,7,opt,name=domain,proto3" json:"domain,omitempty"`
 	Url                  string   `protobuf:"bytes,8,opt,name=url,proto3" json:"url,omitempty"`
 	Aggr                 string   `protobuf:"bytes,9,opt,name=aggr,proto3" json:"aggr,omitempty"`
 	Pack                 []byte   `protobuf:"bytes,10,opt,name=pack,proto3" json:"pack,omitempty"`
@@ -372,7 +622,7 @@ func (m *Content) Reset()         { *m = Content{} }
 func (m *Content) String() string { return proto.CompactTextString(m) }
 func (*Content) ProtoMessage()    {}
 func (*Content) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c06e4cca6c2cc899, []int{8}
+	return fileDescriptor_c06e4cca6c2cc899, []int{14}
 }
 
 func (m *Content) XXX_Unmarshal(b []byte) error {
@@ -421,6 +671,13 @@ func (m *Content) GetIp4() uint32 {
 	return 0
 }
 
+func (m *Content) GetDecision() uint64 {
+	if m != nil {
+		return m.Decision
+	}
+	return 0
+}
+
 func (m *Content) GetIp6() []byte {
 	if m != nil {
 		return m.Ip6
@@ -431,13 +688,6 @@ func (m *Content) GetIp6() []byte {
 func (m *Content) GetDomain() string {
 	if m != nil {
 		return m.Domain
-	}
-	return ""
-}
-
-func (m *Content) GetDecision() string {
-	if m != nil {
-		return m.Decision
 	}
 	return ""
 }
@@ -469,43 +719,56 @@ func init() {
 	proto.RegisterType((*IP6Request)(nil), "IP6Request")
 	proto.RegisterType((*URLRequest)(nil), "URLRequest")
 	proto.RegisterType((*DomainRequest)(nil), "DomainRequest")
+	proto.RegisterType((*DecisionRequest)(nil), "DecisionRequest")
+	proto.RegisterType((*TextDecisionRequest)(nil), "TextDecisionRequest")
+	proto.RegisterType((*Subnet4Request)(nil), "Subnet4Request")
+	proto.RegisterType((*Subnet6Request)(nil), "Subnet6Request")
 	proto.RegisterType((*SearchResponse)(nil), "SearchResponse")
+	proto.RegisterType((*StatRequest)(nil), "StatRequest")
+	proto.RegisterType((*StatResponse)(nil), "StatResponse")
 	proto.RegisterType((*PingRequest)(nil), "PingRequest")
-	proto.RegisterType((*PingResponse)(nil), "PingResponse")
+	proto.RegisterType((*PongResponse)(nil), "PongResponse")
 	proto.RegisterType((*Content)(nil), "Content")
 }
 
 func init() { proto.RegisterFile("msg.proto", fileDescriptor_c06e4cca6c2cc899) }
 
 var fileDescriptor_c06e4cca6c2cc899 = []byte{
-	// 423 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x93, 0xc1, 0x8e, 0x9b, 0x30,
-	0x10, 0x86, 0x15, 0x08, 0x09, 0x0c, 0x24, 0xad, 0xac, 0xaa, 0xb2, 0xa2, 0x1e, 0xb2, 0xae, 0xaa,
-	0xa6, 0x17, 0x57, 0xda, 0x46, 0xbc, 0xc0, 0xe6, 0x12, 0x69, 0x0f, 0x11, 0xdd, 0x3c, 0x00, 0x0b,
-	0x16, 0x6b, 0x25, 0xb1, 0x59, 0x1b, 0x0e, 0xe9, 0x0b, 0xf4, 0x99, 0x7b, 0xab, 0x6c, 0x60, 0xc3,
-	0x76, 0xd1, 0x56, 0x7b, 0xfb, 0x67, 0xfc, 0x31, 0x9e, 0xf1, 0xfc, 0x40, 0x70, 0xd2, 0x05, 0x2d,
-	0x95, 0xac, 0x24, 0xb9, 0x82, 0x60, 0xbb, 0x49, 0xd8, 0x63, 0xcd, 0x74, 0x85, 0x3e, 0x80, 0xf7,
-	0x58, 0x33, 0x75, 0xc6, 0xa3, 0xe5, 0x68, 0xe5, 0x25, 0x4d, 0x40, 0x08, 0xc0, 0x76, 0xb7, 0x1e,
-	0x64, 0x66, 0xcf, 0x98, 0x78, 0x90, 0x89, 0x7a, 0xcc, 0x3e, 0xb9, 0x1d, 0x64, 0x82, 0x8e, 0xf9,
-	0x02, 0xb3, 0x8d, 0x3c, 0xa5, 0x5c, 0xbc, 0x8e, 0xfd, 0x82, 0xf9, 0x4f, 0x96, 0xaa, 0xec, 0x21,
-	0x61, 0xba, 0x94, 0x42, 0x33, 0xc3, 0x31, 0xa5, 0xa4, 0xea, 0x38, 0x1b, 0x20, 0x0a, 0x48, 0xb1,
-	0x82, 0xeb, 0x4a, 0x9d, 0xf7, 0x65, 0x9e, 0x56, 0xec, 0x8e, 0x9f, 0x18, 0x76, 0x96, 0xa3, 0x95,
-	0x9b, 0x0c, 0x9c, 0x20, 0x02, 0x53, 0xc5, 0x74, 0x7d, 0xac, 0x34, 0x76, 0x97, 0xee, 0x2a, 0xbc,
-	0xf6, 0xe9, 0x8d, 0x14, 0x15, 0x13, 0x55, 0xd2, 0x1d, 0x90, 0x2b, 0x08, 0x77, 0x5c, 0x14, 0x5d,
-	0x83, 0x08, 0xc6, 0x25, 0x17, 0x45, 0x7b, 0xaf, 0xd5, 0x84, 0x40, 0xd4, 0x20, 0x6d, 0x73, 0x86,
-	0x91, 0x3d, 0x46, 0x8a, 0x82, 0xfc, 0x19, 0xc1, 0xb4, 0xad, 0x8d, 0xe6, 0xe0, 0xf0, 0xbc, 0x7d,
-	0x74, 0x87, 0xe7, 0x6f, 0x6e, 0xfb, 0x13, 0x04, 0xf7, 0x47, 0x99, 0x1d, 0xee, 0xce, 0x25, 0xc3,
-	0xae, 0x2d, 0x73, 0x49, 0xa0, 0xf7, 0xe0, 0xf2, 0x72, 0x8d, 0xc7, 0x76, 0x5f, 0x46, 0x36, 0x99,
-	0x18, 0x7b, 0x76, 0x3b, 0x46, 0xa2, 0x8f, 0x30, 0xc9, 0xed, 0xbb, 0xe3, 0x89, 0xed, 0xb1, 0x8d,
-	0xd0, 0x02, 0xfc, 0x9c, 0x65, 0x5c, 0x73, 0x29, 0xf0, 0xd4, 0x9e, 0x3c, 0xc5, 0xa6, 0x4a, 0xad,
-	0x8e, 0xd8, 0xb7, 0x69, 0x23, 0xcd, 0x9c, 0x69, 0x51, 0x28, 0x1c, 0x34, 0x73, 0x1a, 0x6d, 0x67,
-	0x4f, 0xb3, 0x03, 0x06, 0x7b, 0x99, 0xd5, 0xd7, 0xbf, 0x1d, 0xf0, 0x6e, 0x1e, 0x58, 0x76, 0x40,
-	0x5f, 0xc1, 0x6f, 0x16, 0xb9, 0xdd, 0x20, 0xa0, 0x4f, 0x4e, 0x5c, 0xbc, 0xa3, 0xff, 0xec, 0xf7,
-	0x1b, 0x04, 0x2d, 0xb8, 0x5b, 0xa3, 0x90, 0x5e, 0x0c, 0xf9, 0x2a, 0x1a, 0x5b, 0x34, 0xfe, 0x3f,
-	0xba, 0x4f, 0x6e, 0x51, 0x48, 0x2f, 0xf6, 0x7c, 0x89, 0x7e, 0x87, 0xa8, 0xc9, 0x34, 0xfe, 0x44,
-	0x73, 0xfa, 0xcc, 0xa8, 0x2f, 0x3f, 0xf8, 0x0c, 0x63, 0x63, 0x02, 0x14, 0xd1, 0x9e, 0x5d, 0x16,
-	0x33, 0xda, 0x77, 0xc6, 0xfd, 0xc4, 0xfe, 0x85, 0x3f, 0xfe, 0x06, 0x00, 0x00, 0xff, 0xff, 0x3b,
-	0xc0, 0x9a, 0xa9, 0x92, 0x03, 0x00, 0x00,
+	// 544 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0x4d, 0x8f, 0xda, 0x3c,
+	0x10, 0x80, 0x05, 0x84, 0x8f, 0x0c, 0x01, 0x5e, 0xf9, 0x45, 0x95, 0x85, 0x7a, 0x60, 0x83, 0xda,
+	0xa5, 0xaa, 0xe4, 0xaa, 0xbb, 0x28, 0xaa, 0xda, 0xe3, 0x72, 0x41, 0xda, 0x03, 0x0a, 0xf0, 0x03,
+	0x02, 0x58, 0xd9, 0x08, 0x88, 0xb3, 0xb6, 0x91, 0x4a, 0xcf, 0xfd, 0xd3, 0xbd, 0x55, 0xb6, 0x13,
+	0x3e, 0x96, 0x34, 0xdb, 0xde, 0x66, 0x26, 0xcf, 0x0c, 0xb6, 0x35, 0x0f, 0x60, 0xef, 0x44, 0x48,
+	0x12, 0xce, 0x24, 0x73, 0x6f, 0xc0, 0x9e, 0x8c, 0x7d, 0xfa, 0xbc, 0xa7, 0x42, 0xa2, 0x2e, 0x54,
+	0x9f, 0xf7, 0x94, 0x1f, 0x70, 0xa9, 0x5f, 0x1a, 0x56, 0x7d, 0x93, 0xb8, 0x2e, 0xc0, 0x64, 0x3a,
+	0xca, 0x65, 0x5a, 0x17, 0x8c, 0x97, 0xcb, 0x38, 0x67, 0xcc, 0xc2, 0x7f, 0xcc, 0x65, 0xec, 0x8c,
+	0x79, 0x07, 0xad, 0x31, 0xdb, 0x05, 0x51, 0x5c, 0x8c, 0xdd, 0x42, 0x67, 0x4c, 0x57, 0x91, 0x88,
+	0x58, 0x3e, 0x68, 0x65, 0xe0, 0x47, 0xf8, 0x7f, 0x4e, 0xbf, 0xcb, 0x42, 0xf8, 0x38, 0xf5, 0x3d,
+	0xb4, 0x67, 0xfb, 0x65, 0x4c, 0xe5, 0xe8, 0x2f, 0x39, 0xaf, 0x98, 0xfb, 0x01, 0xed, 0x19, 0x0d,
+	0xf8, 0xea, 0xc9, 0xa7, 0x22, 0x61, 0xb1, 0xa0, 0x8a, 0xa3, 0x9c, 0x33, 0x9e, 0x71, 0x3a, 0x41,
+	0x04, 0x10, 0xa7, 0x61, 0x24, 0x24, 0x3f, 0x2c, 0x92, 0x75, 0x20, 0xe9, 0x3c, 0xda, 0x51, 0x5c,
+	0xee, 0x97, 0x86, 0x15, 0x3f, 0xe7, 0x0b, 0x72, 0xa1, 0xce, 0xa9, 0xd8, 0x6f, 0xa5, 0xc0, 0x95,
+	0x7e, 0x65, 0xd8, 0xbc, 0x6b, 0x90, 0x07, 0x16, 0x4b, 0x1a, 0x4b, 0x3f, 0xfb, 0xe0, 0x0e, 0xa0,
+	0x39, 0x93, 0x81, 0x2c, 0x3e, 0xe0, 0x57, 0x70, 0x0c, 0x54, 0x78, 0xbc, 0x2e, 0x54, 0x85, 0x0c,
+	0xa4, 0xd0, 0x27, 0x72, 0x7c, 0x93, 0xb8, 0x37, 0xd0, 0x9c, 0x46, 0x71, 0x98, 0xfd, 0x00, 0x02,
+	0x2b, 0x89, 0xe2, 0x30, 0xed, 0xd4, 0xb1, 0xfb, 0x05, 0x9c, 0x29, 0x53, 0x48, 0xe1, 0x78, 0xd5,
+	0xc9, 0xe2, 0x50, 0x4f, 0x57, 0x9d, 0x2c, 0x0e, 0xdd, 0x5f, 0x25, 0xa8, 0xa7, 0x57, 0x42, 0x6d,
+	0x28, 0x47, 0xeb, 0x74, 0x23, 0xcb, 0xd1, 0xfa, 0x9f, 0x5f, 0xeb, 0x2d, 0xd8, 0xcb, 0x2d, 0x5b,
+	0x6d, 0xe6, 0x87, 0x84, 0xe2, 0x8a, 0x1e, 0x73, 0x2a, 0xa0, 0xff, 0xa0, 0x12, 0x25, 0x23, 0x6c,
+	0xe9, 0x65, 0x56, 0x21, 0xea, 0x41, 0x63, 0x9d, 0xae, 0x0b, 0xae, 0xea, 0x5d, 0x3a, 0xe6, 0x86,
+	0xf6, 0x70, 0x4d, 0x3f, 0x84, 0x0a, 0xd1, 0x1b, 0xa8, 0xad, 0xf5, 0xc2, 0xe2, 0xba, 0x3e, 0x7f,
+	0x9a, 0x29, 0x72, 0xcf, 0xb7, 0xb8, 0xa1, 0x8b, 0x2a, 0x54, 0xf7, 0x0c, 0xc2, 0x90, 0x63, 0xdb,
+	0xdc, 0x53, 0xc5, 0xfa, 0xee, 0xc1, 0x6a, 0x83, 0x41, 0x0f, 0xd4, 0xf1, 0xdd, 0x4f, 0x0b, 0xaa,
+	0x0f, 0x4f, 0x74, 0xb5, 0x41, 0xb7, 0xd0, 0x30, 0xfb, 0x33, 0x19, 0x23, 0x20, 0x47, 0x4d, 0x7b,
+	0x1d, 0xf2, 0x62, 0xad, 0x3e, 0x80, 0x9d, 0x82, 0xd3, 0x11, 0x6a, 0x92, 0x93, 0xad, 0x85, 0xa8,
+	0xa7, 0x51, 0xef, 0x75, 0x74, 0xe1, 0x3f, 0xa2, 0x26, 0x39, 0xb9, 0x7b, 0x8d, 0x7e, 0x02, 0xc7,
+	0x54, 0x8c, 0xbc, 0xa8, 0x4d, 0x2e, 0x2c, 0xbe, 0x6e, 0xb8, 0xcf, 0xd4, 0x18, 0x1f, 0x9f, 0x96,
+	0xbc, 0x90, 0xf4, 0xba, 0xe9, 0x1b, 0x20, 0x53, 0x39, 0x57, 0x1a, 0x75, 0x49, 0x8e, 0xe1, 0xd7,
+	0xcd, 0x9f, 0xa1, 0x65, 0x2a, 0xa9, 0xe2, 0xa8, 0x43, 0x2e, 0x65, 0x7f, 0xb5, 0xc5, 0x3b, 0xb6,
+	0xfc, 0xf9, 0xcd, 0x06, 0x60, 0x29, 0xa3, 0x90, 0x43, 0xce, 0xec, 0xeb, 0xb5, 0xc8, 0x85, 0x66,
+	0x03, 0xb0, 0x94, 0x3a, 0xc8, 0x21, 0x67, 0x06, 0xf5, 0x5a, 0xe4, 0x5c, 0x96, 0x65, 0x4d, 0xff,
+	0x3f, 0xdf, 0xff, 0x0e, 0x00, 0x00, 0xff, 0xff, 0xf5, 0xa0, 0x6a, 0x56, 0xac, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -525,7 +788,12 @@ type CheckClient interface {
 	SearchIP6(ctx context.Context, in *IP6Request, opts ...grpc.CallOption) (*SearchResponse, error)
 	SearchURL(ctx context.Context, in *URLRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	SearchDomain(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
+	SearchDecision(ctx context.Context, in *DecisionRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchTextDecision(ctx context.Context, in *TextDecisionRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchSubnet4(ctx context.Context, in *Subnet4Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchSubnet6(ctx context.Context, in *Subnet6Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error)
+	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PongResponse, error)
 }
 
 type checkClient struct {
@@ -581,8 +849,53 @@ func (c *checkClient) SearchDomain(ctx context.Context, in *DomainRequest, opts 
 	return out, nil
 }
 
-func (c *checkClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
-	out := new(PingResponse)
+func (c *checkClient) SearchDecision(ctx context.Context, in *DecisionRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/Check/SearchDecision", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *checkClient) SearchTextDecision(ctx context.Context, in *TextDecisionRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/Check/SearchTextDecision", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *checkClient) SearchSubnet4(ctx context.Context, in *Subnet4Request, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/Check/SearchSubnet4", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *checkClient) SearchSubnet6(ctx context.Context, in *Subnet6Request, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/Check/SearchSubnet6", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *checkClient) Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error) {
+	out := new(StatResponse)
+	err := c.cc.Invoke(ctx, "/Check/Stat", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *checkClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PongResponse, error) {
+	out := new(PongResponse)
 	err := c.cc.Invoke(ctx, "/Check/Ping", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -597,7 +910,12 @@ type CheckServer interface {
 	SearchIP6(context.Context, *IP6Request) (*SearchResponse, error)
 	SearchURL(context.Context, *URLRequest) (*SearchResponse, error)
 	SearchDomain(context.Context, *DomainRequest) (*SearchResponse, error)
-	Ping(context.Context, *PingRequest) (*PingResponse, error)
+	SearchDecision(context.Context, *DecisionRequest) (*SearchResponse, error)
+	SearchTextDecision(context.Context, *TextDecisionRequest) (*SearchResponse, error)
+	SearchSubnet4(context.Context, *Subnet4Request) (*SearchResponse, error)
+	SearchSubnet6(context.Context, *Subnet6Request) (*SearchResponse, error)
+	Stat(context.Context, *StatRequest) (*StatResponse, error)
+	Ping(context.Context, *PingRequest) (*PongResponse, error)
 }
 
 // UnimplementedCheckServer can be embedded to have forward compatible implementations.
@@ -619,7 +937,22 @@ func (*UnimplementedCheckServer) SearchURL(ctx context.Context, req *URLRequest)
 func (*UnimplementedCheckServer) SearchDomain(ctx context.Context, req *DomainRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchDomain not implemented")
 }
-func (*UnimplementedCheckServer) Ping(ctx context.Context, req *PingRequest) (*PingResponse, error) {
+func (*UnimplementedCheckServer) SearchDecision(ctx context.Context, req *DecisionRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchDecision not implemented")
+}
+func (*UnimplementedCheckServer) SearchTextDecision(ctx context.Context, req *TextDecisionRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchTextDecision not implemented")
+}
+func (*UnimplementedCheckServer) SearchSubnet4(ctx context.Context, req *Subnet4Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchSubnet4 not implemented")
+}
+func (*UnimplementedCheckServer) SearchSubnet6(ctx context.Context, req *Subnet6Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchSubnet6 not implemented")
+}
+func (*UnimplementedCheckServer) Stat(ctx context.Context, req *StatRequest) (*StatResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Stat not implemented")
+}
+func (*UnimplementedCheckServer) Ping(ctx context.Context, req *PingRequest) (*PongResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 
@@ -717,6 +1050,96 @@ func _Check_SearchDomain_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Check_SearchDecision_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecisionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchDecision(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/SearchDecision",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchDecision(ctx, req.(*DecisionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Check_SearchTextDecision_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TextDecisionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchTextDecision(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/SearchTextDecision",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchTextDecision(ctx, req.(*TextDecisionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Check_SearchSubnet4_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Subnet4Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchSubnet4(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/SearchSubnet4",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchSubnet4(ctx, req.(*Subnet4Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Check_SearchSubnet6_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Subnet6Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchSubnet6(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/SearchSubnet6",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchSubnet6(ctx, req.(*Subnet6Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Check_Stat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).Stat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Check/Stat",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).Stat(ctx, req.(*StatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Check_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PingRequest)
 	if err := dec(in); err != nil {
@@ -758,6 +1181,26 @@ var _Check_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchDomain",
 			Handler:    _Check_SearchDomain_Handler,
+		},
+		{
+			MethodName: "SearchDecision",
+			Handler:    _Check_SearchDecision_Handler,
+		},
+		{
+			MethodName: "SearchTextDecision",
+			Handler:    _Check_SearchTextDecision_Handler,
+		},
+		{
+			MethodName: "SearchSubnet4",
+			Handler:    _Check_SearchSubnet4_Handler,
+		},
+		{
+			MethodName: "SearchSubnet6",
+			Handler:    _Check_SearchSubnet6_Handler,
+		},
+		{
+			MethodName: "Stat",
+			Handler:    _Check_Stat_Handler,
 		},
 		{
 			MethodName: "Ping",
