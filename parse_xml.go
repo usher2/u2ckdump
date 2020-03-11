@@ -357,8 +357,8 @@ func (v *TMinContent) handleUpdateDecision(v0 *TContent, o *TMinContent) {
 	__h64.Write(c)
 	__h64.Write([]byte(v0.Decision.Date))
 	v.Decision = __h64.Sum64()
-	DumpSnap.AddDecision(v.Decision, v.Id)
 	DumpSnap.DeleteDecision(o.Decision, o.Id)
+	DumpSnap.AddDecision(v.Decision, v.Id)
 }
 
 func (v *TMinContent) handleAddIp(v0 *TContent) {
@@ -561,7 +561,7 @@ func newMinContent(id int32, hash uint64, utime int64, pack []byte) *TMinContent
 	return &v
 }
 
-func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, decision uint64, domain, url, aggr string) *pb.Content {
+func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, domain, url, aggr string) *pb.Content {
 	v0 := pb.Content{}
 	v0.BlockType = v.BlockType
 	v0.RegistryUpdateTime = v.RegistryUpdateTime
@@ -571,7 +571,6 @@ func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, decision uint64, doma
 	v0.Domain = domain
 	v0.Url = url
 	v0.Aggr = aggr
-	v0.Decision = decision
 	v0.Pack = v.Pack
 	return &v0
 }
