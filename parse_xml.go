@@ -231,6 +231,7 @@ func Parse(dumpFile io.Reader) error {
 			for _, v := range o2.Domain {
 				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.Id)
 			}
+			DumpSnap.DeleteDecision(o2.Decision, o2.Id)
 			delete(DumpSnap.Content, id)
 			Stats.CntRemove++
 		}
