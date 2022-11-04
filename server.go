@@ -1,6 +1,6 @@
 package main
 
-//go:generate protoc -I msg --go_out=plugins=grpc:msg msg/msg.proto
+//go:generate protoc -I msg --go-grpc_out=msg --go_out=msg --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative msg/msg.proto
 
 import (
 	"context"

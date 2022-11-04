@@ -1,5 +1,8 @@
 syntax = "proto3";
 
+package msg;
+option go_package = "guthub.com/usher2/u2ckdump/msg";
+
 message IDRequest {
         int32 query = 1;
 }
