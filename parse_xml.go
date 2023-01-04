@@ -67,7 +67,7 @@ func UnmarshalContent(b []byte, v *Content) error {
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return err
 				}
-				v.IP4 = append(v.IP4, IP4{IP4: parseIp4(ip.IP), Ts: parseTime(ip.Ts)})
+				v.IP4 = append(v.IP4, IP4{IP4: ip4str2int(ip.IP), Ts: parseTime(ip.Ts)})
 			case elementIpv6:
 				ip := XMLIP6{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
