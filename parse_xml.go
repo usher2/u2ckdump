@@ -262,6 +262,8 @@ func Parse(dumpFile io.Reader) error {
 		bufferOffset += diff
 	}
 
+	// TODO: move to dedicated function or few
+
 	// remove operations
 	DumpSnap.Lock()
 
