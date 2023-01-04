@@ -226,7 +226,7 @@ func Parse(dumpFile io.Reader) error {
 				DumpSnap.DeleteSubnet(v.Subnet4, o2.ID)
 			}
 			for _, v := range o2.URL {
-				DumpSnap.DeleteUrl(NormalizeUrl(v.URL), o2.ID)
+				DumpSnap.DeleteUrl(NormalizeURL(v.URL), o2.ID)
 			}
 			for _, v := range o2.Domain {
 				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.ID)
@@ -420,7 +420,7 @@ func (v *MinContent) handleAddUrl(v0 *Content) {
 	if len(v0.URL) > 0 {
 		v.URL = v0.URL
 		for _, value := range v.URL {
-			url := NormalizeUrl(value.URL)
+			url := NormalizeURL(value.URL)
 			DumpSnap.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
 				v0.HTTPSBlock += 1
@@ -434,7 +434,7 @@ func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
 	if len(v0.URL) > 0 {
 		v.URL = v0.URL
 		for _, value := range v.URL {
-			url := NormalizeUrl(value.URL)
+			url := NormalizeURL(value.URL)
 			DumpSnap.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
 				v0.HTTPSBlock += 1
@@ -443,7 +443,7 @@ func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
 		}
 	}
 	for _, value := range o.URL {
-		url := NormalizeUrl(value.URL)
+		url := NormalizeURL(value.URL)
 		if _, ok := urlSet[url]; !ok {
 			DumpSnap.DeleteUrl(url, o.ID)
 		}
