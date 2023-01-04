@@ -3,152 +3,194 @@ package main
 import (
 	"archive/zip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 )
 
-type TDumpAnswer struct {
+// DumpAnswer - "vigruzki" json API.
+type DumpAnswer struct {
 	ArchStatus          int    `json:"a"`
 	ArchSize            int    `json:"as"`
 	CRC                 string `json:"crc"`
 	CacheExpirationTime int    `json:"ct"`
-	Id                  string `json:"id"`
+	ID                  string `json:"id"`
 	Size                int    `json:"s"`
 	DbUpdateTime        int64  `json:"u"`
 	UpdateTime          int64  `json:"ut"`
 	UrgentUpdateTime    int64  `json:"utu"`
 }
 
-func GetLastDumpId(ts int64, url, key string) (*TDumpAnswer, error) {
-	var dump *TDumpAnswer
-	answer := make([]TDumpAnswer, 0)
+// Errors
+var (
+	ErrNot200HTTPCode = errors.New("not 200 HTTP code")
+	ErrEmptyAnswer    = errors.New("empty answer")
+)
+
+// GetLastDumpID - fetch last dump ID from "vigruzki".
+func GetLastDumpID(ts int64, u, key string) (*DumpAnswer, error) {
+	answer := make([]DumpAnswer, 0)
 	client := &http.Client{}
-	_url := fmt.Sprintf("%s/last", url)
-	_auth := fmt.Sprintf("Bearer %s", key)
-	_time := fmt.Sprintf("%d", ts)
-	req, err := http.NewRequest("GET", _url, nil)
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/last", u), nil)
 	if err != nil {
-		return dump, err
+		return nil, fmt.Errorf("construct request: %w", err)
 	}
+
 	q := req.URL.Query()
-	q.Add("ts", _time)
+	q.Add("ts", fmt.Sprintf("%d", ts))
+
 	req.URL.RawQuery = q.Encode()
-	req.Header.Set("Authorization", _auth)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return dump, err
+		return nil, fmt.Errorf("do request: %w", err)
 	}
+
 	if resp.StatusCode != 200 {
-		fmt.Printf("%s\n", resp.Body)
-		return dump, fmt.Errorf("not 200 HTTP code: %d", resp.StatusCode)
+		Debug.Printf("%s\n", resp.Body)
+
+		return nil, fmt.Errorf("%w: %d", ErrNot200HTTPCode, resp.StatusCode)
 	}
+
 	err = json.NewDecoder(resp.Body).Decode(&answer)
 	if err != nil {
-		return dump, err
+		return nil, fmt.Errorf("decode: %w", err)
 	}
+
 	if len(answer) == 0 {
-		dump = &TDumpAnswer{}
-		return dump, nil
+		return nil, fmt.Errorf("answers: %w", ErrEmptyAnswer)
 	}
-	dump = &answer[0]
-	return dump, nil
+
+	return &answer[0], nil
 }
 
-func FetchDump(id, filename, url, key string) error {
+// FetchDump - fetch dump from "vigruzki".
+func FetchDump(id, filename, u, key string) error {
 	client := &http.Client{}
-	_url := fmt.Sprintf("%s/get/%s", url, id)
-	_tmpfilename := fmt.Sprintf("%s-tmp", filename)
-	_auth := fmt.Sprintf("Bearer %s", key)
-	out, err := os.Create(_tmpfilename)
+	tfn := fmt.Sprintf("%s-tmp", filename)
+
+	out, err := os.Create(tfn)
 	if err != nil {
 		return err
 	}
+
 	defer out.Close()
-	req, err := http.NewRequest("GET", _url, nil)
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/get/%s", u, id), nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
-	req.Header.Set("Authorization", _auth)
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", key))
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("do request: %w", err)
 	}
+
 	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("not 200 HTTP code: %d", resp.StatusCode)
+		return fmt.Errorf("%w: %d", ErrNot200HTTPCode, resp.StatusCode)
 	}
+
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		return err
+		return fmt.Errorf("body copy: %w", err)
 	}
-	err = os.Rename(_tmpfilename, filename)
+
+	err = os.Rename(tfn, filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("file rename: %w", err)
 	}
+
 	return nil
 }
 
-func ReadCurrentDumpId(filename string) (*TDumpAnswer, error) {
-	result := TDumpAnswer{}
+// ReadCurrentDumpID - read saved current dump id.
+func ReadCurrentDumpID(filename string) (*DumpAnswer, error) {
+	result := DumpAnswer{}
+
 	if _, err := os.Stat(filename); err == nil {
 		dat, err := os.ReadFile(filename)
 		if err != nil {
-			return &result, err
+			return &result, fmt.Errorf("read file: %w", err)
 		}
+
 		err = json.Unmarshal(dat, &result)
 		if err != nil {
-			return &result, err
+			return &result, fmt.Errorf("unmarshal: %w", err)
 		}
 	}
+
 	return &result, nil
 }
 
-func WriteCurrentDumpId(filename string, dump *TDumpAnswer) error {
+// WriteCurrentDumpID - save current dump id.
+func WriteCurrentDumpID(filename string, dump *DumpAnswer) error {
 	dat, err := json.Marshal(dump)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal: %w", err)
 	}
+
 	err = os.WriteFile(filename, dat, 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("write file: %w", err)
 	}
+
 	return nil
 }
 
+// DumpUnzip - unzip dump file.
 func DumpUnzip(src, filename string) error {
-	tmpfile := fmt.Sprintf("%s-temp", filename)
+	tmpfilename := fmt.Sprintf("%s-temp", filename)
+
 	r, err := zip.OpenReader(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("open zip arch: %w", err)
 	}
+
 	defer r.Close()
+
 	for _, f := range r.File {
+		// look over file list and handle this one
 		if f.Name != "dump.xml" {
 			continue
 		}
+
 		if f.FileInfo().IsDir() {
 			return fmt.Errorf("file is dir")
 		}
+
 		rc, err := f.Open()
 		if err != nil {
-			return err
+			return fmt.Errorf("open zipped file: %w", err)
 		}
+
 		defer rc.Close()
-		f, err := os.Create(tmpfile)
+
+		f, err := os.Create(tmpfilename)
 		if err != nil {
-			return err
+			return fmt.Errorf("create tmpfile: %w", err)
 		}
+
 		defer f.Close()
+
 		_, err = io.Copy(f, rc)
 		if err != nil {
-			return err
+			return fmt.Errorf("write unzipped: %w", err)
 		}
+
+		break
 	}
-	err = os.Rename(tmpfile, filename)
+
+	err = os.Rename(tmpfilename, filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("file rename: %w", err)
 	}
+
 	return nil
 }

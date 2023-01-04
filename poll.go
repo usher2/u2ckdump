@@ -26,28 +26,28 @@ func DumpPoll(s *grpc.Server, done chan bool, sigs chan os.Signal, url, token, d
 
 func DumpRefresh(url, token, dir string) {
 	ts := time.Now().Unix()
-	lastDump, err := GetLastDumpId(ts, url, token)
+	lastDump, err := GetLastDumpID(ts, url, token)
 	if err != nil {
 		Error.Printf("Can't get last dump id: %s\n", err.Error())
 		return
 	}
-	if lastDump.Id == "" {
+	if lastDump.ID == "" {
 		Error.Println("Last dump Id is empty...")
 		return
 	}
-	Info.Printf("Last dump id: %s\n", lastDump.Id)
-	cachedDump, err := ReadCurrentDumpId(dir + "/current")
+	Info.Printf("Last dump id: %s\n", lastDump.ID)
+	cachedDump, err := ReadCurrentDumpID(dir + "/current")
 	if err != nil {
 		Error.Printf("Can't read cached dump id: %s\n", err.Error())
 		return
 	}
-	if cachedDump.Id == "" {
+	if cachedDump.ID == "" {
 		Warning.Println("Cashed dump Id is empty...")
 	}
 	// two states...
 	if lastDump.CRC != cachedDump.CRC {
 		Info.Printf("Getting new dump..")
-		err := FetchDump(lastDump.Id, dir+"/dump.zip", url, token)
+		err := FetchDump(lastDump.ID, dir+"/dump.zip", url, token)
 		if err != nil {
 			Error.Printf("Can't fetch last dump: %s\n", err.Error())
 			return
@@ -75,14 +75,14 @@ func DumpRefresh(url, token, dir string) {
 				runtime.GC()
 				Info.Printf("Complete GC\n")
 			}
-			err = WriteCurrentDumpId(dir+"/current", lastDump)
+			err = WriteCurrentDumpID(dir+"/current", lastDump)
 			if err != nil {
 				Error.Printf("Can't write currentdump file: %s\n", err.Error())
 				return
 			}
 			Info.Println("Last dump metainfo saved")
 		}
-	} else if lastDump.Id != cachedDump.Id {
+	} else if lastDump.ID != cachedDump.ID {
 		Info.Printf("Not changed, but new dump metainfo")
 		Parse2(lastDump.UpdateTime)
 		runtime.GC()
