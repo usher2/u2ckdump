@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"io"
 
 	//"log"
 	//"net/http"
@@ -30,11 +30,11 @@ func main() {
 	flag.Parse()
 	switch *confLogLevel {
 	case "Info":
-		logInit(ioutil.Discard, os.Stdout, os.Stderr, os.Stderr)
+		logInit(io.Discard, os.Stdout, os.Stderr, os.Stderr)
 	case "Warning":
-		logInit(ioutil.Discard, ioutil.Discard, os.Stderr, os.Stderr)
+		logInit(io.Discard, io.Discard, os.Stderr, os.Stderr)
 	case "Error":
-		logInit(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
+		logInit(io.Discard, io.Discard, io.Discard, os.Stderr)
 	default:
 		logInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -43,7 +42,7 @@ func GetLastDumpId(ts int64, url, key string) (*TDumpAnswer, error) {
 	}
 	if resp.StatusCode != 200 {
 		fmt.Printf("%s\n", resp.Body)
-		return dump, fmt.Errorf("Not 200 HTTP code: %d", resp.StatusCode)
+		return dump, fmt.Errorf("not 200 HTTP code: %d", resp.StatusCode)
 	}
 	err = json.NewDecoder(resp.Body).Decode(&answer)
 	if err != nil {
@@ -78,7 +77,7 @@ func FetchDump(id, filename, url, key string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Not 200 HTTP code: %d", resp.StatusCode)
+		return fmt.Errorf("not 200 HTTP code: %d", resp.StatusCode)
 	}
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
@@ -94,7 +93,7 @@ func FetchDump(id, filename, url, key string) error {
 func ReadCurrentDumpId(filename string) (*TDumpAnswer, error) {
 	result := TDumpAnswer{}
 	if _, err := os.Stat(filename); err == nil {
-		dat, err := ioutil.ReadFile(filename)
+		dat, err := os.ReadFile(filename)
 		if err != nil {
 			return &result, err
 		}
@@ -111,7 +110,7 @@ func WriteCurrentDumpId(filename string, dump *TDumpAnswer) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(filename, dat, 0644)
+	err = os.WriteFile(filename, dat, 0644)
 	if err != nil {
 		return err
 	}
@@ -130,7 +129,7 @@ func DumpUnzip(src, filename string) error {
 			continue
 		}
 		if f.FileInfo().IsDir() {
-			return fmt.Errorf("File is dir")
+			return fmt.Errorf("file is dir")
 		}
 		rc, err := f.Open()
 		if err != nil {

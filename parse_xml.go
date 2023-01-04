@@ -28,7 +28,7 @@ const (
 
 var __h64 hash.Hash64
 
-func UnmarshalContent(b []byte, v *TContent) error {
+func UnmarshalContent(b []byte, v *Content) error {
 	buf := bytes.NewReader(b)
 	decoder := xml.NewDecoder(buf)
 	for {
@@ -51,52 +51,52 @@ func UnmarshalContent(b []byte, v *TContent) error {
 					return err
 				}
 			case elementUrl:
-				u := TXMLUrl{}
+				u := XMLURL{}
 				if err := decoder.DecodeElement(&u, &element); err != nil {
 					return err
 				}
-				v.Url = append(v.Url, TUrl{Url: u.Url, Ts: parseTime(u.Ts)})
+				v.URL = append(v.URL, URL{URL: u.URL, Ts: parseTime(u.Ts)})
 			case elementDomain:
-				d := TXMLDomain{}
+				d := XMLDomain{}
 				if err := decoder.DecodeElement(&d, &element); err != nil {
 					return err
 				}
-				v.Domain = append(v.Domain, TDomain{Domain: d.Domain, Ts: parseTime(d.Ts)})
+				v.Domain = append(v.Domain, Domain{Domain: d.Domain, Ts: parseTime(d.Ts)})
 			case elementIp:
-				ip := TXMLIp{}
+				ip := XMLIP{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return err
 				}
-				v.Ip4 = append(v.Ip4, TIp4{Ip4: parseIp4(ip.Ip), Ts: parseTime(ip.Ts)})
+				v.IP4 = append(v.IP4, IP4{IP4: parseIp4(ip.IP), Ts: parseTime(ip.Ts)})
 			case elementIpv6:
-				ip := TXMLIp6{}
+				ip := XMLIP6{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return err
 				}
-				v.Ip6 = append(v.Ip6, TIp6{Ip6: net.ParseIP(ip.Ip6), Ts: parseTime(ip.Ts)})
+				v.IP6 = append(v.IP6, IP6{IP6: net.ParseIP(ip.IP6), Ts: parseTime(ip.Ts)})
 			case elementIpSubnet:
-				s := TXMLSubnet{}
+				s := XMLSubnet{}
 				if err := decoder.DecodeElement(&s, &element); err != nil {
 					return err
 				}
-				v.Subnet4 = append(v.Subnet4, TSubnet4{Subnet4: s.Subnet, Ts: parseTime(s.Ts)})
+				v.Subnet4 = append(v.Subnet4, Subnet4{Subnet4: s.Subnet, Ts: parseTime(s.Ts)})
 			case elementIpv6Subnet:
-				s := TXMLSubnet6{}
+				s := XMLSubnet6{}
 				if err := decoder.DecodeElement(&s, &element); err != nil {
 					return err
 				}
-				v.Subnet6 = append(v.Subnet6, TSubnet6{Subnet6: s.Subnet6, Ts: parseTime(s.Ts)})
+				v.Subnet6 = append(v.Subnet6, Subnet6{Subnet6: s.Subnet6, Ts: parseTime(s.Ts)})
 			}
 		}
 	}
 	return nil
 }
 
-func parseContentElement(element xml.StartElement, v *TContent) error {
+func parseContentElement(element xml.StartElement, v *Content) error {
 	for _, attr := range element.Attr {
 		switch attr.Name.Local {
 		case "id":
-			if err := parseInt32(&v.Id, attr.Value); err != nil {
+			if err := parseInt32(&v.ID, attr.Value); err != nil {
 				return err
 			}
 		case "entryType":
@@ -171,7 +171,7 @@ func Parse(dumpFile io.Reader) error {
 				__h64.Write(tempBuf)
 				u2Hash := __h64.Sum64()
 				bufferOffset = tokenStartOffset
-				v := TContent{}
+				v := Content{}
 				// create or update
 				DumpSnap.Lock()
 				v0, exists := DumpSnap.Content[id]
@@ -183,7 +183,7 @@ func Parse(dumpFile io.Reader) error {
 						v.Add(u2Hash, r.UpdateTime)
 						Stats.CntAdd++
 					}
-					SPass[v.Id] = NothingV
+					SPass[v.ID] = NothingV
 				} else if v0.U2Hash != u2Hash {
 					err := UnmarshalContent(tempBuf, &v)
 					if err != nil {
@@ -192,10 +192,10 @@ func Parse(dumpFile io.Reader) error {
 						v.Update(u2Hash, v0, r.UpdateTime)
 						Stats.CntUpdate++
 					}
-					SPass[v.Id] = NothingV
+					SPass[v.ID] = NothingV
 				} else {
 					DumpSnap.Content[id].RegistryUpdateTime = r.UpdateTime
-					SPass[v0.Id] = NothingV
+					SPass[v0.ID] = NothingV
 					//v = nil
 				}
 				DumpSnap.Unlock()
@@ -212,26 +212,26 @@ func Parse(dumpFile io.Reader) error {
 	DumpSnap.Lock()
 	for id, o2 := range DumpSnap.Content {
 		if _, ok := SPass[id]; !ok {
-			for _, v := range o2.Ip4 {
-				DumpSnap.DeleteIp(v.Ip4, o2.Id)
+			for _, v := range o2.IP4 {
+				DumpSnap.DeleteIp(v.IP4, o2.ID)
 			}
-			for _, v := range o2.Ip6 {
-				ip6 := string(v.Ip6)
-				DumpSnap.DeleteIp6(ip6, o2.Id)
+			for _, v := range o2.IP6 {
+				ip6 := string(v.IP6)
+				DumpSnap.DeleteIp6(ip6, o2.ID)
 			}
 			for _, v := range o2.Subnet6 {
-				DumpSnap.DeleteSubnet6(v.Subnet6, o2.Id)
+				DumpSnap.DeleteSubnet6(v.Subnet6, o2.ID)
 			}
 			for _, v := range o2.Subnet4 {
-				DumpSnap.DeleteSubnet(v.Subnet4, o2.Id)
+				DumpSnap.DeleteSubnet(v.Subnet4, o2.ID)
 			}
-			for _, v := range o2.Url {
-				DumpSnap.DeleteUrl(NormalizeUrl(v.Url), o2.Id)
+			for _, v := range o2.URL {
+				DumpSnap.DeleteUrl(NormalizeUrl(v.URL), o2.ID)
 			}
 			for _, v := range o2.Domain {
-				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.Id)
+				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.ID)
 			}
-			DumpSnap.DeleteDecision(o2.Decision, o2.Id)
+			DumpSnap.DeleteDecision(o2.Decision, o2.ID)
 			delete(DumpSnap.Content, id)
 			Stats.CntRemove++
 		}
@@ -278,7 +278,7 @@ func Parse(dumpFile io.Reader) error {
 	return err
 }
 
-func (v *TContent) Marshal() []byte {
+func (v *Content) Marshal() []byte {
 	b, err := json.Marshal(v)
 	if err != nil {
 		Error.Printf("Error encoding: %s\n", err.Error())
@@ -286,30 +286,30 @@ func (v *TContent) Marshal() []byte {
 	return b
 }
 
-func (v *TContent) constructBlockType() int32 {
+func (v *Content) constructBlockType() int32 {
 	switch v.BlockType {
 	case "ip":
-		return TBLOCK_IP
+		return BlockTypeIP
 	case "domain":
-		return TBLOCK_DOMAIN
+		return BlockTypeDomain
 	case "domain-mask":
-		return TBLOCK_MASK
+		return BlockTypeMask
 	default:
 		if v.BlockType != "default" && v.BlockType != "" {
 			Error.Printf("Unknown block type: %s\n", v.BlockType)
 		}
-		if v.HttpsBlock == 0 {
-			return TBLOCK_URL
+		if v.HTTPSBlock == 0 {
+			return BlockTypeURL
 		} else {
-			return TBLOCK_HTTPS
+			return BlockTypeHTTPS
 		}
 	}
 }
 
-func (v *TContent) Update(u2Hash uint64, o *TMinContent, updateTime int64) {
+func (v *Content) Update(u2Hash uint64, o *MinContent, updateTime int64) {
 	pack := v.Marshal()
-	v1 := newMinContent(v.Id, u2Hash, updateTime, pack)
-	DumpSnap.Content[v.Id] = v1
+	v1 := newMinContent(v.ID, u2Hash, updateTime, pack)
+	DumpSnap.Content[v.ID] = v1
 	v1.handleUpdateIp(v, o)
 	v1.handleUpdateIp6(v, o)
 	v1.handleUpdateSubnet(v, o)
@@ -320,10 +320,10 @@ func (v *TContent) Update(u2Hash uint64, o *TMinContent, updateTime int64) {
 	v1.BlockType = v.constructBlockType()
 }
 
-func (v *TContent) Add(u2Hash uint64, updateTime int64) {
+func (v *Content) Add(u2Hash uint64, updateTime int64) {
 	pack := v.Marshal()
-	v1 := newMinContent(v.Id, u2Hash, updateTime, pack)
-	DumpSnap.Content[v.Id] = v1
+	v1 := newMinContent(v.ID, u2Hash, updateTime, pack)
+	DumpSnap.Content[v.ID] = v1
 	v1.handleAddIp(v)
 	v1.handleAddIp6(v)
 	v1.handleAddSubnet6(v)
@@ -334,7 +334,7 @@ func (v *TContent) Add(u2Hash uint64, updateTime int64) {
 	v1.BlockType = v.constructBlockType()
 }
 
-func (v *TMinContent) handleAddDecision(v0 *TContent) {
+func (v *MinContent) handleAddDecision(v0 *Content) {
 	c := []byte(" ")
 	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
 	__h64.Reset()
@@ -344,11 +344,11 @@ func (v *TMinContent) handleAddDecision(v0 *TContent) {
 	__h64.Write(c)
 	__h64.Write([]byte(v0.Decision.Date))
 	v.Decision = __h64.Sum64()
-	DumpSnap.AddDecision(v.Decision, v.Id)
+	DumpSnap.AddDecision(v.Decision, v.ID)
 }
 
 // IT IS REASON FOR ALARM!!!!
-func (v *TMinContent) handleUpdateDecision(v0 *TContent, o *TMinContent) {
+func (v *MinContent) handleUpdateDecision(v0 *Content, o *MinContent) {
 	c := []byte(" ")
 	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
 	__h64.Reset()
@@ -358,172 +358,172 @@ func (v *TMinContent) handleUpdateDecision(v0 *TContent, o *TMinContent) {
 	__h64.Write(c)
 	__h64.Write([]byte(v0.Decision.Date))
 	v.Decision = __h64.Sum64()
-	DumpSnap.DeleteDecision(o.Decision, o.Id)
-	DumpSnap.AddDecision(v.Decision, v.Id)
+	DumpSnap.DeleteDecision(o.Decision, o.ID)
+	DumpSnap.AddDecision(v.Decision, v.ID)
 }
 
-func (v *TMinContent) handleAddIp(v0 *TContent) {
-	if len(v0.Ip4) > 0 {
-		v.Ip4 = v0.Ip4
-		for i, _ := range v.Ip4 {
-			DumpSnap.AddIp(v.Ip4[i].Ip4, v.Id)
+func (v *MinContent) handleAddIp(v0 *Content) {
+	if len(v0.IP4) > 0 {
+		v.IP4 = v0.IP4
+		for i := range v.IP4 {
+			DumpSnap.AddIp(v.IP4[i].IP4, v.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleUpdateIp(v0 *TContent, o *TMinContent) {
-	ipSet := make(map[uint32]Nothing, len(v.Ip4))
-	if len(v0.Ip4) > 0 {
-		v.Ip4 = v0.Ip4
-		for i, _ := range v.Ip4 {
-			DumpSnap.AddIp(v.Ip4[i].Ip4, v.Id)
-			ipSet[v.Ip4[i].Ip4] = NothingV
+func (v *MinContent) handleUpdateIp(v0 *Content, o *MinContent) {
+	ipSet := make(map[uint32]Nothing, len(v.IP4))
+	if len(v0.IP4) > 0 {
+		v.IP4 = v0.IP4
+		for i := range v.IP4 {
+			DumpSnap.AddIp(v.IP4[i].IP4, v.ID)
+			ipSet[v.IP4[i].IP4] = NothingV
 		}
 	}
-	for i, _ := range o.Ip4 {
-		ip := o.Ip4[i].Ip4
+	for i := range o.IP4 {
+		ip := o.IP4[i].IP4
 		if _, ok := ipSet[ip]; !ok {
-			DumpSnap.DeleteIp(ip, o.Id)
+			DumpSnap.DeleteIp(ip, o.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleAddDomain(v0 *TContent) {
+func (v *MinContent) handleAddDomain(v0 *Content) {
 	if len(v0.Domain) > 0 {
 		v.Domain = v0.Domain
 		for _, value := range v.Domain {
 			domain := NormalizeDomain(value.Domain)
-			DumpSnap.AddDomain(domain, v.Id)
+			DumpSnap.AddDomain(domain, v.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleUpdateDomain(v0 *TContent, o *TMinContent) {
+func (v *MinContent) handleUpdateDomain(v0 *Content, o *MinContent) {
 	domainSet := NewStringSet(len(v.Domain))
 	if len(v0.Domain) > 0 {
 		v.Domain = v0.Domain
 		for _, value := range v.Domain {
 			domain := NormalizeDomain(value.Domain)
-			DumpSnap.AddDomain(domain, v.Id)
+			DumpSnap.AddDomain(domain, v.ID)
 			domainSet[domain] = NothingV
 		}
 	}
 	for _, value := range o.Domain {
 		domain := NormalizeDomain(value.Domain)
 		if _, ok := domainSet[domain]; !ok {
-			DumpSnap.DeleteDomain(domain, o.Id)
+			DumpSnap.DeleteDomain(domain, o.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleAddUrl(v0 *TContent) {
-	if len(v0.Url) > 0 {
-		v.Url = v0.Url
-		for _, value := range v.Url {
-			url := NormalizeUrl(value.Url)
-			DumpSnap.AddUrl(url, v.Id)
+func (v *MinContent) handleAddUrl(v0 *Content) {
+	if len(v0.URL) > 0 {
+		v.URL = v0.URL
+		for _, value := range v.URL {
+			url := NormalizeUrl(value.URL)
+			DumpSnap.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
-				v0.HttpsBlock += 1
+				v0.HTTPSBlock += 1
 			}
 		}
 	}
 }
 
-func (v *TMinContent) handleUpdateUrl(v0 *TContent, o *TMinContent) {
-	urlSet := NewStringSet(len(v.Url))
-	if len(v0.Url) > 0 {
-		v.Url = v0.Url
-		for _, value := range v.Url {
-			url := NormalizeUrl(value.Url)
-			DumpSnap.AddUrl(url, v.Id)
+func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
+	urlSet := NewStringSet(len(v.URL))
+	if len(v0.URL) > 0 {
+		v.URL = v0.URL
+		for _, value := range v.URL {
+			url := NormalizeUrl(value.URL)
+			DumpSnap.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
-				v0.HttpsBlock += 1
+				v0.HTTPSBlock += 1
 			}
 			urlSet[url] = NothingV
 		}
 	}
-	for _, value := range o.Url {
-		url := NormalizeUrl(value.Url)
+	for _, value := range o.URL {
+		url := NormalizeUrl(value.URL)
 		if _, ok := urlSet[url]; !ok {
-			DumpSnap.DeleteUrl(url, o.Id)
+			DumpSnap.DeleteUrl(url, o.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleAddSubnet(v0 *TContent) {
+func (v *MinContent) handleAddSubnet(v0 *Content) {
 	if len(v0.Subnet4) > 0 {
 		v.Subnet4 = v0.Subnet4
 		for _, value := range v.Subnet4 {
-			DumpSnap.AddSubnet(value.Subnet4, v.Id)
+			DumpSnap.AddSubnet(value.Subnet4, v.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleUpdateSubnet(v0 *TContent, o *TMinContent) {
+func (v *MinContent) handleUpdateSubnet(v0 *Content, o *MinContent) {
 	subnetSet := NewStringSet(len(v.Subnet4))
 	if len(v0.Subnet4) > 0 {
 		v.Subnet4 = v0.Subnet4
 		for _, value := range v.Subnet4 {
-			DumpSnap.AddSubnet(value.Subnet4, v.Id)
+			DumpSnap.AddSubnet(value.Subnet4, v.ID)
 			subnetSet[value.Subnet4] = NothingV
 		}
 	}
 	for _, value := range o.Subnet4 {
 		if _, ok := subnetSet[value.Subnet4]; !ok {
-			DumpSnap.DeleteSubnet(value.Subnet4, o.Id)
+			DumpSnap.DeleteSubnet(value.Subnet4, o.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleAddSubnet6(v0 *TContent) {
+func (v *MinContent) handleAddSubnet6(v0 *Content) {
 	if len(v0.Subnet6) > 0 {
 		v.Subnet6 = v0.Subnet6
 		for _, value := range v.Subnet6 {
-			DumpSnap.AddSubnet6(value.Subnet6, v.Id)
+			DumpSnap.AddSubnet6(value.Subnet6, v.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleUpdateSubnet6(v0 *TContent, o *TMinContent) {
+func (v *MinContent) handleUpdateSubnet6(v0 *Content, o *MinContent) {
 	subnet6Set := NewStringSet(len(v.Subnet6))
 	if len(v0.Subnet6) > 0 {
 		v.Subnet6 = v0.Subnet6
 		for _, value := range v.Subnet6 {
-			DumpSnap.AddSubnet(value.Subnet6, v.Id)
+			DumpSnap.AddSubnet(value.Subnet6, v.ID)
 			subnet6Set[value.Subnet6] = NothingV
 		}
 	}
 	for _, value := range o.Subnet6 {
 		if _, ok := subnet6Set[value.Subnet6]; !ok {
-			DumpSnap.DeleteSubnet6(value.Subnet6, o.Id)
+			DumpSnap.DeleteSubnet6(value.Subnet6, o.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleAddIp6(v0 *TContent) {
-	if len(v0.Ip6) > 0 {
-		v.Ip6 = v0.Ip6
-		for _, value := range v.Ip6 {
-			ip6 := string(value.Ip6)
-			DumpSnap.AddIp6(ip6, v.Id)
+func (v *MinContent) handleAddIp6(v0 *Content) {
+	if len(v0.IP6) > 0 {
+		v.IP6 = v0.IP6
+		for _, value := range v.IP6 {
+			ip6 := string(value.IP6)
+			DumpSnap.AddIp6(ip6, v.ID)
 		}
 	}
 }
 
-func (v *TMinContent) handleUpdateIp6(v0 *TContent, o *TMinContent) {
-	ip6Set := NewStringSet(len(v.Ip6))
-	if len(v0.Ip6) > 0 {
-		v.Ip6 = v0.Ip6
-		for _, value := range v.Ip6 {
-			ip6 := string(value.Ip6)
-			DumpSnap.AddIp6(ip6, v.Id)
+func (v *MinContent) handleUpdateIp6(v0 *Content, o *MinContent) {
+	ip6Set := NewStringSet(len(v.IP6))
+	if len(v0.IP6) > 0 {
+		v.IP6 = v0.IP6
+		for _, value := range v.IP6 {
+			ip6 := string(value.IP6)
+			DumpSnap.AddIp6(ip6, v.ID)
 			ip6Set[ip6] = NothingV
 		}
 	}
-	for _, value := range o.Ip6 {
-		ip6 := string(value.Ip6)
+	for _, value := range o.IP6 {
+		ip6 := string(value.IP6)
 		if _, ok := ip6Set[ip6]; !ok {
-			DumpSnap.DeleteIp6(ip6, o.Id)
+			DumpSnap.DeleteIp6(ip6, o.ID)
 		}
 	}
 }
@@ -557,16 +557,16 @@ func handleRegister(element xml.StartElement, r *TReg) {
 	}
 }
 
-func newMinContent(id int32, hash uint64, utime int64, pack []byte) *TMinContent {
-	v := TMinContent{Id: id, U2Hash: hash, RegistryUpdateTime: utime, Pack: pack}
+func newMinContent(id int32, hash uint64, utime int64, pack []byte) *MinContent {
+	v := MinContent{ID: id, U2Hash: hash, RegistryUpdateTime: utime, Pack: pack}
 	return &v
 }
 
-func (v *TMinContent) newPbContent(ip4 uint32, ip6 []byte, domain, url, aggr string) *pb.Content {
+func (v *MinContent) newPbContent(ip4 uint32, ip6 []byte, domain, url, aggr string) *pb.Content {
 	v0 := pb.Content{}
 	v0.BlockType = v.BlockType
 	v0.RegistryUpdateTime = v.RegistryUpdateTime
-	v0.Id = v.Id
+	v0.Id = v.ID
 	v0.Ip4 = ip4
 	v0.Ip6 = ip6
 	v0.Domain = domain

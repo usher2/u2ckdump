@@ -10,7 +10,7 @@ import (
 type (
 	Nothing        struct{}
 	IntSet         map[int32]Nothing
-	TMinContentMap map[int32]*TMinContent
+	TMinContentMap map[int32]*MinContent
 )
 
 var NothingV = Nothing{}
@@ -29,7 +29,7 @@ var Stats Stat
 type TDump struct {
 	sync.RWMutex
 	utime    int64
-	ip       Ip4Set
+	ip       IP4Set
 	ip6      StringIntSet
 	subnet   StringIntSet
 	subnet6  StringIntSet
@@ -43,7 +43,7 @@ type TDump struct {
 func NewTDump() *TDump {
 	return &TDump{
 		utime:    0,
-		ip:       make(Ip4Set),
+		ip:       make(IP4Set),
 		ip6:      make(StringIntSet),
 		subnet:   make(StringIntSet),
 		subnet6:  make(StringIntSet),

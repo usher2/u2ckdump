@@ -154,7 +154,7 @@ func Test_Parse(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	fmt.Printf("IP4:\n%v\n", DumpSnap.ip)
-	for k, _ := range DumpSnap.Content {
+	for k := range DumpSnap.Content {
 		fmt.Printf("%d ", k)
 	}
 	fmt.Println()

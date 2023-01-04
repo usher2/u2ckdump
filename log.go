@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// LogLevels
 var (
 	Debug   *log.Logger
 	Info    *log.Logger
