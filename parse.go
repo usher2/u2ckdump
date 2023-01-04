@@ -8,9 +8,9 @@ import (
 )
 
 type (
-	Nothing        struct{}
-	IntSet         map[int32]Nothing
-	TMinContentMap map[int32]*MinContent
+	Nothing       struct{}
+	Int32Map      map[int32]Nothing
+	MinContentMap map[int32]*MinContent
 )
 
 var NothingV = Nothing{}
@@ -37,7 +37,7 @@ type TDump struct {
 	url      StringIntSet
 	domain   StringIntSet
 	decision DecisionSet
-	Content  TMinContentMap
+	Content  MinContentMap
 }
 
 func NewTDump() *TDump {
@@ -50,7 +50,7 @@ func NewTDump() *TDump {
 		url:      make(StringIntSet),
 		domain:   make(StringIntSet),
 		decision: make(DecisionSet),
-		Content:  make(TMinContentMap),
+		Content:  make(MinContentMap),
 		net:      cidranger.NewPCTrieRanger(),
 	}
 }
@@ -143,7 +143,7 @@ func (t *TDump) DeleteDecision(i uint64, id int32) {
 
 var DumpSnap = NewTDump()
 
-type TReg struct {
+type Reg struct {
 	UpdateTime         int64
 	UpdateTimeUrgently string
 	FormatVersion      string
