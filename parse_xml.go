@@ -267,34 +267,34 @@ func Parse(dumpFile io.Reader) error {
 	// remove operations
 	DumpSnap.Lock()
 
-	for id, o2 := range DumpSnap.Content {
+	for id, cont := range DumpSnap.Content {
 		if _, ok := ContJournal[id]; !ok {
-			for _, v := range o2.IP4 {
-				DumpSnap.DeleteIp(v.IP4, o2.ID)
+			for _, v := range cont.IP4 {
+				DumpSnap.DeleteIp(v.IP4, cont.ID)
 			}
 
-			for _, v := range o2.IP6 {
+			for _, v := range cont.IP6 {
 				ip6 := string(v.IP6)
-				DumpSnap.DeleteIp6(ip6, o2.ID)
+				DumpSnap.DeleteIp6(ip6, cont.ID)
 			}
 
-			for _, v := range o2.Subnet6 {
-				DumpSnap.DeleteSubnet6(v.Subnet6, o2.ID)
+			for _, v := range cont.Subnet6 {
+				DumpSnap.DeleteSubnet6(v.Subnet6, cont.ID)
 			}
 
-			for _, v := range o2.Subnet4 {
-				DumpSnap.DeleteSubnet(v.Subnet4, o2.ID)
+			for _, v := range cont.Subnet4 {
+				DumpSnap.DeleteSubnet(v.Subnet4, cont.ID)
 			}
 
-			for _, v := range o2.URL {
-				DumpSnap.DeleteUrl(NormalizeURL(v.URL), o2.ID)
+			for _, v := range cont.URL {
+				DumpSnap.DeleteUrl(NormalizeURL(v.URL), cont.ID)
 			}
 
-			for _, v := range o2.Domain {
-				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.ID)
+			for _, v := range cont.Domain {
+				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), cont.ID)
 			}
 
-			DumpSnap.DeleteDecision(o2.Decision, o2.ID)
+			DumpSnap.DeleteDecision(cont.Decision, cont.ID)
 			delete(DumpSnap.Content, id)
 			stats.CntRemove++
 		}
