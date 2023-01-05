@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/usher2/u2ckdump/internal/logger"
 )
 
 const (
@@ -121,7 +123,7 @@ const (
 )
 
 func Test_Parse(t *testing.T) {
-	logInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
+	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
 	dumpFile := strings.NewReader(xml01)
 	err := Parse(dumpFile)
 	if err != nil {

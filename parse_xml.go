@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/net/html/charset"
 
+	"github.com/usher2/u2ckdump/internal/logger"
 	pb "github.com/usher2/u2ckdump/msg"
 )
 
@@ -178,7 +179,7 @@ func Parse(dumpFile io.Reader) error {
 				if !exists {
 					err := UnmarshalContent(tempBuf, &v)
 					if err != nil {
-						Error.Printf("Decode Error: %s\n", err.Error())
+						logger.Error.Printf("Decode Error: %s\n", err.Error())
 					} else {
 						v.Add(u2Hash, r.UpdateTime)
 						Stats.CntAdd++
@@ -187,7 +188,7 @@ func Parse(dumpFile io.Reader) error {
 				} else if v0.U2Hash != u2Hash {
 					err := UnmarshalContent(tempBuf, &v)
 					if err != nil {
-						Error.Printf("Decode Error: %s\n", err.Error())
+						logger.Error.Printf("Decode Error: %s\n", err.Error())
 					} else {
 						v.Update(u2Hash, v0, r.UpdateTime)
 						Stats.CntUpdate++
@@ -269,19 +270,19 @@ func Parse(dumpFile io.Reader) error {
 		}
 	}
 	DumpSnap.Unlock()
-	Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", Stats.Cnt, Stats.CntAdd, Stats.CntUpdate, Stats.CntRemove)
-	Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
+	logger.Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", Stats.Cnt, Stats.CntAdd, Stats.CntUpdate, Stats.CntRemove)
+	logger.Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
 		len(DumpSnap.ip), len(DumpSnap.ip6), len(DumpSnap.subnet), len(DumpSnap.subnet6),
 		len(DumpSnap.domain), len(DumpSnap.url))
-	Info.Printf("Biggest array: %d\n", Stats.MaxArrayIntSet)
-	Info.Printf("Biggest content: %d\n", Stats.MaxContentSize)
+	logger.Info.Printf("Biggest array: %d\n", Stats.MaxArrayIntSet)
+	logger.Info.Printf("Biggest content: %d\n", Stats.MaxContentSize)
 	return err
 }
 
 func (v *Content) Marshal() []byte {
 	b, err := json.Marshal(v)
 	if err != nil {
-		Error.Printf("Error encoding: %s\n", err.Error())
+		logger.Error.Printf("Error encoding: %s\n", err.Error())
 	}
 	return b
 }
@@ -296,7 +297,7 @@ func (v *Content) constructBlockType() int32 {
 		return BlockTypeMask
 	default:
 		if v.BlockType != "default" && v.BlockType != "" {
-			Error.Printf("Unknown block type: %s\n", v.BlockType)
+			logger.Error.Printf("Unknown block type: %s\n", v.BlockType)
 		}
 		if v.HTTPSBlock == 0 {
 			return BlockTypeURL
@@ -537,7 +538,7 @@ func getContentId(_e xml.StartElement) int32 {
 		if _a.Name.Local == "id" {
 			id, err = strconv.Atoi(_a.Value)
 			if err != nil {
-				Debug.Printf("Can't fetch id: %s: %s\n", _a.Value, err.Error())
+				logger.Debug.Printf("Can't fetch id: %s: %s\n", _a.Value, err.Error())
 			}
 		}
 	}

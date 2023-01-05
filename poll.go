@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+
+	"github.com/usher2/u2ckdump/internal/logger"
 )
 
 func DumpPoll(s *grpc.Server, done chan bool, sigs chan os.Signal, url, token, dir string, d time.Duration) {
 	runtime.GC()
-	Info.Printf("Complete GC\n")
+	logger.Info.Printf("Complete GC\n")
 	DumpRefresh(url, token, dir)
 	for {
 		timer := time.NewTimer(d * time.Second)
@@ -28,66 +30,66 @@ func DumpRefresh(url, token, dir string) {
 	ts := time.Now().Unix()
 	lastDump, err := GetLastDumpID(ts, url, token)
 	if err != nil {
-		Error.Printf("Can't get last dump id: %s\n", err.Error())
+		logger.Error.Printf("Can't get last dump id: %s\n", err.Error())
 		return
 	}
 	if lastDump.ID == "" {
-		Error.Println("Last dump Id is empty...")
+		logger.Error.Println("Last dump Id is empty...")
 		return
 	}
-	Info.Printf("Last dump id: %s\n", lastDump.ID)
+	logger.Info.Printf("Last dump id: %s\n", lastDump.ID)
 	cachedDump, err := ReadCurrentDumpID(dir + "/current")
 	if err != nil {
-		Error.Printf("Can't read cached dump id: %s\n", err.Error())
+		logger.Error.Printf("Can't read cached dump id: %s\n", err.Error())
 		return
 	}
 	if cachedDump.ID == "" {
-		Warning.Println("Cashed dump Id is empty...")
+		logger.Warning.Println("Cashed dump Id is empty...")
 	}
 	// two states...
 	if lastDump.CRC != cachedDump.CRC {
-		Info.Printf("Getting new dump..")
+		logger.Info.Printf("Getting new dump..")
 		err := FetchDump(lastDump.ID, dir+"/dump.zip", url, token)
 		if err != nil {
-			Error.Printf("Can't fetch last dump: %s\n", err.Error())
+			logger.Error.Printf("Can't fetch last dump: %s\n", err.Error())
 			return
 		}
-		Info.Println("Last dump fetched")
+		logger.Info.Println("Last dump fetched")
 		err = DumpUnzip(dir+"/dump.zip", dir+"/dump.xml")
 		if err != nil {
-			Error.Printf("Can't extract last dump: %s\n", err.Error())
+			logger.Error.Printf("Can't extract last dump: %s\n", err.Error())
 			return
 		}
-		Info.Println("Last dump extracted")
+		logger.Info.Println("Last dump extracted")
 		// parse xml
 		if dumpFile, err := os.Open(dir + "/dump.xml"); err != nil {
-			Error.Printf("Can't open dump file: %s\n", err.Error())
+			logger.Error.Printf("Can't open dump file: %s\n", err.Error())
 			return
 		} else {
 			defer dumpFile.Close()
 			err = Parse(dumpFile)
 			if err != nil {
-				Error.Printf("Parse error: %s\n", err.Error())
+				logger.Error.Printf("Parse error: %s\n", err.Error())
 				return
 			} else {
-				Info.Printf("Dump parsed")
+				logger.Info.Printf("Dump parsed")
 				dumpFile.Close()
 				runtime.GC()
-				Info.Printf("Complete GC\n")
+				logger.Info.Printf("Complete GC\n")
 			}
 			err = WriteCurrentDumpID(dir+"/current", lastDump)
 			if err != nil {
-				Error.Printf("Can't write currentdump file: %s\n", err.Error())
+				logger.Error.Printf("Can't write currentdump file: %s\n", err.Error())
 				return
 			}
-			Info.Println("Last dump metainfo saved")
+			logger.Info.Println("Last dump metainfo saved")
 		}
 	} else if lastDump.ID != cachedDump.ID {
-		Info.Printf("Not changed, but new dump metainfo")
+		logger.Info.Printf("Not changed, but new dump metainfo")
 		Parse2(lastDump.UpdateTime)
 		runtime.GC()
-		Info.Printf("Complete GC\n")
+		logger.Info.Printf("Complete GC\n")
 	} else {
-		Info.Printf("No new dump")
+		logger.Info.Printf("No new dump")
 	}
 }

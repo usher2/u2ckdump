@@ -5,6 +5,8 @@ import (
 	"sync"
 
 	"github.com/yl2chen/cidranger"
+
+	"github.com/usher2/u2ckdump/internal/logger"
 )
 
 type (
@@ -74,11 +76,11 @@ func (t *TDump) AddSubnet(i string, id int32) {
 	if t.subnet.Add(i, id) {
 		_, network, err := net.ParseCIDR(i)
 		if err != nil {
-			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
 		}
 		err = t.net.Insert(cidranger.NewBasicRangerEntry(*network))
 		if err != nil {
-			Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
 		}
 	}
 }
@@ -86,11 +88,11 @@ func (t *TDump) DeleteSubnet(i string, id int32) {
 	if t.subnet.Delete(i, id) {
 		_, network, err := net.ParseCIDR(i)
 		if err != nil {
-			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
 		}
 		_, err = t.net.Remove(*network)
 		if err != nil {
-			Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
 		}
 	}
 }
@@ -99,11 +101,11 @@ func (t *TDump) AddSubnet6(i string, id int32) {
 	if t.subnet6.Add(i, id) {
 		_, network, err := net.ParseCIDR(i)
 		if err != nil {
-			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
 		}
 		err = t.net.Insert(cidranger.NewBasicRangerEntry(*network))
 		if err != nil {
-			Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
 		}
 	}
 }
@@ -111,11 +113,11 @@ func (t *TDump) DeleteSubnet6(i string, id int32) {
 	if t.subnet6.Delete(i, id) {
 		_, network, err := net.ParseCIDR(i)
 		if err != nil {
-			Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
 		}
 		_, err = t.net.Remove(*network)
 		if err != nil {
-			Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
 		}
 	}
 }

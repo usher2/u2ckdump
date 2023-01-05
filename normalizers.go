@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"golang.org/x/net/idna"
+
+	"github.com/usher2/u2ckdump/internal/logger"
 )
 
 func NormalizeDomain(domain string) string {
@@ -27,7 +29,7 @@ func NormalizeUrl(u string) string {
 	u = strings.Replace(u, "\\", "/", -1)
 	_url, err := url.Parse(u)
 	if err != nil {
-		Error.Printf("URL parse error: %s\n", err.Error())
+		logger.Error.Printf("URL parse error: %s\n", err.Error())
 		// add as is
 		return u
 	} else {

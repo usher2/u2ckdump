@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/usher2/u2ckdump/internal/logger"
 )
 
 // DumpAnswer - "vigruzki" json API.
@@ -51,7 +53,7 @@ func GetLastDumpID(ts int64, u, key string) (*DumpAnswer, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		Debug.Printf("%s\n", resp.Body)
+		logger.Debug.Printf("%s\n", resp.Body)
 
 		return nil, fmt.Errorf("%w: %d", ErrNot200HTTPCode, resp.StatusCode)
 	}

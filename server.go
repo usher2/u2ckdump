@@ -6,6 +6,7 @@ import (
 	"context"
 	"net"
 
+	"github.com/usher2/u2ckdump/internal/logger"
 	pb "github.com/usher2/u2ckdump/msg"
 )
 
@@ -18,7 +19,7 @@ type server struct {
 func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
-	Debug.Printf("Received decision: %d\n", query)
+	logger.Debug.Printf("Received decision: %d\n", query)
 
 	// TODO: Change to DunpSnap search method.
 	if DumpSnap != nil && DumpSnap.utime > 0 {
@@ -46,7 +47,7 @@ func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*p
 func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
-	Debug.Printf("Received content ID: %d\n", query)
+	logger.Debug.Printf("Received content ID: %d\n", query)
 
 	// TODO: Change to DunpSnap search method.
 	if DumpSnap != nil && DumpSnap.utime > 0 {
@@ -76,7 +77,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 		byte(query & 0x000000FF),
 	}
 
-	Debug.Printf("Received IPv4: %s\n", ipb)
+	logger.Debug.Printf("Received IPv4: %s\n", ipb)
 
 	var v1, v2 ArrayIntSet
 	var vnw []string
@@ -90,7 +91,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 		// TODO: Change to DumpSnap search method
 		cnw, err := DumpSnap.net.ContainingNetworks(ipb)
 		if err != nil {
-			Debug.Printf("Can't get containing networks: %s: %s\n", ipb, err)
+			logger.Debug.Printf("Can't get containing networks: %s: %s\n", ipb, err)
 		} else {
 			for _, entry := range cnw {
 				nw := entry.Network()
@@ -136,7 +137,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
-	Debug.Printf("Received IPv6: %v\n", query)
+	logger.Debug.Printf("Received IPv6: %v\n", query)
 
 	// TODO: Change to DunpSnap search method.
 	if DumpSnap != nil && DumpSnap.utime > 0 {
@@ -164,7 +165,7 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
-	Debug.Printf("Received URL: %v\n", query)
+	logger.Debug.Printf("Received URL: %v\n", query)
 
 	// TODO: Change to DunpSnap search method.
 	if DumpSnap != nil && DumpSnap.utime > 0 {
@@ -192,7 +193,7 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
-	Debug.Printf("Received Domain: %v\n", query)
+	logger.Debug.Printf("Received Domain: %v\n", query)
 
 	// TODO: Change to DunpSnap search method.
 	if DumpSnap != nil && DumpSnap.utime > 0 {
@@ -220,7 +221,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PongResponse, error) {
 	ping := in.GetPing()
 
-	Debug.Printf("Received Ping: %v\n", ping)
+	logger.Debug.Printf("Received Ping: %v\n", ping)
 
 	// TODO: Change to DunpSnap search method.
 	if DumpSnap != nil && DumpSnap.utime > 0 {
