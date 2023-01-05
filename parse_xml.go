@@ -269,29 +269,29 @@ func Parse(dumpFile io.Reader) error {
 
 	for id, cont := range DumpSnap.Content {
 		if _, ok := ContJournal[id]; !ok {
-			for _, v := range cont.IP4 {
-				DumpSnap.DeleteIp(v.IP4, cont.ID)
+			for _, ip4 := range cont.IP4 {
+				DumpSnap.DeleteIp(ip4.IP4, cont.ID)
 			}
 
-			for _, v := range cont.IP6 {
-				ip6 := string(v.IP6)
+			for _, ip6 := range cont.IP6 {
+				ip6 := string(ip6.IP6)
 				DumpSnap.DeleteIp6(ip6, cont.ID)
 			}
 
-			for _, v := range cont.Subnet6 {
-				DumpSnap.DeleteSubnet6(v.Subnet6, cont.ID)
+			for _, subnet6 := range cont.Subnet6 {
+				DumpSnap.DeleteSubnet6(subnet6.Subnet6, cont.ID)
 			}
 
-			for _, v := range cont.Subnet4 {
-				DumpSnap.DeleteSubnet(v.Subnet4, cont.ID)
+			for _, subnet4 := range cont.Subnet4 {
+				DumpSnap.DeleteSubnet(subnet4.Subnet4, cont.ID)
 			}
 
-			for _, v := range cont.URL {
-				DumpSnap.DeleteUrl(NormalizeURL(v.URL), cont.ID)
+			for _, u := range cont.URL {
+				DumpSnap.DeleteUrl(NormalizeURL(u.URL), cont.ID)
 			}
 
-			for _, v := range cont.Domain {
-				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), cont.ID)
+			for _, domain := range cont.Domain {
+				DumpSnap.DeleteDomain(NormalizeDomain(domain.Domain), cont.ID)
 			}
 
 			DumpSnap.DeleteDecision(cont.Decision, cont.ID)
