@@ -24,19 +24,19 @@ func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*p
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 
-		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		a := DumpSnap.decision[query]
-		r.Results = make([]*pb.Content, 0, len(a))
+		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		results := DumpSnap.decision[query]
+		resp.Results = make([]*pb.Content, 0, len(results))
 
-		for _, id := range a {
+		for _, id := range results {
 			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results = append(r.Results, v.newPbContent(0, nil, "", "", ""))
+				resp.Results = append(resp.Results, v.newPbContent(0, nil, "", "", ""))
 			}
 		}
 
 		DumpSnap.RUnlock()
 
-		return r, nil
+		return resp, nil
 	}
 
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
@@ -52,15 +52,15 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 
-		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 
-		if v, ok := DumpSnap.Content[query]; ok {
-			r.Results = append(r.Results, v.newPbContent(0, nil, "", "", ""))
+		if result, ok := DumpSnap.Content[query]; ok {
+			resp.Results = append(resp.Results, result.newPbContent(0, nil, "", "", ""))
 		}
 
 		DumpSnap.RUnlock()
 
-		return r, nil
+		return resp, nil
 	}
 
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
@@ -69,64 +69,64 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 // SearchID - search by IPv4.
 func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
-	ipb := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff,
+	ipBytes := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff,
 		byte((query & 0xFF000000) >> 24),
 		byte((query & 0x00FF0000) >> 16),
 		byte((query & 0x0000FF00) >> 8),
 		byte(query & 0x000000FF),
 	}
 
-	Debug.Printf("Received IPv4: %s\n", ipb)
+	Debug.Printf("Received IPv4: %s\n", ipBytes)
 
-	var v1, v2 ArrayIntSet
-	var vnw []string
+	var resultSubnets, resulIPs ArrayIntSet
+	var subnets []string
 
 	// TODO: Change to DunpSnap search method.
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 
-		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
 
 		// TODO: Change to DumpSnap search method
-		cnw, err := DumpSnap.net.ContainingNetworks(ipb)
+		cnw, err := DumpSnap.net.ContainingNetworks(ipBytes)
 		if err != nil {
-			Debug.Printf("Can't get containing networks: %s: %s\n", ipb, err)
+			Debug.Printf("Can't get containing networks: %s: %s\n", ipBytes, err)
 		} else {
 			for _, entry := range cnw {
-				nw := entry.Network()
-				nwstr := nw.String()
+				subnet := entry.Network()
+				subnetStr := subnet.String()
 
-				if a, ok := DumpSnap.subnet[nwstr]; ok {
-					v1 = append(v1, a...)
+				if a, ok := DumpSnap.subnet[subnetStr]; ok {
+					resultSubnets = append(resultSubnets, a...)
 
 					for range a {
-						vnw = append(vnw, nwstr)
+						subnets = append(subnets, subnetStr)
 					}
 				}
 			}
 		}
 
 		if a, ok := DumpSnap.ip[query]; ok {
-			v2 = append(v2, a...)
+			resulIPs = append(resulIPs, a...)
 		}
 
-		r.Results = make([]*pb.Content, 0, len(v1)+len(v2))
+		resp.Results = make([]*pb.Content, 0, len(resultSubnets)+len(resulIPs))
 
-		for i, id := range v1 {
-			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results = append(r.Results, v.newPbContent(0, nil, "", "", vnw[i]))
+		for i, id := range resultSubnets {
+			if cont, ok := DumpSnap.Content[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", "", subnets[i]))
 			}
 		}
 
-		for _, id := range v2 {
-			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results = append(r.Results, v.newPbContent(query, nil, "", "", ""))
+		for _, id := range resulIPs {
+			if cont, ok := DumpSnap.Content[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(query, nil, "", "", ""))
 			}
 		}
 
 		DumpSnap.RUnlock()
 
-		return r, nil
+		return resp, nil
 	}
 
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
@@ -142,19 +142,19 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 
-		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		a := DumpSnap.ip6[string(query)]
-		r.Results = make([]*pb.Content, 0, len(a))
+		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		results := DumpSnap.ip6[string(query)]
+		resp.Results = make([]*pb.Content, 0, len(results))
 
-		for _, id := range a {
-			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results = append(r.Results, v.newPbContent(0, query, "", "", ""))
+		for _, id := range results {
+			if cont, ok := DumpSnap.Content[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, query, "", "", ""))
 			}
 		}
 
 		DumpSnap.RUnlock()
 
-		return r, nil
+		return resp, nil
 	}
 
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
@@ -170,19 +170,19 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 
-		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		a := DumpSnap.url[query]
-		r.Results = make([]*pb.Content, 0, len(a))
+		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		results := DumpSnap.url[query]
+		resp.Results = make([]*pb.Content, 0, len(results))
 
-		for _, id := range a {
-			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results = append(r.Results, v.newPbContent(0, nil, "", query, ""))
+		for _, id := range results {
+			if cont, ok := DumpSnap.Content[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", query, ""))
 			}
 		}
 
 		DumpSnap.RUnlock()
 
-		return r, nil
+		return resp, nil
 	}
 
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
@@ -198,19 +198,19 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 
-		r := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		a := DumpSnap.domain[query]
-		r.Results = make([]*pb.Content, 0, len(a))
+		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		results := DumpSnap.domain[query]
+		resp.Results = make([]*pb.Content, 0, len(results))
 
-		for _, id := range a {
-			if v, ok := DumpSnap.Content[id]; ok {
-				r.Results = append(r.Results, v.newPbContent(0, nil, query, "", ""))
+		for _, id := range results {
+			if cont, ok := DumpSnap.Content[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, query, "", ""))
 			}
 		}
 
 		DumpSnap.RUnlock()
 
-		return r, nil
+		return resp, nil
 	}
 
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
@@ -226,11 +226,11 @@ func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PongResponse
 	if DumpSnap != nil && DumpSnap.utime > 0 {
 		DumpSnap.RLock()
 
-		r := &pb.PongResponse{Pong: SrvPongMessage, RegistryUpdateTime: DumpSnap.utime}
+		resp := &pb.PongResponse{Pong: SrvPongMessage, RegistryUpdateTime: DumpSnap.utime}
 
 		DumpSnap.RUnlock()
 
-		return r, nil
+		return resp, nil
 	}
 
 	return &pb.PongResponse{Error: SrvDataNotReady}, nil
