@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"hash"
 	"hash/fnv"
 	"io"
@@ -17,97 +18,119 @@ import (
 )
 
 const (
-	elementContent    = "content"
-	elementDecision   = "decision"
-	elementUrl        = "url"
-	elementDomain     = "domain"
-	elementIp         = "ip"
-	elementIpv6       = "ipv6"
-	elementIpSubnet   = "ipSubnet"
-	elementIpv6Subnet = "ipv6Subnet"
+	elementContent   = "content"
+	elementDecision  = "decision"
+	elementURL       = "url"
+	elementDomain    = "domain"
+	elementIP4       = "ip"
+	elementIP6       = "ipv6"
+	elementIP4Subnet = "ipSubnet"
+	elementIP6Subnet = "ipv6Subnet"
 )
 
-var __h64 hash.Hash64
+var hasher64 hash.Hash64
 
-func UnmarshalContent(b []byte, v *Content) error {
+// UnmarshalContent - unmarshal <content> element.
+func UnmarshalContent(b []byte, cont *Content) error {
 	buf := bytes.NewReader(b)
 	decoder := xml.NewDecoder(buf)
+
 	for {
-		t, err := decoder.Token()
-		if t == nil {
+		token, err := decoder.Token()
+		if token == nil {
 			if err != io.EOF {
-				return err
+				return fmt.Errorf("token: %w", err)
 			}
+
 			break
 		}
-		switch element := t.(type) {
+
+		switch element := token.(type) {
 		case xml.StartElement:
+			// TODO: one func for one case, handle time parsing
 			switch element.Name.Local {
 			case elementContent:
-				if err := parseContentElement(element, v); err != nil {
-					return err
+				if err := parseContentElement(element, cont); err != nil {
+					return fmt.Errorf("parse content elm: %w", err)
 				}
 			case elementDecision:
-				if err := decoder.DecodeElement(&v.Decision, &element); err != nil {
-					return err
+				if err := decoder.DecodeElement(&cont.Decision, &element); err != nil {
+					return fmt.Errorf("parse decision elm: %w", err)
 				}
-			case elementUrl:
+			case elementURL:
 				u := XMLURL{}
 				if err := decoder.DecodeElement(&u, &element); err != nil {
-					return err
+					return fmt.Errorf("parse url elm: %w", err)
 				}
-				v.URL = append(v.URL, URL{URL: u.URL, Ts: parseTime(u.Ts)})
+
+				cont.URL = append(cont.URL, URL{URL: u.URL, Ts: parseTime(u.Ts)})
 			case elementDomain:
 				d := XMLDomain{}
 				if err := decoder.DecodeElement(&d, &element); err != nil {
-					return err
+					return fmt.Errorf("parse domain elm: %w", err)
 				}
-				v.Domain = append(v.Domain, Domain{Domain: d.Domain, Ts: parseTime(d.Ts)})
-			case elementIp:
+
+				cont.Domain = append(cont.Domain, Domain{Domain: d.Domain, Ts: parseTime(d.Ts)})
+			case elementIP4:
 				ip := XMLIP{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
-					return err
+					return fmt.Errorf("parse ip elm: %w", err)
 				}
-				v.IP4 = append(v.IP4, IP4{IP4: ip4str2int(ip.IP), Ts: parseTime(ip.Ts)})
-			case elementIpv6:
+
+				cont.IP4 = append(cont.IP4, IP4{IP4: ip4str2int(ip.IP), Ts: parseTime(ip.Ts)})
+			case elementIP6:
 				ip := XMLIP6{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
-					return err
+					return fmt.Errorf("parse ipv6 elm: %w", err)
 				}
-				v.IP6 = append(v.IP6, IP6{IP6: net.ParseIP(ip.IP6), Ts: parseTime(ip.Ts)})
-			case elementIpSubnet:
+
+				cont.IP6 = append(cont.IP6, IP6{IP6: net.ParseIP(ip.IP6), Ts: parseTime(ip.Ts)})
+			case elementIP4Subnet:
 				s := XMLSubnet{}
 				if err := decoder.DecodeElement(&s, &element); err != nil {
-					return err
+					return fmt.Errorf("parse subnet elm: %w", err)
 				}
-				v.Subnet4 = append(v.Subnet4, Subnet4{Subnet4: s.Subnet, Ts: parseTime(s.Ts)})
-			case elementIpv6Subnet:
+
+				cont.Subnet4 = append(cont.Subnet4, Subnet4{Subnet4: s.Subnet, Ts: parseTime(s.Ts)})
+			case elementIP6Subnet:
 				s := XMLSubnet6{}
 				if err := decoder.DecodeElement(&s, &element); err != nil {
-					return err
+					return fmt.Errorf("parse ipv6 subnet elm: %w", err)
 				}
-				v.Subnet6 = append(v.Subnet6, Subnet6{Subnet6: s.Subnet6, Ts: parseTime(s.Ts)})
+
+				cont.Subnet6 = append(cont.Subnet6, Subnet6{Subnet6: s.Subnet6, Ts: parseTime(s.Ts)})
 			}
 		}
 	}
+
 	return nil
 }
 
+// pasre <content> element itself.
 func parseContentElement(element xml.StartElement, v *Content) error {
 	for _, attr := range element.Attr {
 		switch attr.Name.Local {
 		case "id":
-			if err := parseInt32(&v.ID, attr.Value); err != nil {
-				return err
+			x, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return fmt.Errorf("id atoi: %w: %s", err, attr.Value)
 			}
+
+			v.ID = int32(x)
 		case "entryType":
-			if err := parseInt32(&v.EntryType, attr.Value); err != nil {
-				return err
+			x, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return fmt.Errorf("entryType atoi: %w: %s", err, attr.Value)
 			}
+
+			v.EntryType = int32(x)
 		case "urgencyType":
-			if err := parseInt32(&v.UrgencyType, attr.Value); err != nil {
-				return err
+			x, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return fmt.Errorf("urgencyType atoi: %w: %s", err, attr.Value)
 			}
+
+			v.UrgencyType = int32(x)
 		case "includeTime":
 			v.IncludeTime = parseTime2(attr.Value)
 		case "blockType":
@@ -118,165 +141,210 @@ func parseContentElement(element xml.StartElement, v *Content) error {
 			v.Ts = parseTime(attr.Value)
 		}
 	}
+
 	return nil
 }
 
+// Parse - parse dump.
 func Parse(dumpFile io.Reader) error {
 	var (
-		err                            error
-		r                              TReg
+		reg                            Reg
 		buffer                         bytes.Buffer
 		bufferOffset, offsetCorrection int64
+
+		stats Stat
 	)
-	__h64 = fnv.New64a()
-	Stats = Stat{}
+
+	hasher64 = fnv.New64a()
 	decoder := xml.NewDecoder(dumpFile)
+
 	// we need this closure, we don't want constructor
 	decoder.CharsetReader = func(label string, input io.Reader) (io.Reader, error) {
 		r, err := charset.NewReaderLabel(label, input)
 		if err != nil {
 			return nil, err
 		}
+
 		offsetCorrection = decoder.InputOffset()
+
 		return io.TeeReader(r, &buffer), nil
 	}
-	SPass := make(IntSet, len(DumpSnap.Content)+1000)
+
+	// TODO: What is it?
+	ContJournal := make(Int32Map, len(DumpSnap.Content))
+
 	for {
 		tokenStartOffset := decoder.InputOffset() - offsetCorrection
-		t, err := decoder.Token()
-		if t == nil {
+
+		token, err := decoder.Token()
+		if token == nil {
 			if err != io.EOF {
 				return err
 			}
+
 			break
 		}
-		switch _e := t.(type) {
+
+		switch element := token.(type) {
 		case xml.StartElement:
-			switch _e.Name.Local {
+			switch element.Name.Local {
 			case "register":
-				handleRegister(_e, &r)
+				handleRegister(element, &reg)
 			case "content":
-				id := getContentId(_e)
+				id := getContentId(element)
+
 				// parse <content>...</content> only if need
 				decoder.Skip()
-				dif := tokenStartOffset - bufferOffset
-				buffer.Next(int(dif))
-				bufferOffset += dif
+
+				// read buffer to mark anyway
+				diff := tokenStartOffset - bufferOffset
+				buffer.Next(int(diff))
+				bufferOffset += diff
+
+				// calc end of element
 				tokenStartOffset = decoder.InputOffset() - offsetCorrection
+
 				// create hash of <content>...</content> for comp
-				tempBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
-				if Stats.MaxContentSize < len(tempBuf) {
-					Stats.MaxContentSize = len(tempBuf)
+				contBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
+				if stats.MaxContentSize < len(contBuf) {
+					stats.MaxContentSize = len(contBuf)
 				}
-				__h64.Reset()
-				__h64.Write(tempBuf)
-				u2Hash := __h64.Sum64()
+
+				hasher64.Reset()
+				hasher64.Write(contBuf)
+
+				newContHash := hasher64.Sum64()
 				bufferOffset = tokenStartOffset
-				v := Content{}
+
+				// TODO: move to special func
+				newCont := Content{}
+
+				ContJournal[id] = NothingV // add to journal.
+
 				// create or update
 				DumpSnap.Lock()
-				v0, exists := DumpSnap.Content[id]
-				if !exists {
-					err := UnmarshalContent(tempBuf, &v)
+
+				prevCont, exists := DumpSnap.Content[id]
+
+				switch {
+				case !exists:
+					err := UnmarshalContent(contBuf, &newCont)
 					if err != nil {
-						logger.Error.Printf("Decode Error: %s\n", err.Error())
-					} else {
-						v.Add(u2Hash, r.UpdateTime)
-						Stats.CntAdd++
+						logger.Error.Printf("Decode Error: %s\n", err)
+
+						break
 					}
-					SPass[v.ID] = NothingV
-				} else if v0.U2Hash != u2Hash {
-					err := UnmarshalContent(tempBuf, &v)
+
+					newCont.Add(newContHash, reg.UpdateTime)
+					stats.CntAdd++
+				case prevCont.U2Hash != newContHash:
+					err := UnmarshalContent(contBuf, &newCont)
 					if err != nil {
-						logger.Error.Printf("Decode Error: %s\n", err.Error())
-					} else {
-						v.Update(u2Hash, v0, r.UpdateTime)
-						Stats.CntUpdate++
+						logger.Error.Printf("Decode Error: %s\n", err)
+
+						break
 					}
-					SPass[v.ID] = NothingV
-				} else {
-					DumpSnap.Content[id].RegistryUpdateTime = r.UpdateTime
-					SPass[v0.ID] = NothingV
-					//v = nil
+
+					newCont.Update(newContHash, prevCont, reg.UpdateTime)
+					stats.CntUpdate++
+				default:
+					DumpSnap.Content[id].RegistryUpdateTime = reg.UpdateTime
 				}
+
 				DumpSnap.Unlock()
-				Stats.Cnt++
+
+				stats.Cnt++
 			}
-		default:
-			//fmt.printf("%v\n", _e)
 		}
-		dif := tokenStartOffset - bufferOffset
-		buffer.Next(int(dif))
-		bufferOffset += dif
+
+		// read buffer anyway
+		diff := tokenStartOffset - bufferOffset
+		buffer.Next(int(diff))
+		bufferOffset += diff
 	}
+
+	// TODO: move to dedicated function or few
+
 	// remove operations
 	DumpSnap.Lock()
-	for id, o2 := range DumpSnap.Content {
-		if _, ok := SPass[id]; !ok {
-			for _, v := range o2.IP4 {
-				DumpSnap.DeleteIp(v.IP4, o2.ID)
+
+	for id, cont := range DumpSnap.Content {
+		if _, ok := ContJournal[id]; !ok {
+			for _, ip4 := range cont.IP4 {
+				DumpSnap.DeleteIp(ip4.IP4, cont.ID)
 			}
-			for _, v := range o2.IP6 {
-				ip6 := string(v.IP6)
-				DumpSnap.DeleteIp6(ip6, o2.ID)
+
+			for _, ip6 := range cont.IP6 {
+				ip6 := string(ip6.IP6)
+				DumpSnap.DeleteIp6(ip6, cont.ID)
 			}
-			for _, v := range o2.Subnet6 {
-				DumpSnap.DeleteSubnet6(v.Subnet6, o2.ID)
+
+			for _, subnet6 := range cont.Subnet6 {
+				DumpSnap.DeleteSubnet6(subnet6.Subnet6, cont.ID)
 			}
-			for _, v := range o2.Subnet4 {
-				DumpSnap.DeleteSubnet(v.Subnet4, o2.ID)
+
+			for _, subnet4 := range cont.Subnet4 {
+				DumpSnap.DeleteSubnet(subnet4.Subnet4, cont.ID)
 			}
-			for _, v := range o2.URL {
-				DumpSnap.DeleteUrl(NormalizeUrl(v.URL), o2.ID)
+
+			for _, u := range cont.URL {
+				DumpSnap.DeleteUrl(NormalizeURL(u.URL), cont.ID)
 			}
-			for _, v := range o2.Domain {
-				DumpSnap.DeleteDomain(NormalizeDomain(v.Domain), o2.ID)
+
+			for _, domain := range cont.Domain {
+				DumpSnap.DeleteDomain(NormalizeDomain(domain.Domain), cont.ID)
 			}
-			DumpSnap.DeleteDecision(o2.Decision, o2.ID)
+
+			DumpSnap.DeleteDecision(cont.Decision, cont.ID)
 			delete(DumpSnap.Content, id)
-			Stats.CntRemove++
+			stats.CntRemove++
 		}
 	}
-	DumpSnap.utime = r.UpdateTime
-	Stats.MaxArrayIntSet = 0
+
+	DumpSnap.utime = reg.UpdateTime
+	stats.MaxArrayIntSet = 0
+
 	for _, a := range DumpSnap.ip {
-		if Stats.MaxArrayIntSet < len(a) {
-			Stats.MaxArrayIntSet = len(a)
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.ip6 {
-		if Stats.MaxArrayIntSet < len(a) {
-			Stats.MaxArrayIntSet = len(a)
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.subnet {
-		if Stats.MaxArrayIntSet < len(a) {
-			Stats.MaxArrayIntSet = len(a)
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.subnet6 {
-		if Stats.MaxArrayIntSet < len(a) {
-			Stats.MaxArrayIntSet = len(a)
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.url {
-		if Stats.MaxArrayIntSet < len(a) {
-			Stats.MaxArrayIntSet = len(a)
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
 		}
 	}
 	for _, a := range DumpSnap.domain {
-		if Stats.MaxArrayIntSet < len(a) {
-			Stats.MaxArrayIntSet = len(a)
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
 		}
 	}
+
 	DumpSnap.Unlock()
-	logger.Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", Stats.Cnt, Stats.CntAdd, Stats.CntUpdate, Stats.CntRemove)
+
+	logger.Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", stats.Cnt, stats.CntAdd, stats.CntUpdate, stats.CntRemove)
 	logger.Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
 		len(DumpSnap.ip), len(DumpSnap.ip6), len(DumpSnap.subnet), len(DumpSnap.subnet6),
 		len(DumpSnap.domain), len(DumpSnap.url))
-	logger.Info.Printf("Biggest array: %d\n", Stats.MaxArrayIntSet)
-	logger.Info.Printf("Biggest content: %d\n", Stats.MaxContentSize)
-	return err
+	logger.Info.Printf("Biggest array: %d\n", stats.MaxArrayIntSet)
+	logger.Info.Printf("Biggest content: %d\n", stats.MaxContentSize)
+
+	return nil
 }
 
 func (v *Content) Marshal() []byte {
@@ -338,13 +406,13 @@ func (v *Content) Add(u2Hash uint64, updateTime int64) {
 func (v *MinContent) handleAddDecision(v0 *Content) {
 	c := []byte(" ")
 	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
-	__h64.Reset()
-	__h64.Write([]byte(v0.Decision.Org))
-	__h64.Write(c)
-	__h64.Write([]byte(v0.Decision.Number))
-	__h64.Write(c)
-	__h64.Write([]byte(v0.Decision.Date))
-	v.Decision = __h64.Sum64()
+	hasher64.Reset()
+	hasher64.Write([]byte(v0.Decision.Org))
+	hasher64.Write(c)
+	hasher64.Write([]byte(v0.Decision.Number))
+	hasher64.Write(c)
+	hasher64.Write([]byte(v0.Decision.Date))
+	v.Decision = hasher64.Sum64()
 	DumpSnap.AddDecision(v.Decision, v.ID)
 }
 
@@ -352,13 +420,13 @@ func (v *MinContent) handleAddDecision(v0 *Content) {
 func (v *MinContent) handleUpdateDecision(v0 *Content, o *MinContent) {
 	c := []byte(" ")
 	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
-	__h64.Reset()
-	__h64.Write([]byte(v0.Decision.Org))
-	__h64.Write(c)
-	__h64.Write([]byte(v0.Decision.Number))
-	__h64.Write(c)
-	__h64.Write([]byte(v0.Decision.Date))
-	v.Decision = __h64.Sum64()
+	hasher64.Reset()
+	hasher64.Write([]byte(v0.Decision.Org))
+	hasher64.Write(c)
+	hasher64.Write([]byte(v0.Decision.Number))
+	hasher64.Write(c)
+	hasher64.Write([]byte(v0.Decision.Date))
+	v.Decision = hasher64.Sum64()
 	DumpSnap.DeleteDecision(o.Decision, o.ID)
 	DumpSnap.AddDecision(v.Decision, v.ID)
 }
@@ -421,7 +489,7 @@ func (v *MinContent) handleAddUrl(v0 *Content) {
 	if len(v0.URL) > 0 {
 		v.URL = v0.URL
 		for _, value := range v.URL {
-			url := NormalizeUrl(value.URL)
+			url := NormalizeURL(value.URL)
 			DumpSnap.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
 				v0.HTTPSBlock += 1
@@ -435,7 +503,7 @@ func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
 	if len(v0.URL) > 0 {
 		v.URL = v0.URL
 		for _, value := range v.URL {
-			url := NormalizeUrl(value.URL)
+			url := NormalizeURL(value.URL)
 			DumpSnap.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
 				v0.HTTPSBlock += 1
@@ -444,7 +512,7 @@ func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
 		}
 	}
 	for _, value := range o.URL {
-		url := NormalizeUrl(value.URL)
+		url := NormalizeURL(value.URL)
 		if _, ok := urlSet[url]; !ok {
 			DumpSnap.DeleteUrl(url, o.ID)
 		}
@@ -545,7 +613,7 @@ func getContentId(_e xml.StartElement) int32 {
 	return int32(id)
 }
 
-func handleRegister(element xml.StartElement, r *TReg) {
+func handleRegister(element xml.StartElement, r *Reg) {
 	for _, attr := range element.Attr {
 		switch attr.Name.Local {
 		case "formatVersion":
@@ -575,13 +643,4 @@ func (v *MinContent) newPbContent(ip4 uint32, ip6 []byte, domain, url, aggr stri
 	v0.Aggr = aggr
 	v0.Pack = v.Pack
 	return &v0
-}
-
-func parseInt32(to *int32, value string) error {
-	i, err := strconv.Atoi(value)
-	if err != nil {
-		return err
-	}
-	*to = int32(i)
-	return nil
 }

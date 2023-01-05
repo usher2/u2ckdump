@@ -9,42 +9,46 @@ import (
 	"github.com/usher2/u2ckdump/internal/logger"
 )
 
+// NormalizeDomain - normilize domain name.
 func NormalizeDomain(domain string) string {
-	domain = strings.Replace(domain, ",", ".", -1)
-	domain = strings.Replace(domain, " ", "", -1)
 	if c := strings.IndexByte(domain, '/'); c >= 0 {
 		domain = domain[:c]
 	}
+
 	if c := strings.IndexByte(domain, '\\'); c >= 0 {
 		domain = domain[:c]
 	}
+
+	domain = strings.Replace(domain, ",", ".", -1)
+	domain = strings.Replace(domain, " ", "", -1)
 	domain = strings.TrimPrefix(domain, "*.")
 	domain = strings.TrimSuffix(domain, ".")
 	domain, _ = idna.ToASCII(domain)
 	domain = strings.ToLower(domain)
+
 	return domain
 }
 
-func NormalizeUrl(u string) string {
+// NormalizeURL - normilize URL.
+func NormalizeURL(u string) string {
 	u = strings.Replace(u, "\\", "/", -1)
-	_url, err := url.Parse(u)
+
+	nurl, err := url.Parse(u)
 	if err != nil {
-		logger.Error.Printf("URL parse error: %s\n", err.Error())
-		// add as is
+		logger.Error.Printf("URL parse error: %s\n", err)
+
 		return u
-	} else {
-		port := ""
-		domain := _url.Hostname()
-		colon := strings.LastIndexByte(domain, ':')
-		if colon != -1 && validOptionalPort(domain[colon:]) {
-			domain, port = domain[:colon], domain[colon+1:]
-		}
-		domain = NormalizeDomain(domain)
-		_url.Host = domain
-		if port != "" {
-			_url.Host = _url.Host + ":" + port
-		}
-		_url.Fragment = ""
-		return _url.String()
 	}
+
+	domain := nurl.Hostname()
+	port := nurl.Port()
+
+	nurl.Host = NormalizeDomain(domain)
+	if port != "" {
+		nurl.Host = nurl.Host + ":" + port
+	}
+
+	nurl.Fragment = ""
+
+	return nurl.String()
 }
