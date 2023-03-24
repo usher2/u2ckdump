@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"golang.org/x/net/idna"
+
+	"github.com/usher2/u2ckdump/internal/logger"
 )
 
 // NormalizeDomain - normilize domain name.
@@ -33,7 +35,7 @@ func NormalizeURL(u string) string {
 
 	nurl, err := url.Parse(u)
 	if err != nil {
-		Error.Printf("URL parse error: %s\n", err)
+		logger.Error.Printf("URL parse error: %s\n", err)
 
 		return u
 	}

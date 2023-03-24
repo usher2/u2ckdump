@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"time"
+
+	"github.com/usher2/u2ckdump/internal/logger"
+)
 
 var locationMSK *time.Location
 
@@ -20,7 +24,7 @@ func parseTime(s string) int64 {
 
 	t, err := time.Parse(time.RFC3339, s)
 	if err != nil {
-		Error.Printf("Can't parse time: %s (%s)\n", err, s)
+		logger.Error.Printf("Can't parse time: %s (%s)\n", err, s)
 
 		return 0
 	}
@@ -37,7 +41,7 @@ func parseTime2(s string) int64 {
 
 	t, err := time.ParseInLocation(parseIncludeTime, s, locationMSK)
 	if err != nil {
-		Error.Printf("Can't parse time: %s (%s)\n", err, s)
+		logger.Error.Printf("Can't parse time: %s (%s)\n", err, s)
 
 		return 0
 	}
