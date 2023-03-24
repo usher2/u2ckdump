@@ -77,7 +77,7 @@ func UnmarshalContent(b []byte, cont *Content) error {
 					return fmt.Errorf("parse ip elm: %w", err)
 				}
 
-				cont.IP4 = append(cont.IP4, IP4{IP4: ip4str2int(ip.IP), Ts: parseTime(ip.Ts)})
+				cont.IP4 = append(cont.IP4, IP4{IP4: IPv4StrToInt(ip.IP), Ts: parseTime(ip.Ts)})
 			case elementIP6:
 				ip := XMLIP6{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
@@ -405,7 +405,7 @@ func (v *Content) Add(u2Hash uint64, updateTime int64) {
 
 func (v *MinContent) handleAddDecision(v0 *Content) {
 	c := []byte(" ")
-	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
+	// hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
 	hasher64.Reset()
 	hasher64.Write([]byte(v0.Decision.Org))
 	hasher64.Write(c)
@@ -419,7 +419,7 @@ func (v *MinContent) handleAddDecision(v0 *Content) {
 // IT IS REASON FOR ALARM!!!!
 func (v *MinContent) handleUpdateDecision(v0 *Content, o *MinContent) {
 	c := []byte(" ")
-	//hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
+	// hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
 	hasher64.Reset()
 	hasher64.Write([]byte(v0.Decision.Org))
 	hasher64.Write(c)

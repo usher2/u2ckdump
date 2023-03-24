@@ -35,11 +35,3 @@ type XMLIP6 struct {
 	IP6 string `xml:",chardata"`
 	Ts  string `xml:"ts,attr,omitempty"`
 }
-
-/*
-// use universal TDecision
-type XMLDecision struct {
-	Date   string `xml:"date,attr"`
-	Number string `xml:"number,attr"`
-	Org    string `xml:"org,attr"`
-} */

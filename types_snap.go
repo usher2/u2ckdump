@@ -1,6 +1,6 @@
 package main
 
-// Block types: url, https, domain, mask, ip
+// Block types: url, https, domain, mask, ip.
 const (
 	BlockTypeURL = iota
 	BlockTypeHTTPS
