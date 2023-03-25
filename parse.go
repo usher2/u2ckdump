@@ -28,12 +28,12 @@ type Stat struct {
 
 var Stats Stat
 
-type TDump struct {
+type Dump struct {
 	sync.RWMutex
 	utime    int64
-	ip       IP4Set
+	ip4      IP4Set
 	ip6      StringIntSet
-	subnet   StringIntSet
+	subnet4  StringIntSet
 	subnet6  StringIntSet
 	net      cidranger.Ranger
 	url      StringIntSet
@@ -42,12 +42,12 @@ type TDump struct {
 	Content  MinContentMap
 }
 
-func NewTDump() *TDump {
-	return &TDump{
+func NewDump() *Dump {
+	return &Dump{
 		utime:    0,
-		ip:       make(IP4Set),
+		ip4:      make(IP4Set),
 		ip6:      make(StringIntSet),
-		subnet:   make(StringIntSet),
+		subnet4:  make(StringIntSet),
 		subnet6:  make(StringIntSet),
 		url:      make(StringIntSet),
 		domain:   make(StringIntSet),
@@ -57,93 +57,99 @@ func NewTDump() *TDump {
 	}
 }
 
-func (t *TDump) AddIp(ip uint32, id int32) {
-	t.ip.Add(ip, id)
+func (d *Dump) AddIp(ip4 uint32, id int32) {
+	d.ip4.Add(ip4, id)
 }
 
-func (t *TDump) DeleteIp(ip uint32, id int32) {
-	t.ip.Delete(ip, id)
+func (d *Dump) DeleteIp(ip4 uint32, id int32) {
+	d.ip4.Delete(ip4, id)
 }
 
-func (t *TDump) AddIp6(i string, id int32) {
-	t.ip6.Add(i, id)
-}
-func (t *TDump) DeleteIp6(i string, id int32) {
-	t.ip6.Delete(i, id)
+func (d *Dump) AddIp6(ip6 string, id int32) {
+	d.ip6.Add(ip6, id)
 }
 
-func (t *TDump) AddSubnet(i string, id int32) {
-	if t.subnet.Add(i, id) {
-		_, network, err := net.ParseCIDR(i)
-		if err != nil {
-			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
-		}
-		err = t.net.Insert(cidranger.NewBasicRangerEntry(*network))
-		if err != nil {
-			logger.Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
-		}
-	}
+func (d *Dump) DeleteIp6(ip6 string, id int32) {
+	d.ip6.Delete(ip6, id)
 }
-func (t *TDump) DeleteSubnet(i string, id int32) {
-	if t.subnet.Delete(i, id) {
-		_, network, err := net.ParseCIDR(i)
+
+func (d *Dump) AddSubnet(subnet4 string, id int32) {
+	if d.subnet4.Add(subnet4, id) {
+		_, network, err := net.ParseCIDR(subnet4)
 		if err != nil {
-			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet4, err.Error())
 		}
-		_, err = t.net.Remove(*network)
+		err = d.net.Insert(cidranger.NewBasicRangerEntry(*network))
 		if err != nil {
-			logger.Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't insert CIDR: %s: %s\n", subnet4, err.Error())
 		}
 	}
 }
 
-func (t *TDump) AddSubnet6(i string, id int32) {
-	if t.subnet6.Add(i, id) {
-		_, network, err := net.ParseCIDR(i)
+func (d *Dump) DeleteSubnet(subnet4 string, id int32) {
+	if d.subnet4.Delete(subnet4, id) {
+		_, network, err := net.ParseCIDR(subnet4)
 		if err != nil {
-			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet4, err.Error())
 		}
-		err = t.net.Insert(cidranger.NewBasicRangerEntry(*network))
+		_, err = d.net.Remove(*network)
 		if err != nil {
-			logger.Debug.Printf("Can't insert CIDR: %s: %s\n", i, err.Error())
-		}
-	}
-}
-func (t *TDump) DeleteSubnet6(i string, id int32) {
-	if t.subnet6.Delete(i, id) {
-		_, network, err := net.ParseCIDR(i)
-		if err != nil {
-			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", i, err.Error())
-		}
-		_, err = t.net.Remove(*network)
-		if err != nil {
-			logger.Debug.Printf("Can't remove CIDR: %s: %s\n", i, err.Error())
+			logger.Debug.Printf("Can't remove CIDR: %s: %s\n", subnet4, err.Error())
 		}
 	}
 }
 
-func (t *TDump) AddUrl(i string, id int32) {
-	t.url.Add(i, id)
-}
-func (t *TDump) DeleteUrl(i string, id int32) {
-	t.url.Delete(i, id)
-}
-
-func (t *TDump) AddDomain(i string, id int32) {
-	t.domain.Add(i, id)
-}
-func (t *TDump) DeleteDomain(i string, id int32) {
-	t.domain.Delete(i, id)
-}
-
-func (t *TDump) AddDecision(i uint64, id int32) {
-	t.decision.Add(i, id)
-}
-func (t *TDump) DeleteDecision(i uint64, id int32) {
-	t.decision.Delete(i, id)
+func (d *Dump) AddSubnet6(subnet6 string, id int32) {
+	if d.subnet6.Add(subnet6, id) {
+		_, network, err := net.ParseCIDR(subnet6)
+		if err != nil {
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet6, err.Error())
+		}
+		err = d.net.Insert(cidranger.NewBasicRangerEntry(*network))
+		if err != nil {
+			logger.Debug.Printf("Can't insert CIDR: %s: %s\n", subnet6, err.Error())
+		}
+	}
 }
 
-var DumpSnap = NewTDump()
+func (d *Dump) DeleteSubnet6(subnet6 string, id int32) {
+	if d.subnet6.Delete(subnet6, id) {
+		_, network, err := net.ParseCIDR(subnet6)
+		if err != nil {
+			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet6, err.Error())
+		}
+		_, err = d.net.Remove(*network)
+		if err != nil {
+			logger.Debug.Printf("Can't remove CIDR: %s: %s\n", subnet6, err.Error())
+		}
+	}
+}
+
+func (d *Dump) AddUrl(url string, id int32) {
+	d.url.Add(url, id)
+}
+
+func (d *Dump) DeleteUrl(url string, id int32) {
+	d.url.Delete(url, id)
+}
+
+func (d *Dump) AddDomain(domain string, id int32) {
+	d.domain.Add(domain, id)
+}
+
+func (d *Dump) DeleteDomain(domain string, id int32) {
+	d.domain.Delete(domain, id)
+}
+
+func (d *Dump) AddDecision(decision uint64, id int32) {
+	d.decision.Add(decision, id)
+}
+
+func (d *Dump) DeleteDecision(decision uint64, id int32) {
+	d.decision.Delete(decision, id)
+}
+
+var CurrentDump = NewDump()
 
 type Reg struct {
 	UpdateTime         int64
@@ -151,11 +157,11 @@ type Reg struct {
 	FormatVersion      string
 }
 
-func Parse2(UpdateTime int64) {
-	DumpSnap.Lock()
-	for _, v := range DumpSnap.Content {
+func UpdateDumpTime(UpdateTime int64) {
+	CurrentDump.Lock()
+	for _, v := range CurrentDump.Content {
 		v.RegistryUpdateTime = UpdateTime
 	}
-	DumpSnap.utime = UpdateTime
-	DumpSnap.Unlock()
+	CurrentDump.utime = UpdateTime
+	CurrentDump.Unlock()
 }

@@ -171,7 +171,7 @@ func Parse(dumpFile io.Reader) error {
 	}
 
 	// TODO: What is it?
-	ContJournal := make(Int32Map, len(DumpSnap.Content))
+	ContJournal := make(Int32Map, len(CurrentDump.Content))
 
 	for {
 		tokenStartOffset := decoder.InputOffset() - offsetCorrection
@@ -222,9 +222,9 @@ func Parse(dumpFile io.Reader) error {
 				ContJournal[id] = NothingV // add to journal.
 
 				// create or update
-				DumpSnap.Lock()
+				CurrentDump.Lock()
 
-				prevCont, exists := DumpSnap.Content[id]
+				prevCont, exists := CurrentDump.Content[id]
 
 				switch {
 				case !exists:
@@ -248,10 +248,10 @@ func Parse(dumpFile io.Reader) error {
 					newCont.Update(newContHash, prevCont, reg.UpdateTime)
 					stats.CntUpdate++
 				default:
-					DumpSnap.Content[id].RegistryUpdateTime = reg.UpdateTime
+					CurrentDump.Content[id].RegistryUpdateTime = reg.UpdateTime
 				}
 
-				DumpSnap.Unlock()
+				CurrentDump.Unlock()
 
 				stats.Cnt++
 			}
@@ -266,81 +266,81 @@ func Parse(dumpFile io.Reader) error {
 	// TODO: move to dedicated function or few
 
 	// remove operations
-	DumpSnap.Lock()
+	CurrentDump.Lock()
 
-	for id, cont := range DumpSnap.Content {
+	for id, cont := range CurrentDump.Content {
 		if _, ok := ContJournal[id]; !ok {
 			for _, ip4 := range cont.IP4 {
-				DumpSnap.DeleteIp(ip4.IP4, cont.ID)
+				CurrentDump.DeleteIp(ip4.IP4, cont.ID)
 			}
 
 			for _, ip6 := range cont.IP6 {
 				ip6 := string(ip6.IP6)
-				DumpSnap.DeleteIp6(ip6, cont.ID)
+				CurrentDump.DeleteIp6(ip6, cont.ID)
 			}
 
 			for _, subnet6 := range cont.Subnet6 {
-				DumpSnap.DeleteSubnet6(subnet6.Subnet6, cont.ID)
+				CurrentDump.DeleteSubnet6(subnet6.Subnet6, cont.ID)
 			}
 
 			for _, subnet4 := range cont.Subnet4 {
-				DumpSnap.DeleteSubnet(subnet4.Subnet4, cont.ID)
+				CurrentDump.DeleteSubnet(subnet4.Subnet4, cont.ID)
 			}
 
 			for _, u := range cont.URL {
-				DumpSnap.DeleteUrl(NormalizeURL(u.URL), cont.ID)
+				CurrentDump.DeleteUrl(NormalizeURL(u.URL), cont.ID)
 			}
 
 			for _, domain := range cont.Domain {
-				DumpSnap.DeleteDomain(NormalizeDomain(domain.Domain), cont.ID)
+				CurrentDump.DeleteDomain(NormalizeDomain(domain.Domain), cont.ID)
 			}
 
-			DumpSnap.DeleteDecision(cont.Decision, cont.ID)
-			delete(DumpSnap.Content, id)
+			CurrentDump.DeleteDecision(cont.Decision, cont.ID)
+			delete(CurrentDump.Content, id)
 			stats.CntRemove++
 		}
 	}
 
-	DumpSnap.utime = reg.UpdateTime
+	CurrentDump.utime = reg.UpdateTime
 	stats.MaxArrayIntSet = 0
 
-	for _, a := range DumpSnap.ip {
+	for _, a := range CurrentDump.ip4 {
 		if stats.MaxArrayIntSet < len(a) {
 			stats.MaxArrayIntSet = len(a)
 		}
 	}
-	for _, a := range DumpSnap.ip6 {
+	for _, a := range CurrentDump.ip6 {
 		if stats.MaxArrayIntSet < len(a) {
 			stats.MaxArrayIntSet = len(a)
 		}
 	}
-	for _, a := range DumpSnap.subnet {
+	for _, a := range CurrentDump.subnet4 {
 		if stats.MaxArrayIntSet < len(a) {
 			stats.MaxArrayIntSet = len(a)
 		}
 	}
-	for _, a := range DumpSnap.subnet6 {
+	for _, a := range CurrentDump.subnet6 {
 		if stats.MaxArrayIntSet < len(a) {
 			stats.MaxArrayIntSet = len(a)
 		}
 	}
-	for _, a := range DumpSnap.url {
+	for _, a := range CurrentDump.url {
 		if stats.MaxArrayIntSet < len(a) {
 			stats.MaxArrayIntSet = len(a)
 		}
 	}
-	for _, a := range DumpSnap.domain {
+	for _, a := range CurrentDump.domain {
 		if stats.MaxArrayIntSet < len(a) {
 			stats.MaxArrayIntSet = len(a)
 		}
 	}
 
-	DumpSnap.Unlock()
+	CurrentDump.Unlock()
 
 	logger.Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", stats.Cnt, stats.CntAdd, stats.CntUpdate, stats.CntRemove)
 	logger.Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
-		len(DumpSnap.ip), len(DumpSnap.ip6), len(DumpSnap.subnet), len(DumpSnap.subnet6),
-		len(DumpSnap.domain), len(DumpSnap.url))
+		len(CurrentDump.ip4), len(CurrentDump.ip6), len(CurrentDump.subnet4), len(CurrentDump.subnet6),
+		len(CurrentDump.domain), len(CurrentDump.url))
 	logger.Info.Printf("Biggest array: %d\n", stats.MaxArrayIntSet)
 	logger.Info.Printf("Biggest content: %d\n", stats.MaxContentSize)
 
@@ -378,7 +378,7 @@ func (v *Content) constructBlockType() int32 {
 func (v *Content) Update(u2Hash uint64, o *MinContent, updateTime int64) {
 	pack := v.Marshal()
 	v1 := newMinContent(v.ID, u2Hash, updateTime, pack)
-	DumpSnap.Content[v.ID] = v1
+	CurrentDump.Content[v.ID] = v1
 	v1.handleUpdateIp(v, o)
 	v1.handleUpdateIp6(v, o)
 	v1.handleUpdateSubnet(v, o)
@@ -392,7 +392,7 @@ func (v *Content) Update(u2Hash uint64, o *MinContent, updateTime int64) {
 func (v *Content) Add(u2Hash uint64, updateTime int64) {
 	pack := v.Marshal()
 	v1 := newMinContent(v.ID, u2Hash, updateTime, pack)
-	DumpSnap.Content[v.ID] = v1
+	CurrentDump.Content[v.ID] = v1
 	v1.handleAddIp(v)
 	v1.handleAddIp6(v)
 	v1.handleAddSubnet6(v)
@@ -413,7 +413,7 @@ func (v *MinContent) handleAddDecision(v0 *Content) {
 	hasher64.Write(c)
 	hasher64.Write([]byte(v0.Decision.Date))
 	v.Decision = hasher64.Sum64()
-	DumpSnap.AddDecision(v.Decision, v.ID)
+	CurrentDump.AddDecision(v.Decision, v.ID)
 }
 
 // IT IS REASON FOR ALARM!!!!
@@ -427,15 +427,15 @@ func (v *MinContent) handleUpdateDecision(v0 *Content, o *MinContent) {
 	hasher64.Write(c)
 	hasher64.Write([]byte(v0.Decision.Date))
 	v.Decision = hasher64.Sum64()
-	DumpSnap.DeleteDecision(o.Decision, o.ID)
-	DumpSnap.AddDecision(v.Decision, v.ID)
+	CurrentDump.DeleteDecision(o.Decision, o.ID)
+	CurrentDump.AddDecision(v.Decision, v.ID)
 }
 
 func (v *MinContent) handleAddIp(v0 *Content) {
 	if len(v0.IP4) > 0 {
 		v.IP4 = v0.IP4
 		for i := range v.IP4 {
-			DumpSnap.AddIp(v.IP4[i].IP4, v.ID)
+			CurrentDump.AddIp(v.IP4[i].IP4, v.ID)
 		}
 	}
 }
@@ -445,14 +445,14 @@ func (v *MinContent) handleUpdateIp(v0 *Content, o *MinContent) {
 	if len(v0.IP4) > 0 {
 		v.IP4 = v0.IP4
 		for i := range v.IP4 {
-			DumpSnap.AddIp(v.IP4[i].IP4, v.ID)
+			CurrentDump.AddIp(v.IP4[i].IP4, v.ID)
 			ipSet[v.IP4[i].IP4] = NothingV
 		}
 	}
 	for i := range o.IP4 {
 		ip := o.IP4[i].IP4
 		if _, ok := ipSet[ip]; !ok {
-			DumpSnap.DeleteIp(ip, o.ID)
+			CurrentDump.DeleteIp(ip, o.ID)
 		}
 	}
 }
@@ -462,7 +462,7 @@ func (v *MinContent) handleAddDomain(v0 *Content) {
 		v.Domain = v0.Domain
 		for _, value := range v.Domain {
 			domain := NormalizeDomain(value.Domain)
-			DumpSnap.AddDomain(domain, v.ID)
+			CurrentDump.AddDomain(domain, v.ID)
 		}
 	}
 }
@@ -473,14 +473,14 @@ func (v *MinContent) handleUpdateDomain(v0 *Content, o *MinContent) {
 		v.Domain = v0.Domain
 		for _, value := range v.Domain {
 			domain := NormalizeDomain(value.Domain)
-			DumpSnap.AddDomain(domain, v.ID)
+			CurrentDump.AddDomain(domain, v.ID)
 			domainSet[domain] = NothingV
 		}
 	}
 	for _, value := range o.Domain {
 		domain := NormalizeDomain(value.Domain)
 		if _, ok := domainSet[domain]; !ok {
-			DumpSnap.DeleteDomain(domain, o.ID)
+			CurrentDump.DeleteDomain(domain, o.ID)
 		}
 	}
 }
@@ -490,7 +490,7 @@ func (v *MinContent) handleAddUrl(v0 *Content) {
 		v.URL = v0.URL
 		for _, value := range v.URL {
 			url := NormalizeURL(value.URL)
-			DumpSnap.AddUrl(url, v.ID)
+			CurrentDump.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
 				v0.HTTPSBlock += 1
 			}
@@ -504,7 +504,7 @@ func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
 		v.URL = v0.URL
 		for _, value := range v.URL {
 			url := NormalizeURL(value.URL)
-			DumpSnap.AddUrl(url, v.ID)
+			CurrentDump.AddUrl(url, v.ID)
 			if url[:8] == "https://" {
 				v0.HTTPSBlock += 1
 			}
@@ -514,7 +514,7 @@ func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
 	for _, value := range o.URL {
 		url := NormalizeURL(value.URL)
 		if _, ok := urlSet[url]; !ok {
-			DumpSnap.DeleteUrl(url, o.ID)
+			CurrentDump.DeleteUrl(url, o.ID)
 		}
 	}
 }
@@ -523,7 +523,7 @@ func (v *MinContent) handleAddSubnet(v0 *Content) {
 	if len(v0.Subnet4) > 0 {
 		v.Subnet4 = v0.Subnet4
 		for _, value := range v.Subnet4 {
-			DumpSnap.AddSubnet(value.Subnet4, v.ID)
+			CurrentDump.AddSubnet(value.Subnet4, v.ID)
 		}
 	}
 }
@@ -533,13 +533,13 @@ func (v *MinContent) handleUpdateSubnet(v0 *Content, o *MinContent) {
 	if len(v0.Subnet4) > 0 {
 		v.Subnet4 = v0.Subnet4
 		for _, value := range v.Subnet4 {
-			DumpSnap.AddSubnet(value.Subnet4, v.ID)
+			CurrentDump.AddSubnet(value.Subnet4, v.ID)
 			subnetSet[value.Subnet4] = NothingV
 		}
 	}
 	for _, value := range o.Subnet4 {
 		if _, ok := subnetSet[value.Subnet4]; !ok {
-			DumpSnap.DeleteSubnet(value.Subnet4, o.ID)
+			CurrentDump.DeleteSubnet(value.Subnet4, o.ID)
 		}
 	}
 }
@@ -548,7 +548,7 @@ func (v *MinContent) handleAddSubnet6(v0 *Content) {
 	if len(v0.Subnet6) > 0 {
 		v.Subnet6 = v0.Subnet6
 		for _, value := range v.Subnet6 {
-			DumpSnap.AddSubnet6(value.Subnet6, v.ID)
+			CurrentDump.AddSubnet6(value.Subnet6, v.ID)
 		}
 	}
 }
@@ -558,13 +558,13 @@ func (v *MinContent) handleUpdateSubnet6(v0 *Content, o *MinContent) {
 	if len(v0.Subnet6) > 0 {
 		v.Subnet6 = v0.Subnet6
 		for _, value := range v.Subnet6 {
-			DumpSnap.AddSubnet(value.Subnet6, v.ID)
+			CurrentDump.AddSubnet(value.Subnet6, v.ID)
 			subnet6Set[value.Subnet6] = NothingV
 		}
 	}
 	for _, value := range o.Subnet6 {
 		if _, ok := subnet6Set[value.Subnet6]; !ok {
-			DumpSnap.DeleteSubnet6(value.Subnet6, o.ID)
+			CurrentDump.DeleteSubnet6(value.Subnet6, o.ID)
 		}
 	}
 }
@@ -574,7 +574,7 @@ func (v *MinContent) handleAddIp6(v0 *Content) {
 		v.IP6 = v0.IP6
 		for _, value := range v.IP6 {
 			ip6 := string(value.IP6)
-			DumpSnap.AddIp6(ip6, v.ID)
+			CurrentDump.AddIp6(ip6, v.ID)
 		}
 	}
 }
@@ -585,14 +585,14 @@ func (v *MinContent) handleUpdateIp6(v0 *Content, o *MinContent) {
 		v.IP6 = v0.IP6
 		for _, value := range v.IP6 {
 			ip6 := string(value.IP6)
-			DumpSnap.AddIp6(ip6, v.ID)
+			CurrentDump.AddIp6(ip6, v.ID)
 			ip6Set[ip6] = NothingV
 		}
 	}
 	for _, value := range o.IP6 {
 		ip6 := string(value.IP6)
 		if _, ok := ip6Set[ip6]; !ok {
-			DumpSnap.DeleteIp6(ip6, o.ID)
+			CurrentDump.DeleteIp6(ip6, o.ID)
 		}
 	}
 }

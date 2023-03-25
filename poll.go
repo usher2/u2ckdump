@@ -51,7 +51,7 @@ func DumpRefresh(url, token, dir string) {
 		logger.Error.Printf("Can't read cached dump id: %s\n", err.Error())
 
 		// TODO: investigate thi case.
-		//return
+		// return
 	}
 
 	if cachedDump.ID == "" {
@@ -114,7 +114,7 @@ func DumpRefresh(url, token, dir string) {
 	case lastDump.ID != cachedDump.ID:
 		logger.Info.Printf("Not changed, but new dump metainfo")
 
-		Parse2(lastDump.UpdateTime)
+		UpdateDumpTime(lastDump.UpdateTime)
 	default:
 		logger.Info.Printf("No new dump")
 	}

@@ -136,12 +136,12 @@ func Test_Parse(t *testing.T) {
 		Stats.CntRemove != 0 {
 		t.Errorf("Stat error: %v\n", Stats)
 	}*/
-	if len(DumpSnap.ip) != 13 ||
-		len(DumpSnap.ip6) != 11 ||
-		len(DumpSnap.subnet) != 1 ||
-		len(DumpSnap.subnet6) != 0 ||
-		len(DumpSnap.url) != 3 ||
-		len(DumpSnap.domain) != 2 {
+	if len(CurrentDump.ip4) != 13 ||
+		len(CurrentDump.ip6) != 11 ||
+		len(CurrentDump.subnet4) != 1 ||
+		len(CurrentDump.subnet6) != 0 ||
+		len(CurrentDump.url) != 3 ||
+		len(CurrentDump.domain) != 2 {
 		t.Errorf("Count error")
 	}
 
@@ -156,8 +156,8 @@ func Test_Parse(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	fmt.Printf("IP4:\n%v\n", DumpSnap.ip)
-	for k := range DumpSnap.Content {
+	fmt.Printf("IP4:\n%v\n", CurrentDump.ip4)
+	for k := range CurrentDump.Content {
 		fmt.Printf("%d ", k)
 	}
 	fmt.Println()

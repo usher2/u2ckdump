@@ -22,20 +22,20 @@ func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*p
 	logger.Debug.Printf("Received decision: %d\n", query)
 
 	// TODO: Change to DunpSnap search method.
-	if DumpSnap != nil && DumpSnap.utime > 0 {
-		DumpSnap.RLock()
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		results := DumpSnap.decision[query]
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		results := CurrentDump.decision[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if v, ok := DumpSnap.Content[id]; ok {
+			if v, ok := CurrentDump.Content[id]; ok {
 				resp.Results = append(resp.Results, v.newPbContent(0, nil, "", "", ""))
 			}
 		}
 
-		DumpSnap.RUnlock()
+		CurrentDump.RUnlock()
 
 		return resp, nil
 	}
@@ -50,16 +50,16 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 	logger.Debug.Printf("Received content ID: %d\n", query)
 
 	// TODO: Change to DunpSnap search method.
-	if DumpSnap != nil && DumpSnap.utime > 0 {
-		DumpSnap.RLock()
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
 
-		if result, ok := DumpSnap.Content[query]; ok {
+		if result, ok := CurrentDump.Content[query]; ok {
 			resp.Results = append(resp.Results, result.newPbContent(0, nil, "", "", ""))
 		}
 
-		DumpSnap.RUnlock()
+		CurrentDump.RUnlock()
 
 		return resp, nil
 	}
@@ -70,7 +70,8 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 // SearchID - search by IPv4.
 func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
-	ipBytes := net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff,
+	ipBytes := net.IP{
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff,
 		byte((query & 0xFF000000) >> 24),
 		byte((query & 0x00FF0000) >> 16),
 		byte((query & 0x0000FF00) >> 8),
@@ -83,13 +84,13 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 	var subnets []string
 
 	// TODO: Change to DunpSnap search method.
-	if DumpSnap != nil && DumpSnap.utime > 0 {
-		DumpSnap.RLock()
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
 
 		// TODO: Change to DumpSnap search method
-		cnw, err := DumpSnap.net.ContainingNetworks(ipBytes)
+		cnw, err := CurrentDump.net.ContainingNetworks(ipBytes)
 		if err != nil {
 			logger.Debug.Printf("Can't get containing networks: %s: %s\n", ipBytes, err)
 		} else {
@@ -97,7 +98,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 				subnet := entry.Network()
 				subnetStr := subnet.String()
 
-				if a, ok := DumpSnap.subnet[subnetStr]; ok {
+				if a, ok := CurrentDump.subnet4[subnetStr]; ok {
 					resultSubnets = append(resultSubnets, a...)
 
 					for range a {
@@ -107,25 +108,25 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 			}
 		}
 
-		if a, ok := DumpSnap.ip[query]; ok {
+		if a, ok := CurrentDump.ip4[query]; ok {
 			resulIPs = append(resulIPs, a...)
 		}
 
 		resp.Results = make([]*pb.Content, 0, len(resultSubnets)+len(resulIPs))
 
 		for i, id := range resultSubnets {
-			if cont, ok := DumpSnap.Content[id]; ok {
+			if cont, ok := CurrentDump.Content[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", "", subnets[i]))
 			}
 		}
 
 		for _, id := range resulIPs {
-			if cont, ok := DumpSnap.Content[id]; ok {
+			if cont, ok := CurrentDump.Content[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(query, nil, "", "", ""))
 			}
 		}
 
-		DumpSnap.RUnlock()
+		CurrentDump.RUnlock()
 
 		return resp, nil
 	}
@@ -140,20 +141,20 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 	logger.Debug.Printf("Received IPv6: %v\n", query)
 
 	// TODO: Change to DunpSnap search method.
-	if DumpSnap != nil && DumpSnap.utime > 0 {
-		DumpSnap.RLock()
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		results := DumpSnap.ip6[string(query)]
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		results := CurrentDump.ip6[string(query)]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := DumpSnap.Content[id]; ok {
+			if cont, ok := CurrentDump.Content[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, query, "", "", ""))
 			}
 		}
 
-		DumpSnap.RUnlock()
+		CurrentDump.RUnlock()
 
 		return resp, nil
 	}
@@ -168,20 +169,20 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 	logger.Debug.Printf("Received URL: %v\n", query)
 
 	// TODO: Change to DunpSnap search method.
-	if DumpSnap != nil && DumpSnap.utime > 0 {
-		DumpSnap.RLock()
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		results := DumpSnap.url[query]
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		results := CurrentDump.url[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := DumpSnap.Content[id]; ok {
+			if cont, ok := CurrentDump.Content[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", query, ""))
 			}
 		}
 
-		DumpSnap.RUnlock()
+		CurrentDump.RUnlock()
 
 		return resp, nil
 	}
@@ -196,20 +197,20 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 	logger.Debug.Printf("Received Domain: %v\n", query)
 
 	// TODO: Change to DunpSnap search method.
-	if DumpSnap != nil && DumpSnap.utime > 0 {
-		DumpSnap.RLock()
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: DumpSnap.utime}
-		results := DumpSnap.domain[query]
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		results := CurrentDump.domain[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := DumpSnap.Content[id]; ok {
+			if cont, ok := CurrentDump.Content[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, query, "", ""))
 			}
 		}
 
-		DumpSnap.RUnlock()
+		CurrentDump.RUnlock()
 
 		return resp, nil
 	}
@@ -224,12 +225,12 @@ func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PongResponse
 	logger.Debug.Printf("Received Ping: %v\n", ping)
 
 	// TODO: Change to DunpSnap search method.
-	if DumpSnap != nil && DumpSnap.utime > 0 {
-		DumpSnap.RLock()
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
 
-		resp := &pb.PongResponse{Pong: SrvPongMessage, RegistryUpdateTime: DumpSnap.utime}
+		resp := &pb.PongResponse{Pong: SrvPongMessage, RegistryUpdateTime: CurrentDump.utime}
 
-		DumpSnap.RUnlock()
+		CurrentDump.RUnlock()
 
 		return resp, nil
 	}
