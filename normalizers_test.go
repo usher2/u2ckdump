@@ -1,8 +1,16 @@
 package main
 
 import (
+	"io"
+	"os"
 	"testing"
+
+	"github.com/usher2/u2ckdump/internal/logger"
 )
+
+func init() {
+	logger.LogInit(io.Discard, os.Stdout, os.Stderr, os.Stderr)
+}
 
 // TestNormalizeDomain tests the NormalizeDomain function.
 func TestNormalizeDomain(t *testing.T) {
@@ -46,6 +54,7 @@ func TestNormalizeURL(t *testing.T) {
 		{"http:/example.com", "http://example.com"},
 		{"http:example.com", "http://example.com"},
 		{"http://Example,com", "http://example.com"},
+		{"http://example.com/test%t", "http://example.com/test%t"},
 		{"http://example.com/test#fragment", "http://example.com/test"},
 		{"https://example.com:8080", "https://example.com:8080"},
 	}

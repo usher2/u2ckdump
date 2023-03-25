@@ -63,42 +63,42 @@ func UnmarshalContent(b []byte, cont *Content) error {
 					return fmt.Errorf("parse url elm: %w", err)
 				}
 
-				cont.URL = append(cont.URL, URL{URL: u.URL, Ts: parseTime(u.Ts)})
+				cont.URL = append(cont.URL, URL{URL: u.URL, Ts: parseRFC3339Time(u.Ts)})
 			case elementDomain:
 				d := XMLDomain{}
 				if err := decoder.DecodeElement(&d, &element); err != nil {
 					return fmt.Errorf("parse domain elm: %w", err)
 				}
 
-				cont.Domain = append(cont.Domain, Domain{Domain: d.Domain, Ts: parseTime(d.Ts)})
+				cont.Domain = append(cont.Domain, Domain{Domain: d.Domain, Ts: parseRFC3339Time(d.Ts)})
 			case elementIP4:
 				ip := XMLIP{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return fmt.Errorf("parse ip elm: %w", err)
 				}
 
-				cont.IP4 = append(cont.IP4, IP4{IP4: IPv4StrToInt(ip.IP), Ts: parseTime(ip.Ts)})
+				cont.IP4 = append(cont.IP4, IP4{IP4: IPv4StrToInt(ip.IP), Ts: parseRFC3339Time(ip.Ts)})
 			case elementIP6:
 				ip := XMLIP6{}
 				if err := decoder.DecodeElement(&ip, &element); err != nil {
 					return fmt.Errorf("parse ipv6 elm: %w", err)
 				}
 
-				cont.IP6 = append(cont.IP6, IP6{IP6: net.ParseIP(ip.IP6), Ts: parseTime(ip.Ts)})
+				cont.IP6 = append(cont.IP6, IP6{IP6: net.ParseIP(ip.IP6), Ts: parseRFC3339Time(ip.Ts)})
 			case elementIP4Subnet:
 				s := XMLSubnet{}
 				if err := decoder.DecodeElement(&s, &element); err != nil {
 					return fmt.Errorf("parse subnet elm: %w", err)
 				}
 
-				cont.Subnet4 = append(cont.Subnet4, Subnet4{Subnet4: s.Subnet, Ts: parseTime(s.Ts)})
+				cont.Subnet4 = append(cont.Subnet4, Subnet4{Subnet4: s.Subnet, Ts: parseRFC3339Time(s.Ts)})
 			case elementIP6Subnet:
 				s := XMLSubnet6{}
 				if err := decoder.DecodeElement(&s, &element); err != nil {
 					return fmt.Errorf("parse ipv6 subnet elm: %w", err)
 				}
 
-				cont.Subnet6 = append(cont.Subnet6, Subnet6{Subnet6: s.Subnet6, Ts: parseTime(s.Ts)})
+				cont.Subnet6 = append(cont.Subnet6, Subnet6{Subnet6: s.Subnet6, Ts: parseRFC3339Time(s.Ts)})
 			}
 		}
 	}
@@ -132,13 +132,13 @@ func parseContentElement(element xml.StartElement, v *Content) error {
 
 			v.UrgencyType = int32(x)
 		case "includeTime":
-			v.IncludeTime = parseTime2(attr.Value)
+			v.IncludeTime = parseMoscowTime(attr.Value)
 		case "blockType":
 			v.BlockType = attr.Value
 		case "hash":
 			v.Hash = attr.Value
 		case "ts":
-			v.Ts = parseTime(attr.Value)
+			v.Ts = parseRFC3339Time(attr.Value)
 		}
 	}
 
@@ -619,7 +619,7 @@ func handleRegister(element xml.StartElement, r *Reg) {
 		case "formatVersion":
 			r.FormatVersion = attr.Value
 		case "updateTime":
-			r.UpdateTime = parseTime(attr.Value)
+			r.UpdateTime = parseRFC3339Time(attr.Value)
 		case "updateTimeUrgently":
 			r.UpdateTimeUrgently = attr.Value
 		}

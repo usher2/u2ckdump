@@ -6,10 +6,13 @@ import (
 	"github.com/usher2/u2ckdump/internal/logger"
 )
 
-// locationMSK - Moscow timezone.
+// Provides functions to parse RFC3339 time strings into Unix timestamps.
+// It supports parsing time strings in the Moscow timezone and without a timezone specified.
+
+// locationMSK represents the Moscow timezone.
 var locationMSK *time.Location
 
-// Set the Moscow timezone at init time.
+// init initializes the Moscow timezone.
 func init() {
 	var err error
 
@@ -19,27 +22,28 @@ func init() {
 	}
 }
 
-// ParseTime - parse RFC3339 time string to unix timestamp.
-func parseTime(s string) int64 {
+// parseRFC3339Time converts an RFC3339 time string to a Unix timestamp.
+// Returns 0 if the input string is empty or the parsing fails.
+func parseRFC3339Time(s string) int64 {
 	if s == "" {
 		return 0
 	}
 
 	t, err := time.Parse(time.RFC3339, s)
 	if err != nil {
-		logger.Error.Printf("Can't parse time: %s (%s)\n", err, s)
-
+		// logger.Error.Printf("Can't parse time: %s (%s)\n", err, s)
 		return 0
 	}
 
 	return t.Unix()
 }
 
-// parseIncludeTime - time format for parsing RFC3339 like time withouth timezone.
+// parseIncludeTime is a format for parsing RFC3339-like time strings without a timezone.
 const parseIncludeTime = "2006-01-02T15:04:05"
 
-// ParseTime2 - parse RFC3339 like time string in Moscow timezone to unix timestamp.
-func parseTime2(s string) int64 {
+// parseMoscowTime converts an RFC3339-like time string in the Moscow timezone to a Unix timestamp.
+// Returns 0 if the input string is empty or the parsing fails.
+func parseMoscowTime(s string) int64 {
 	if s == "" {
 		return 0
 	}
@@ -47,7 +51,6 @@ func parseTime2(s string) int64 {
 	t, err := time.ParseInLocation(parseIncludeTime, s, locationMSK)
 	if err != nil {
 		logger.Error.Printf("Can't parse time: %s (%s)\n", err, s)
-
 		return 0
 	}
 
