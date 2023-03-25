@@ -9,8 +9,8 @@ const (
 	BlockTypeIP
 )
 
-// MinContent - packed version of Content.
-type MinContent struct {
+// PackedContent - packed version of Content.
+type PackedContent struct {
 	ID                 int32
 	BlockType          int32 // for protobuf
 	RegistryUpdateTime int64
@@ -21,8 +21,8 @@ type MinContent struct {
 	Subnet4            []Subnet4
 	Subnet6            []Subnet6
 	Domain             []Domain
-	Pack               []byte
-	U2Hash             uint64
+	Payload            []byte // It is a protobuf message.
+	RecordHash         uint64
 }
 
 // Content - store for <content> with hash.
@@ -42,7 +42,7 @@ type Content struct {
 	Subnet6     []Subnet6 `json:"sb6,omitempty"`
 	Domain      []Domain  `json:"dm,omitempty"`
 	HTTPSBlock  int       `json:"hb"`
-	U2Hash      uint64    `json:"u2h"`
+	RecordHash  uint64    `json:"u2h"`
 }
 
 // Subnet6 - store for <ipv6Subnet>.

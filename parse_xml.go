@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 
 	"golang.org/x/net/html/charset"
 
@@ -210,16 +211,17 @@ func Parse(dumpFile io.Reader) error {
 					stats.MaxContentSize = len(contBuf)
 				}
 
+				bufferOffset = tokenStartOffset
+
 				hasher64.Reset()
 				hasher64.Write(contBuf)
 
-				newContHash := hasher64.Sum64()
-				bufferOffset = tokenStartOffset
-
 				// TODO: move to special func
-				newCont := Content{}
+				newCont := &Content{
+					RecordHash: hasher64.Sum64(),
+				}
 
-				ContJournal[id] = NothingV // add to journal.
+				ContJournal[id] = Nothing{} // add to journal.
 
 				// create or update
 				CurrentDump.Lock()
@@ -228,31 +230,30 @@ func Parse(dumpFile io.Reader) error {
 
 				switch {
 				case !exists:
-					err := UnmarshalContent(contBuf, &newCont)
+					err := UnmarshalContent(contBuf, newCont)
 					if err != nil {
 						logger.Error.Printf("Decode Error: %s\n", err)
 
 						break
 					}
 
-					newCont.Add(newContHash, reg.UpdateTime)
+					CurrentDump.NewPackedContent(newCont, reg.UpdateTime)
 					stats.CntAdd++
-				case prevCont.U2Hash != newContHash:
-					err := UnmarshalContent(contBuf, &newCont)
+				case prevCont.RecordHash != newCont.RecordHash:
+					err := UnmarshalContent(contBuf, newCont)
 					if err != nil {
 						logger.Error.Printf("Decode Error: %s\n", err)
 
 						break
 					}
 
-					newCont.Update(newContHash, prevCont, reg.UpdateTime)
+					CurrentDump.MergePackedContent(newCont, prevCont, reg.UpdateTime)
 					stats.CntUpdate++
 				default:
-					CurrentDump.Content[id].RegistryUpdateTime = reg.UpdateTime
+					CurrentDump.SetContentUpdateTime(id, reg.UpdateTime)
 				}
 
 				CurrentDump.Unlock()
-
 				stats.Cnt++
 			}
 		}
@@ -268,72 +269,11 @@ func Parse(dumpFile io.Reader) error {
 	// remove operations
 	CurrentDump.Lock()
 
-	for id, cont := range CurrentDump.Content {
-		if _, ok := ContJournal[id]; !ok {
-			for _, ip4 := range cont.IP4 {
-				CurrentDump.DeleteIp(ip4.IP4, cont.ID)
-			}
-
-			for _, ip6 := range cont.IP6 {
-				ip6 := string(ip6.IP6)
-				CurrentDump.DeleteIp6(ip6, cont.ID)
-			}
-
-			for _, subnet6 := range cont.Subnet6 {
-				CurrentDump.DeleteSubnet6(subnet6.Subnet6, cont.ID)
-			}
-
-			for _, subnet4 := range cont.Subnet4 {
-				CurrentDump.DeleteSubnet(subnet4.Subnet4, cont.ID)
-			}
-
-			for _, u := range cont.URL {
-				CurrentDump.DeleteUrl(NormalizeURL(u.URL), cont.ID)
-			}
-
-			for _, domain := range cont.Domain {
-				CurrentDump.DeleteDomain(NormalizeDomain(domain.Domain), cont.ID)
-			}
-
-			CurrentDump.DeleteDecision(cont.Decision, cont.ID)
-			delete(CurrentDump.Content, id)
-			stats.CntRemove++
-		}
-	}
+	CurrentDump.Purge(ContJournal, &stats)
 
 	CurrentDump.utime = reg.UpdateTime
-	stats.MaxArrayIntSet = 0
 
-	for _, a := range CurrentDump.ip4 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
-		}
-	}
-	for _, a := range CurrentDump.ip6 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
-		}
-	}
-	for _, a := range CurrentDump.subnet4 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
-		}
-	}
-	for _, a := range CurrentDump.subnet6 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
-		}
-	}
-	for _, a := range CurrentDump.url {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
-		}
-	}
-	for _, a := range CurrentDump.domain {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
-		}
-	}
+	CurrentDump.CalcMaxEntityLen(&stats)
 
 	CurrentDump.Unlock()
 
@@ -347,16 +287,90 @@ func Parse(dumpFile io.Reader) error {
 	return nil
 }
 
-func (v *Content) Marshal() []byte {
-	b, err := json.Marshal(v)
+func (dump *Dump) CalcMaxEntityLen(stats *Stat) {
+	stats.MaxArrayIntSet = 0
+
+	for _, a := range dump.ip4 {
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
+		}
+	}
+	for _, a := range dump.ip6 {
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
+		}
+	}
+	for _, a := range dump.subnet4 {
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
+		}
+	}
+	for _, a := range dump.subnet6 {
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
+		}
+	}
+	for _, a := range dump.url {
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
+		}
+	}
+	for _, a := range dump.domain {
+		if stats.MaxArrayIntSet < len(a) {
+			stats.MaxArrayIntSet = len(a)
+		}
+	}
+}
+
+func (dump *Dump) Purge(existed Int32Map, stats *Stat) {
+	for id, cont := range dump.Content {
+		if _, ok := existed[id]; !ok {
+			for _, ip4 := range cont.IP4 {
+				dump.DeleteIp(ip4.IP4, cont.ID)
+			}
+
+			for _, ip6 := range cont.IP6 {
+				ip6 := string(ip6.IP6)
+				dump.DeleteIp6(ip6, cont.ID)
+			}
+
+			for _, subnet6 := range cont.Subnet6 {
+				dump.DeleteSubnet6(subnet6.Subnet6, cont.ID)
+			}
+
+			for _, subnet4 := range cont.Subnet4 {
+				dump.DeleteSubnet(subnet4.Subnet4, cont.ID)
+			}
+
+			for _, u := range cont.URL {
+				dump.DeleteUrl(NormalizeURL(u.URL), cont.ID)
+			}
+
+			for _, domain := range cont.Domain {
+				dump.DeleteDomain(NormalizeDomain(domain.Domain), cont.ID)
+			}
+
+			dump.DeleteDecision(cont.Decision, cont.ID)
+
+			delete(dump.Content, id)
+
+			stats.CntRemove++
+		}
+	}
+}
+
+// Marshal - encodes content to JSON.
+func (record *Content) Marshal() []byte {
+	b, err := json.Marshal(record)
 	if err != nil {
 		logger.Error.Printf("Error encoding: %s\n", err.Error())
 	}
 	return b
 }
 
-func (v *Content) constructBlockType() int32 {
-	switch v.BlockType {
+// constructBlockType - returns block type for content.
+func (record *Content) constructBlockType() int32 {
+	switch record.BlockType {
 	case "ip":
 		return BlockTypeIP
 	case "domain":
@@ -364,10 +378,10 @@ func (v *Content) constructBlockType() int32 {
 	case "domain-mask":
 		return BlockTypeMask
 	default:
-		if v.BlockType != "default" && v.BlockType != "" {
-			logger.Error.Printf("Unknown block type: %s\n", v.BlockType)
+		if record.BlockType != "default" && record.BlockType != "" {
+			logger.Error.Printf("Unknown block type: %s\n", record.BlockType)
 		}
-		if v.HTTPSBlock == 0 {
+		if record.HTTPSBlock == 0 {
 			return BlockTypeURL
 		} else {
 			return BlockTypeHTTPS
@@ -375,226 +389,404 @@ func (v *Content) constructBlockType() int32 {
 	}
 }
 
-func (v *Content) Update(u2Hash uint64, o *MinContent, updateTime int64) {
-	pack := v.Marshal()
-	v1 := newMinContent(v.ID, u2Hash, updateTime, pack)
-	CurrentDump.Content[v.ID] = v1
-	v1.handleUpdateIp(v, o)
-	v1.handleUpdateIp6(v, o)
-	v1.handleUpdateSubnet(v, o)
-	v1.handleUpdateSubnet6(v, o)
-	v1.handleUpdateUrl(v, o)
-	v1.handleUpdateDomain(v, o)
-	v1.handleUpdateDecision(v, o) // reason for ALARM!!!
-	v1.BlockType = v.constructBlockType()
+func (dump *Dump) SetContentUpdateTime(id int32, updateTime int64) {
+	dump.Content[id].RegistryUpdateTime = dump.utime
 }
 
-func (v *Content) Add(u2Hash uint64, updateTime int64) {
-	pack := v.Marshal()
-	v1 := newMinContent(v.ID, u2Hash, updateTime, pack)
-	CurrentDump.Content[v.ID] = v1
-	v1.handleAddIp(v)
-	v1.handleAddIp6(v)
-	v1.handleAddSubnet6(v)
-	v1.handleAddSubnet(v)
-	v1.handleAddUrl(v)
-	v1.handleAddDomain(v)
-	v1.handleAddDecision(v)
-	v1.BlockType = v.constructBlockType()
+// MergePackedContent - merges new content with previous one.
+// It is used to update existing content.
+func (dump *Dump) MergePackedContent(record *Content, prev *PackedContent, updateTime int64) {
+	prev.refreshPackedContent(record.RecordHash, updateTime, record.Marshal())
+
+	dump.EctractAndApplyUpdateIP4(record, prev)
+	dump.EctractAndApplyUpdateIP6(record, prev)
+	dump.EctractAndApplyUpdateSubnet4(record, prev)
+	dump.EctractAndApplyUpdateSubnet6(record, prev)
+	dump.EctractAndApplyUpdateDomain(record, prev)
+	dump.EctractAndApplyUpdateURL(record, prev)
+	dump.EctractAndApplyUpdateDecision(record, prev) // reason for ALARM!!!
 }
 
-func (v *MinContent) handleAddDecision(v0 *Content) {
-	c := []byte(" ")
-	// hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
-	hasher64.Reset()
-	hasher64.Write([]byte(v0.Decision.Org))
-	hasher64.Write(c)
-	hasher64.Write([]byte(v0.Decision.Number))
-	hasher64.Write(c)
-	hasher64.Write([]byte(v0.Decision.Date))
-	v.Decision = hasher64.Sum64()
-	CurrentDump.AddDecision(v.Decision, v.ID)
+// NewPackedContent - creates new content.
+// It is used to add new content.
+func (dump *Dump) NewPackedContent(record *Content, updateTime int64) {
+	fresh := newPackedContent(record.ID, record.RecordHash, updateTime, record.Marshal())
+	dump.Content[record.ID] = fresh
+
+	dump.ExtractAndApplyIP4(record, fresh)
+	dump.ExtractAndApplyIP6(record, fresh)
+	dump.ExtractAndApplySubnet4(record, fresh)
+	dump.ExtractAndApplySubnet6(record, fresh)
+	dump.ExtractAndApplyDomain(record, fresh)
+	dump.ExtractAndApplyURL(record, fresh)
+	dump.ExtractAndApplyDecision(record, fresh)
+}
+
+func (dump *Dump) ExtractAndApplyDecision(record *Content, pack *PackedContent) {
+	pack.Decision = hashDecision(&record.Decision)
+	dump.AddDecision(pack.Decision, pack.ID)
 }
 
 // IT IS REASON FOR ALARM!!!!
-func (v *MinContent) handleUpdateDecision(v0 *Content, o *MinContent) {
-	c := []byte(" ")
+func (dump *Dump) EctractAndApplyUpdateDecision(record *Content, pack *PackedContent) {
+	dump.DeleteDecision(pack.Decision, pack.ID)
+
+	pack.Decision = hashDecision(&record.Decision)
+
+	dump.AddDecision(pack.Decision, pack.ID)
+}
+
+func hashDecision(decision *Decision) uint64 {
 	// hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
 	hasher64.Reset()
-	hasher64.Write([]byte(v0.Decision.Org))
-	hasher64.Write(c)
-	hasher64.Write([]byte(v0.Decision.Number))
-	hasher64.Write(c)
-	hasher64.Write([]byte(v0.Decision.Date))
-	v.Decision = hasher64.Sum64()
-	CurrentDump.DeleteDecision(o.Decision, o.ID)
-	CurrentDump.AddDecision(v.Decision, v.ID)
+	hasher64.Write([]byte(decision.Org))
+	hasher64.Write([]byte(" "))
+	hasher64.Write([]byte(decision.Number))
+	hasher64.Write([]byte(" "))
+	hasher64.Write([]byte(decision.Date))
+	return hasher64.Sum64()
 }
 
-func (v *MinContent) handleAddIp(v0 *Content) {
-	if len(v0.IP4) > 0 {
-		v.IP4 = v0.IP4
-		for i := range v.IP4 {
-			CurrentDump.AddIp(v.IP4[i].IP4, v.ID)
-		}
-	}
-}
-
-func (v *MinContent) handleUpdateIp(v0 *Content, o *MinContent) {
-	ipSet := make(map[uint32]Nothing, len(v.IP4))
-	if len(v0.IP4) > 0 {
-		v.IP4 = v0.IP4
-		for i := range v.IP4 {
-			CurrentDump.AddIp(v.IP4[i].IP4, v.ID)
-			ipSet[v.IP4[i].IP4] = NothingV
-		}
-	}
-	for i := range o.IP4 {
-		ip := o.IP4[i].IP4
-		if _, ok := ipSet[ip]; !ok {
-			CurrentDump.DeleteIp(ip, o.ID)
+func (dump *Dump) ExtractAndApplyIP4(record *Content, pack *PackedContent) {
+	if len(record.IP4) > 0 {
+		pack.IP4 = record.IP4
+		for _, ip4 := range pack.IP4 {
+			dump.AddIp(ip4.IP4, pack.ID)
 		}
 	}
 }
 
-func (v *MinContent) handleAddDomain(v0 *Content) {
-	if len(v0.Domain) > 0 {
-		v.Domain = v0.Domain
-		for _, value := range v.Domain {
-			domain := NormalizeDomain(value.Domain)
-			CurrentDump.AddDomain(domain, v.ID)
+func (dump *Dump) EctractAndApplyUpdateIP4(record *Content, pack *PackedContent) {
+	ipExisted := make(map[uint32]Nothing, len(pack.IP4))
+	if len(record.IP4) > 0 {
+		for _, ip4 := range record.IP4 {
+			pack.AppendIP4(ip4)
+			dump.AddIp(ip4.IP4, pack.ID)
+			ipExisted[ip4.IP4] = Nothing{}
+		}
+	}
+
+	for _, ip4 := range pack.IP4 {
+		if _, ok := ipExisted[ip4.IP4]; !ok {
+			pack.RemoveIP4(ip4)
+			dump.DeleteIp(ip4.IP4, pack.ID)
 		}
 	}
 }
 
-func (v *MinContent) handleUpdateDomain(v0 *Content, o *MinContent) {
-	domainSet := NewStringSet(len(v.Domain))
-	if len(v0.Domain) > 0 {
-		v.Domain = v0.Domain
-		for _, value := range v.Domain {
-			domain := NormalizeDomain(value.Domain)
-			CurrentDump.AddDomain(domain, v.ID)
-			domainSet[domain] = NothingV
+func (pack *PackedContent) AppendIP4(ip4 IP4) {
+	for _, existedIP4 := range pack.IP4 {
+		if ip4 == existedIP4 {
+			return
 		}
 	}
-	for _, value := range o.Domain {
-		domain := NormalizeDomain(value.Domain)
-		if _, ok := domainSet[domain]; !ok {
-			CurrentDump.DeleteDomain(domain, o.ID)
+
+	pack.IP4 = append(pack.IP4, ip4)
+}
+
+func (pack *PackedContent) RemoveIP4(ip4 IP4) {
+	for i, existedIP4 := range pack.IP4 {
+		if ip4 == existedIP4 {
+			pack.IP4 = append(pack.IP4[:i], pack.IP4[i+1:]...)
+
+			return
 		}
 	}
 }
 
-func (v *MinContent) handleAddUrl(v0 *Content) {
-	if len(v0.URL) > 0 {
-		v.URL = v0.URL
-		for _, value := range v.URL {
-			url := NormalizeURL(value.URL)
-			CurrentDump.AddUrl(url, v.ID)
-			if url[:8] == "https://" {
-				v0.HTTPSBlock += 1
+func (dump *Dump) ExtractAndApplyIP6(record *Content, pack *PackedContent) {
+	if len(record.IP6) > 0 {
+		pack.IP6 = record.IP6
+		for _, ip4 := range pack.IP6 {
+			dump.AddIp6(string(ip4.IP6), pack.ID)
+		}
+	}
+}
+
+func (dump *Dump) EctractAndApplyUpdateIP6(record *Content, pack *PackedContent) {
+	ipExisted := make(map[string]Nothing, len(pack.IP6))
+	if len(record.IP6) > 0 {
+		for _, ip6 := range record.IP6 {
+			pack.AppendIP6(ip6)
+
+			addr := string(ip6.IP6)
+			dump.AddIp6(addr, pack.ID)
+			ipExisted[addr] = Nothing{}
+		}
+	}
+
+	for _, ip6 := range pack.IP6 {
+		if _, ok := ipExisted[string(ip6.IP6)]; !ok {
+			pack.RemoveIP6(ip6)
+			dump.DeleteIp6(string(ip6.IP6), pack.ID)
+		}
+	}
+}
+
+func (pack *PackedContent) AppendIP6(ip6 IP6) {
+	for _, existedIP6 := range pack.IP6 {
+		if string(ip6.IP6) == string(existedIP6.IP6) && ip6.Ts == existedIP6.Ts {
+			return
+		}
+	}
+
+	pack.IP6 = append(pack.IP6, ip6)
+}
+
+func (pack *PackedContent) RemoveIP6(ip6 IP6) {
+	for i, existedIP6 := range pack.IP6 {
+		if string(ip6.IP6) == string(existedIP6.IP6) && ip6.Ts == existedIP6.Ts {
+			pack.IP6 = append(pack.IP6[:i], pack.IP6[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (dump *Dump) ExtractAndApplySubnet4(record *Content, pack *PackedContent) {
+	if len(record.Subnet4) > 0 {
+		pack.Subnet4 = record.Subnet4
+		for _, subnet4 := range pack.Subnet4 {
+			dump.AddSubnet(subnet4.Subnet4, pack.ID)
+		}
+	}
+}
+
+func (dump *Dump) EctractAndApplyUpdateSubnet4(record *Content, pack *PackedContent) {
+	subnetExisted := NewStringSet(len(pack.Subnet4))
+	if len(record.Subnet4) > 0 {
+		for _, subnet4 := range record.Subnet4 {
+			pack.AppendSubnet4(subnet4)
+			dump.AddSubnet(subnet4.Subnet4, pack.ID)
+			subnetExisted[subnet4.Subnet4] = Nothing{}
+		}
+	}
+
+	for _, subnet4 := range pack.Subnet4 {
+		if _, ok := subnetExisted[subnet4.Subnet4]; !ok {
+			pack.RemoveSubnet4(subnet4)
+			dump.DeleteSubnet(subnet4.Subnet4, pack.ID)
+		}
+	}
+}
+
+func (pack *PackedContent) AppendSubnet4(subnet4 Subnet4) {
+	for _, existedSubnet4 := range pack.Subnet4 {
+		if subnet4 == existedSubnet4 {
+			return
+		}
+	}
+
+	pack.Subnet4 = append(pack.Subnet4, subnet4)
+}
+
+func (pack *PackedContent) RemoveSubnet4(subnet4 Subnet4) {
+	for i, existedSubnet4 := range pack.Subnet4 {
+		if subnet4 == existedSubnet4 {
+			pack.Subnet4 = append(pack.Subnet4[:i], pack.Subnet4[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (dump *Dump) ExtractAndApplySubnet6(record *Content, pack *PackedContent) {
+	if len(record.Subnet6) > 0 {
+		pack.Subnet6 = record.Subnet6
+		for _, subnet6 := range pack.Subnet6 {
+			dump.AddSubnet(subnet6.Subnet6, pack.ID)
+		}
+	}
+}
+
+func (dump *Dump) EctractAndApplyUpdateSubnet6(record *Content, pack *PackedContent) {
+	subnetExisted := NewStringSet(len(pack.Subnet6))
+	if len(record.Subnet6) > 0 {
+		for _, subnet6 := range record.Subnet6 {
+			pack.AppendSubnet6(subnet6)
+			dump.AddSubnet6(subnet6.Subnet6, pack.ID)
+			subnetExisted[subnet6.Subnet6] = Nothing{}
+		}
+	}
+
+	for _, subnet6 := range pack.Subnet6 {
+		if _, ok := subnetExisted[subnet6.Subnet6]; !ok {
+			pack.RemoveSubnet6(subnet6)
+			dump.DeleteSubnet(subnet6.Subnet6, pack.ID)
+		}
+	}
+}
+
+func (pack *PackedContent) AppendSubnet6(subnet6 Subnet6) {
+	for _, existedSubnet6 := range pack.Subnet6 {
+		if subnet6 == existedSubnet6 {
+			return
+		}
+	}
+
+	pack.Subnet6 = append(pack.Subnet6, subnet6)
+}
+
+func (pack *PackedContent) RemoveSubnet6(subnet6 Subnet6) {
+	for i, existedSubnet6 := range pack.Subnet6 {
+		if subnet6 == existedSubnet6 {
+			pack.Subnet6 = append(pack.Subnet6[:i], pack.Subnet6[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (dump *Dump) ExtractAndApplyDomain(record *Content, pack *PackedContent) {
+	if len(record.Domain) > 0 {
+		pack.Domain = record.Domain
+		for _, domain := range pack.Domain {
+			nDomain := NormalizeDomain(domain.Domain)
+
+			dump.AddDomain(nDomain, pack.ID)
+		}
+	}
+}
+
+func (dump *Dump) EctractAndApplyUpdateDomain(record *Content, pack *PackedContent) {
+	domainExisted := NewStringSet(len(pack.Domain))
+	if len(record.Domain) > 0 {
+		for _, domain := range record.Domain {
+			pack.AppendDomain(domain)
+
+			nDomain := NormalizeDomain(domain.Domain)
+
+			dump.AddDomain(nDomain, pack.ID)
+
+			domainExisted[domain.Domain] = Nothing{}
+		}
+	}
+
+	for _, domain := range pack.Domain {
+		if _, ok := domainExisted[domain.Domain]; !ok {
+			pack.RemoveDomain(domain)
+
+			nDomain := NormalizeDomain(domain.Domain)
+
+			dump.DeleteDomain(nDomain, pack.ID)
+		}
+	}
+}
+
+func (pack *PackedContent) AppendDomain(domain Domain) {
+	for _, existedDomain := range pack.Domain {
+		if domain == existedDomain {
+			return
+		}
+	}
+
+	pack.Domain = append(pack.Domain, domain)
+}
+
+func (pack *PackedContent) RemoveDomain(domain Domain) {
+	for i, existedDomain := range pack.Domain {
+		if domain == existedDomain {
+			pack.Domain = append(pack.Domain[:i], pack.Domain[i+1:]...)
+
+			return
+		}
+	}
+}
+
+func (dump *Dump) ExtractAndApplyURL(record *Content, pack *PackedContent) {
+	if len(record.URL) > 0 {
+		pack.URL = record.URL
+		for _, u := range pack.URL {
+			nURL := NormalizeURL(u.URL)
+			if strings.HasPrefix(nURL, "https://") {
+				record.HTTPSBlock++
 			}
+
+			dump.AddUrl(nURL, pack.ID)
 		}
 	}
+
+	pack.BlockType = record.constructBlockType()
 }
 
-func (v *MinContent) handleUpdateUrl(v0 *Content, o *MinContent) {
-	urlSet := NewStringSet(len(v.URL))
-	if len(v0.URL) > 0 {
-		v.URL = v0.URL
-		for _, value := range v.URL {
-			url := NormalizeURL(value.URL)
-			CurrentDump.AddUrl(url, v.ID)
-			if url[:8] == "https://" {
-				v0.HTTPSBlock += 1
+func (dump *Dump) EctractAndApplyUpdateURL(record *Content, pack *PackedContent) {
+	urlExisted := NewStringSet(len(pack.URL))
+	HTTPSBlock := 0
+
+	if len(record.URL) > 0 {
+		for _, u := range record.URL {
+			pack.AppendURL(u)
+
+			nURL := NormalizeURL(u.URL)
+			if strings.HasPrefix(nURL, "https://") {
+				HTTPSBlock++
 			}
-			urlSet[url] = NothingV
+
+			dump.AddUrl(nURL, pack.ID)
+
+			urlExisted[u.URL] = Nothing{}
 		}
 	}
-	for _, value := range o.URL {
-		url := NormalizeURL(value.URL)
-		if _, ok := urlSet[url]; !ok {
-			CurrentDump.DeleteUrl(url, o.ID)
+
+	record.HTTPSBlock = HTTPSBlock
+	pack.BlockType = record.constructBlockType()
+
+	for _, u := range pack.URL {
+		if _, ok := urlExisted[u.URL]; !ok {
+			pack.RemoveURL(u)
+
+			nURL := NormalizeURL(u.URL)
+
+			dump.DeleteUrl(nURL, pack.ID)
 		}
 	}
 }
 
-func (v *MinContent) handleAddSubnet(v0 *Content) {
-	if len(v0.Subnet4) > 0 {
-		v.Subnet4 = v0.Subnet4
-		for _, value := range v.Subnet4 {
-			CurrentDump.AddSubnet(value.Subnet4, v.ID)
+func (pack *PackedContent) AppendURL(u URL) {
+	for _, existedURL := range pack.URL {
+		if u == existedURL {
+			return
+		}
+	}
+
+	pack.URL = append(pack.URL, u)
+}
+
+func (pack *PackedContent) RemoveURL(u URL) {
+	for i, existedURL := range pack.URL {
+		if u == existedURL {
+			pack.URL = append(pack.URL[:i], pack.URL[i+1:]...)
+
+			return
 		}
 	}
 }
 
-func (v *MinContent) handleUpdateSubnet(v0 *Content, o *MinContent) {
-	subnetSet := NewStringSet(len(v.Subnet4))
-	if len(v0.Subnet4) > 0 {
-		v.Subnet4 = v0.Subnet4
-		for _, value := range v.Subnet4 {
-			CurrentDump.AddSubnet(value.Subnet4, v.ID)
-			subnetSet[value.Subnet4] = NothingV
-		}
-	}
-	for _, value := range o.Subnet4 {
-		if _, ok := subnetSet[value.Subnet4]; !ok {
-			CurrentDump.DeleteSubnet(value.Subnet4, o.ID)
-		}
+func (pack *PackedContent) refreshPackedContent(hash uint64, utime int64, payload []byte) {
+	pack.RecordHash, pack.RegistryUpdateTime, pack.Payload = hash, utime, payload
+}
+
+func newPackedContent(id int32, hash uint64, utime int64, payload []byte) *PackedContent {
+	return &PackedContent{
+		ID:                 id,
+		RecordHash:         hash,
+		RegistryUpdateTime: utime,
+		Payload:            payload,
 	}
 }
 
-func (v *MinContent) handleAddSubnet6(v0 *Content) {
-	if len(v0.Subnet6) > 0 {
-		v.Subnet6 = v0.Subnet6
-		for _, value := range v.Subnet6 {
-			CurrentDump.AddSubnet6(value.Subnet6, v.ID)
-		}
-	}
-}
-
-func (v *MinContent) handleUpdateSubnet6(v0 *Content, o *MinContent) {
-	subnet6Set := NewStringSet(len(v.Subnet6))
-	if len(v0.Subnet6) > 0 {
-		v.Subnet6 = v0.Subnet6
-		for _, value := range v.Subnet6 {
-			CurrentDump.AddSubnet(value.Subnet6, v.ID)
-			subnet6Set[value.Subnet6] = NothingV
-		}
-	}
-	for _, value := range o.Subnet6 {
-		if _, ok := subnet6Set[value.Subnet6]; !ok {
-			CurrentDump.DeleteSubnet6(value.Subnet6, o.ID)
-		}
-	}
-}
-
-func (v *MinContent) handleAddIp6(v0 *Content) {
-	if len(v0.IP6) > 0 {
-		v.IP6 = v0.IP6
-		for _, value := range v.IP6 {
-			ip6 := string(value.IP6)
-			CurrentDump.AddIp6(ip6, v.ID)
-		}
-	}
-}
-
-func (v *MinContent) handleUpdateIp6(v0 *Content, o *MinContent) {
-	ip6Set := NewStringSet(len(v.IP6))
-	if len(v0.IP6) > 0 {
-		v.IP6 = v0.IP6
-		for _, value := range v.IP6 {
-			ip6 := string(value.IP6)
-			CurrentDump.AddIp6(ip6, v.ID)
-			ip6Set[ip6] = NothingV
-		}
-	}
-	for _, value := range o.IP6 {
-		ip6 := string(value.IP6)
-		if _, ok := ip6Set[ip6]; !ok {
-			CurrentDump.DeleteIp6(ip6, o.ID)
-		}
-	}
+func (v *PackedContent) newPbContent(ip4 uint32, ip6 []byte, domain, url, aggr string) *pb.Content {
+	v0 := pb.Content{}
+	v0.BlockType = v.BlockType
+	v0.RegistryUpdateTime = v.RegistryUpdateTime
+	v0.Id = v.ID
+	v0.Ip4 = ip4
+	v0.Ip6 = ip6
+	v0.Domain = domain
+	v0.Url = url
+	v0.Aggr = aggr
+	v0.Pack = v.Payload
+	return &v0
 }
 
 func getContentId(_e xml.StartElement) int32 {
@@ -624,23 +816,4 @@ func handleRegister(element xml.StartElement, r *Reg) {
 			r.UpdateTimeUrgently = attr.Value
 		}
 	}
-}
-
-func newMinContent(id int32, hash uint64, utime int64, pack []byte) *MinContent {
-	v := MinContent{ID: id, U2Hash: hash, RegistryUpdateTime: utime, Pack: pack}
-	return &v
-}
-
-func (v *MinContent) newPbContent(ip4 uint32, ip6 []byte, domain, url, aggr string) *pb.Content {
-	v0 := pb.Content{}
-	v0.BlockType = v.BlockType
-	v0.RegistryUpdateTime = v.RegistryUpdateTime
-	v0.Id = v.ID
-	v0.Ip4 = ip4
-	v0.Ip6 = ip6
-	v0.Domain = domain
-	v0.Url = url
-	v0.Aggr = aggr
-	v0.Pack = v.Pack
-	return &v0
 }

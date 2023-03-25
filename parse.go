@@ -12,10 +12,8 @@ import (
 type (
 	Nothing       struct{}
 	Int32Map      map[int32]Nothing
-	MinContentMap map[int32]*MinContent
+	MinContentMap map[int32]*PackedContent
 )
-
-var NothingV = Nothing{}
 
 type Stat struct {
 	Cnt            int
