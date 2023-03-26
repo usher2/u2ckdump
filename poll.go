@@ -11,7 +11,7 @@ import (
 )
 
 // DumpPoll - poll "vygruzki" service for new dumps.
-func DumpPoll(s *grpc.Server, done chan bool, sigs chan os.Signal, url, token, dir string, d time.Duration) {
+func DumpPoll(s *grpc.Server, done chan<- struct{}, kill <-chan struct{}, url, token, dir string, d time.Duration) {
 	timer := time.NewTimer(time.Millisecond)
 	defer timer.Stop()
 
@@ -19,11 +19,12 @@ func DumpPoll(s *grpc.Server, done chan bool, sigs chan os.Signal, url, token, d
 		select {
 		case <-timer.C:
 			DumpRefresh(url, token, dir)
-		case <-sigs:
-			done <- true
-		}
+			timer.Reset(d * time.Second)
+		case <-kill:
+			close(done)
 
-		timer.Reset(d * time.Second)
+			return
+		}
 	}
 }
 

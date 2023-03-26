@@ -3,8 +3,8 @@ package main
 // DecisionSet - decision map of array object for ref purpose.
 type DecisionSet map[uint64]ArrayIntSet
 
-// Drop - delete the decision.
-func (a *DecisionSet) Drop(decision uint64, id int32) {
+// Remove - delete the decision.
+func (a *DecisionSet) Remove(decision uint64, id int32) {
 	if v, ok := (*a)[decision]; ok {
 		v = v.Del(id)
 

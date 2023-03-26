@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"io"
+
 	//"log"
 	//"net/http"
 	//_ "net/http/pprof"
@@ -70,21 +71,43 @@ func main() {
 			dumpFile.Close()
 		}
 	}
-	sigs := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
-	lis, err := net.Listen("tcp", ":"+*confPBPort)
+
+	listen, err := net.Listen("tcp", ":"+*confPBPort)
 	if err != nil {
 		logger.Error.Printf("Failed to listen: %s\n", err.Error())
 		os.Exit(1)
 	}
-	s := grpc.NewServer()
-	pb.RegisterCheckServer(s, &server{})
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go DumpPoll(s, done, sigs, *confAPIURL, *confAPIKey, *confDumpCacheDir, 60)
-	if err := s.Serve(lis); err != nil {
+
+	serverGRPC := grpc.NewServer()
+	pb.RegisterCheckServer(serverGRPC, &server{})
+
+	quit := make(chan os.Signal, 1)
+	done := make(chan struct{})
+	killPoll := make(chan struct{})
+	donePoll := make(chan struct{})
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-quit
+
+		close(killPoll)
+
+		serverGRPC.GracefulStop()
+
+		<-donePoll
+
+		close(done)
+	}()
+
+	go DumpPoll(serverGRPC, donePoll, killPoll, *confAPIURL, *confAPIKey, *confDumpCacheDir, 60)
+
+	if err := serverGRPC.Serve(listen); err != nil {
 		logger.Error.Printf("Failed to serve: %v", err.Error())
 		os.Exit(1)
 	}
+
 	<-done
+
 	logger.Warning.Printf("Exiting...")
 }

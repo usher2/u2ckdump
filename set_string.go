@@ -11,8 +11,8 @@ func NewStringSet(size int) StringMap {
 // StringIntSet - string map of int array object for ref purpose.
 type StringIntSet map[string]ArrayIntSet
 
-// Drop - delete item from the string map of int array.
-func (a *StringIntSet) Drop(s string, id int32) bool {
+// Remove - delete item from the string map of int array.
+func (a *StringIntSet) Remove(s string, id int32) bool {
 	if v, ok := (*a)[s]; ok {
 		v = v.Del(id)
 

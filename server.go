@@ -26,11 +26,11 @@ func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*p
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.decision[query]
+		results := CurrentDump.decisionIdx[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if v, ok := CurrentDump.Content[id]; ok {
+			if v, ok := CurrentDump.ContentIdx[id]; ok {
 				resp.Results = append(resp.Results, v.newPbContent(0, nil, "", "", ""))
 			}
 		}
@@ -55,7 +55,7 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
 
-		if result, ok := CurrentDump.Content[query]; ok {
+		if result, ok := CurrentDump.ContentIdx[query]; ok {
 			resp.Results = append(resp.Results, result.newPbContent(0, nil, "", "", ""))
 		}
 
@@ -90,7 +90,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
 
 		// TODO: Change to DumpSnap search method
-		cnw, err := CurrentDump.net.ContainingNetworks(ipBytes)
+		cnw, err := CurrentDump.netTree.ContainingNetworks(ipBytes)
 		if err != nil {
 			logger.Debug.Printf("Can't get containing networks: %s: %s\n", ipBytes, err)
 		} else {
@@ -98,7 +98,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 				subnet := entry.Network()
 				subnetStr := subnet.String()
 
-				if a, ok := CurrentDump.subnet4[subnetStr]; ok {
+				if a, ok := CurrentDump.subnet4Idx[subnetStr]; ok {
 					resultSubnets = append(resultSubnets, a...)
 
 					for range a {
@@ -108,20 +108,20 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 			}
 		}
 
-		if a, ok := CurrentDump.ip4[query]; ok {
+		if a, ok := CurrentDump.ip4Idx[query]; ok {
 			resulIPs = append(resulIPs, a...)
 		}
 
 		resp.Results = make([]*pb.Content, 0, len(resultSubnets)+len(resulIPs))
 
 		for i, id := range resultSubnets {
-			if cont, ok := CurrentDump.Content[id]; ok {
+			if cont, ok := CurrentDump.ContentIdx[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", "", subnets[i]))
 			}
 		}
 
 		for _, id := range resulIPs {
-			if cont, ok := CurrentDump.Content[id]; ok {
+			if cont, ok := CurrentDump.ContentIdx[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(query, nil, "", "", ""))
 			}
 		}
@@ -145,11 +145,11 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.ip6[string(query)]
+		results := CurrentDump.ip6Idx[string(query)]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := CurrentDump.Content[id]; ok {
+			if cont, ok := CurrentDump.ContentIdx[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, query, "", "", ""))
 			}
 		}
@@ -173,11 +173,11 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.url[query]
+		results := CurrentDump.urlIdx[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := CurrentDump.Content[id]; ok {
+			if cont, ok := CurrentDump.ContentIdx[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", query, ""))
 			}
 		}
@@ -201,11 +201,11 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.domain[query]
+		results := CurrentDump.domainIdx[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := CurrentDump.Content[id]; ok {
+			if cont, ok := CurrentDump.ContentIdx[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, query, "", ""))
 			}
 		}
