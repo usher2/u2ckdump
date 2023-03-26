@@ -129,13 +129,15 @@ func Test_Parse(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	/*if Stats.MaxArrayIntSet != 5 ||
-		Stats.Cnt != 5 ||
-		Stats.CntAdd != 5 ||
-		Stats.CntUpdate != 0 ||
-		Stats.CntRemove != 0 {
+
+	if Stats.MaxIDSetLen != 5 ||
+		Stats.Count != 5 ||
+		Stats.AddCount != 5 ||
+		Stats.UpdateCount != 0 ||
+		Stats.RemoveCount != 0 {
 		t.Errorf("Stat error: %v\n", Stats)
-	}*/
+	}
+
 	if len(CurrentDump.ip4) != 13 ||
 		len(CurrentDump.ip6) != 11 ||
 		len(CurrentDump.subnet4) != 1 ||
@@ -145,10 +147,10 @@ func Test_Parse(t *testing.T) {
 		t.Errorf("Count error")
 	}
 
-	/*if len(DumpSnap.Content) != 5 ||
-		len(DumpSnap.Content) != Stats.Cnt {
-		t.Errorf("DumpSnap integrity error: %d\n", len(DumpSnap.Content))
-	}*/
+	if len(CurrentDump.Content) != 5 ||
+		len(CurrentDump.Content) != Stats.Count {
+		t.Errorf("DumpSnap integrity error: %d\n", len(CurrentDump.Content))
+	}
 
 	fmt.Println()
 	dumpFile = strings.NewReader(xml02)

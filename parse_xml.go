@@ -153,7 +153,7 @@ func Parse(dumpFile io.Reader) error {
 		buffer                         bytes.Buffer
 		bufferOffset, offsetCorrection int64
 
-		stats Stat
+		stats ParseStatistics
 	)
 
 	hasher64 = fnv.New64a()
@@ -190,7 +190,7 @@ func Parse(dumpFile io.Reader) error {
 		case xml.StartElement:
 			switch element.Name.Local {
 			case "register":
-				handleRegister(element, &reg)
+				parseRegister(element, &reg)
 			case "content":
 				id := getContentId(element)
 
@@ -216,21 +216,17 @@ func Parse(dumpFile io.Reader) error {
 				hasher64.Reset()
 				hasher64.Write(contBuf)
 
-				// TODO: move to special func
-				newCont := &Content{
-					RecordHash: hasher64.Sum64(),
-				}
-
-				ContJournal[id] = Nothing{} // add to journal.
+				newRecordHash := hasher64.Sum64()
 
 				// create or update
 				CurrentDump.Lock()
 
 				prevCont, exists := CurrentDump.Content[id]
+				ContJournal[id] = Nothing{} // add to journal.
 
 				switch {
 				case !exists:
-					err := UnmarshalContent(contBuf, newCont)
+					newCont, err := NewContent(newRecordHash, contBuf)
 					if err != nil {
 						logger.Error.Printf("Decode Error: %s\n", err)
 
@@ -238,9 +234,9 @@ func Parse(dumpFile io.Reader) error {
 					}
 
 					CurrentDump.NewPackedContent(newCont, reg.UpdateTime)
-					stats.CntAdd++
-				case prevCont.RecordHash != newCont.RecordHash:
-					err := UnmarshalContent(contBuf, newCont)
+					stats.AddCount++
+				case prevCont.RecordHash != newRecordHash:
+					newCont, err := NewContent(newRecordHash, contBuf)
 					if err != nil {
 						logger.Error.Printf("Decode Error: %s\n", err)
 
@@ -248,13 +244,13 @@ func Parse(dumpFile io.Reader) error {
 					}
 
 					CurrentDump.MergePackedContent(newCont, prevCont, reg.UpdateTime)
-					stats.CntUpdate++
+					stats.UpdateCount++
 				default:
 					CurrentDump.SetContentUpdateTime(id, reg.UpdateTime)
 				}
 
 				CurrentDump.Unlock()
-				stats.Cnt++
+				stats.Count++
 			}
 		}
 
@@ -264,97 +260,114 @@ func Parse(dumpFile io.Reader) error {
 		bufferOffset += diff
 	}
 
-	// TODO: move to dedicated function or few
+	// Cleanup.
+	CurrentDump.Cleanup(ContJournal, &stats, reg.UpdateTime)
 
-	// remove operations
-	CurrentDump.Lock()
+	stats.Update()
+	Stats = stats
 
-	CurrentDump.Purge(ContJournal, &stats)
+	// Print stats.
 
-	CurrentDump.utime = reg.UpdateTime
-
-	CurrentDump.CalcMaxEntityLen(&stats)
-
-	CurrentDump.Unlock()
-
-	logger.Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", stats.Cnt, stats.CntAdd, stats.CntUpdate, stats.CntRemove)
+	logger.Info.Printf("Records: %d Added: %d Updated: %d Removed: %d\n", stats.Count, stats.AddCount, stats.UpdateCount, stats.RemoveCount)
 	logger.Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
 		len(CurrentDump.ip4), len(CurrentDump.ip6), len(CurrentDump.subnet4), len(CurrentDump.subnet6),
 		len(CurrentDump.domain), len(CurrentDump.url))
-	logger.Info.Printf("Biggest array: %d\n", stats.MaxArrayIntSet)
+	logger.Info.Printf("Biggest array: %d\n", stats.MaxIDSetLen)
 	logger.Info.Printf("Biggest content: %d\n", stats.MaxContentSize)
 
 	return nil
 }
 
-func (dump *Dump) CalcMaxEntityLen(stats *Stat) {
-	stats.MaxArrayIntSet = 0
+func NewContent(recordHash uint64, buf []byte) (*Content, error) {
+	content := &Content{
+		RecordHash: recordHash,
+	}
+
+	err := UnmarshalContent(buf, content)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+func (dump *Dump) Cleanup(existed Int32Map, stats *ParseStatistics, utime int64) {
+	dump.Lock()
+	defer dump.Unlock()
+
+	dump.purge(existed, stats)   // remove old records.
+	dump.calcMaxEntityLen(stats) // calc max entity len.
+	dump.utime = utime           // set global update time.
+}
+
+func (dump *Dump) calcMaxEntityLen(stats *ParseStatistics) {
+	stats.MaxIDSetLen = 0
 
 	for _, a := range dump.ip4 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
+		if stats.MaxIDSetLen < len(a) {
+			stats.MaxIDSetLen = len(a)
 		}
 	}
 	for _, a := range dump.ip6 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
+		if stats.MaxIDSetLen < len(a) {
+			stats.MaxIDSetLen = len(a)
 		}
 	}
 	for _, a := range dump.subnet4 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
+		if stats.MaxIDSetLen < len(a) {
+			stats.MaxIDSetLen = len(a)
 		}
 	}
 	for _, a := range dump.subnet6 {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
+		if stats.MaxIDSetLen < len(a) {
+			stats.MaxIDSetLen = len(a)
 		}
 	}
 	for _, a := range dump.url {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
+		if stats.MaxIDSetLen < len(a) {
+			stats.MaxIDSetLen = len(a)
 		}
 	}
 	for _, a := range dump.domain {
-		if stats.MaxArrayIntSet < len(a) {
-			stats.MaxArrayIntSet = len(a)
+		if stats.MaxIDSetLen < len(a) {
+			stats.MaxIDSetLen = len(a)
 		}
 	}
 }
 
-func (dump *Dump) Purge(existed Int32Map, stats *Stat) {
+func (dump *Dump) purge(existed Int32Map, stats *ParseStatistics) {
 	for id, cont := range dump.Content {
 		if _, ok := existed[id]; !ok {
 			for _, ip4 := range cont.IP4 {
-				dump.DeleteIp(ip4.IP4, cont.ID)
+				dump.DropPairIP4xID(ip4.IP4, cont.ID)
 			}
 
 			for _, ip6 := range cont.IP6 {
 				ip6 := string(ip6.IP6)
-				dump.DeleteIp6(ip6, cont.ID)
+				dump.DropPairIP6xID(ip6, cont.ID)
 			}
 
 			for _, subnet6 := range cont.Subnet6 {
-				dump.DeleteSubnet6(subnet6.Subnet6, cont.ID)
+				dump.DropPairSubnet6xID(subnet6.Subnet6, cont.ID)
 			}
 
 			for _, subnet4 := range cont.Subnet4 {
-				dump.DeleteSubnet(subnet4.Subnet4, cont.ID)
+				dump.DropPairSubnet4xID(subnet4.Subnet4, cont.ID)
 			}
 
 			for _, u := range cont.URL {
-				dump.DeleteUrl(NormalizeURL(u.URL), cont.ID)
+				dump.DropPairURLxID(NormalizeURL(u.URL), cont.ID)
 			}
 
 			for _, domain := range cont.Domain {
-				dump.DeleteDomain(NormalizeDomain(domain.Domain), cont.ID)
+				dump.DropPairDomainID(NormalizeDomain(domain.Domain), cont.ID)
 			}
 
-			dump.DeleteDecision(cont.Decision, cont.ID)
+			dump.DropPairDecisionID(cont.Decision, cont.ID)
 
 			delete(dump.Content, id)
 
-			stats.CntRemove++
+			stats.RemoveCount++
 		}
 	}
 }
@@ -424,16 +437,16 @@ func (dump *Dump) NewPackedContent(record *Content, updateTime int64) {
 
 func (dump *Dump) ExtractAndApplyDecision(record *Content, pack *PackedContent) {
 	pack.Decision = hashDecision(&record.Decision)
-	dump.AddDecision(pack.Decision, pack.ID)
+	dump.InsertPairDecisionID(pack.Decision, pack.ID)
 }
 
 // IT IS REASON FOR ALARM!!!!
 func (dump *Dump) EctractAndApplyUpdateDecision(record *Content, pack *PackedContent) {
-	dump.DeleteDecision(pack.Decision, pack.ID)
+	dump.DropPairDecisionID(pack.Decision, pack.ID)
 
 	pack.Decision = hashDecision(&record.Decision)
 
-	dump.AddDecision(pack.Decision, pack.ID)
+	dump.InsertPairDecisionID(pack.Decision, pack.ID)
 }
 
 func hashDecision(decision *Decision) uint64 {
@@ -451,7 +464,7 @@ func (dump *Dump) ExtractAndApplyIP4(record *Content, pack *PackedContent) {
 	if len(record.IP4) > 0 {
 		pack.IP4 = record.IP4
 		for _, ip4 := range pack.IP4 {
-			dump.AddIp(ip4.IP4, pack.ID)
+			dump.InsertPairIP4xID(ip4.IP4, pack.ID)
 		}
 	}
 }
@@ -460,8 +473,8 @@ func (dump *Dump) EctractAndApplyUpdateIP4(record *Content, pack *PackedContent)
 	ipExisted := make(map[uint32]Nothing, len(pack.IP4))
 	if len(record.IP4) > 0 {
 		for _, ip4 := range record.IP4 {
-			pack.AppendIP4(ip4)
-			dump.AddIp(ip4.IP4, pack.ID)
+			pack.InsertIP4(ip4)
+			dump.InsertPairIP4xID(ip4.IP4, pack.ID)
 			ipExisted[ip4.IP4] = Nothing{}
 		}
 	}
@@ -469,12 +482,12 @@ func (dump *Dump) EctractAndApplyUpdateIP4(record *Content, pack *PackedContent)
 	for _, ip4 := range pack.IP4 {
 		if _, ok := ipExisted[ip4.IP4]; !ok {
 			pack.RemoveIP4(ip4)
-			dump.DeleteIp(ip4.IP4, pack.ID)
+			dump.DropPairIP4xID(ip4.IP4, pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) AppendIP4(ip4 IP4) {
+func (pack *PackedContent) InsertIP4(ip4 IP4) {
 	for _, existedIP4 := range pack.IP4 {
 		if ip4 == existedIP4 {
 			return
@@ -498,7 +511,7 @@ func (dump *Dump) ExtractAndApplyIP6(record *Content, pack *PackedContent) {
 	if len(record.IP6) > 0 {
 		pack.IP6 = record.IP6
 		for _, ip4 := range pack.IP6 {
-			dump.AddIp6(string(ip4.IP6), pack.ID)
+			dump.InsertPairIP6xID(string(ip4.IP6), pack.ID)
 		}
 	}
 }
@@ -507,10 +520,10 @@ func (dump *Dump) EctractAndApplyUpdateIP6(record *Content, pack *PackedContent)
 	ipExisted := make(map[string]Nothing, len(pack.IP6))
 	if len(record.IP6) > 0 {
 		for _, ip6 := range record.IP6 {
-			pack.AppendIP6(ip6)
+			pack.InsertIP6(ip6)
 
 			addr := string(ip6.IP6)
-			dump.AddIp6(addr, pack.ID)
+			dump.InsertPairIP6xID(addr, pack.ID)
 			ipExisted[addr] = Nothing{}
 		}
 	}
@@ -518,12 +531,12 @@ func (dump *Dump) EctractAndApplyUpdateIP6(record *Content, pack *PackedContent)
 	for _, ip6 := range pack.IP6 {
 		if _, ok := ipExisted[string(ip6.IP6)]; !ok {
 			pack.RemoveIP6(ip6)
-			dump.DeleteIp6(string(ip6.IP6), pack.ID)
+			dump.DropPairIP6xID(string(ip6.IP6), pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) AppendIP6(ip6 IP6) {
+func (pack *PackedContent) InsertIP6(ip6 IP6) {
 	for _, existedIP6 := range pack.IP6 {
 		if string(ip6.IP6) == string(existedIP6.IP6) && ip6.Ts == existedIP6.Ts {
 			return
@@ -547,7 +560,7 @@ func (dump *Dump) ExtractAndApplySubnet4(record *Content, pack *PackedContent) {
 	if len(record.Subnet4) > 0 {
 		pack.Subnet4 = record.Subnet4
 		for _, subnet4 := range pack.Subnet4 {
-			dump.AddSubnet(subnet4.Subnet4, pack.ID)
+			dump.InsertPairSubnet4xID(subnet4.Subnet4, pack.ID)
 		}
 	}
 }
@@ -556,8 +569,8 @@ func (dump *Dump) EctractAndApplyUpdateSubnet4(record *Content, pack *PackedCont
 	subnetExisted := NewStringSet(len(pack.Subnet4))
 	if len(record.Subnet4) > 0 {
 		for _, subnet4 := range record.Subnet4 {
-			pack.AppendSubnet4(subnet4)
-			dump.AddSubnet(subnet4.Subnet4, pack.ID)
+			pack.InsertSubnet4(subnet4)
+			dump.InsertPairSubnet4xID(subnet4.Subnet4, pack.ID)
 			subnetExisted[subnet4.Subnet4] = Nothing{}
 		}
 	}
@@ -565,12 +578,12 @@ func (dump *Dump) EctractAndApplyUpdateSubnet4(record *Content, pack *PackedCont
 	for _, subnet4 := range pack.Subnet4 {
 		if _, ok := subnetExisted[subnet4.Subnet4]; !ok {
 			pack.RemoveSubnet4(subnet4)
-			dump.DeleteSubnet(subnet4.Subnet4, pack.ID)
+			dump.DropPairSubnet4xID(subnet4.Subnet4, pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) AppendSubnet4(subnet4 Subnet4) {
+func (pack *PackedContent) InsertSubnet4(subnet4 Subnet4) {
 	for _, existedSubnet4 := range pack.Subnet4 {
 		if subnet4 == existedSubnet4 {
 			return
@@ -594,7 +607,7 @@ func (dump *Dump) ExtractAndApplySubnet6(record *Content, pack *PackedContent) {
 	if len(record.Subnet6) > 0 {
 		pack.Subnet6 = record.Subnet6
 		for _, subnet6 := range pack.Subnet6 {
-			dump.AddSubnet(subnet6.Subnet6, pack.ID)
+			dump.InsertPairSubnet4xID(subnet6.Subnet6, pack.ID)
 		}
 	}
 }
@@ -603,8 +616,8 @@ func (dump *Dump) EctractAndApplyUpdateSubnet6(record *Content, pack *PackedCont
 	subnetExisted := NewStringSet(len(pack.Subnet6))
 	if len(record.Subnet6) > 0 {
 		for _, subnet6 := range record.Subnet6 {
-			pack.AppendSubnet6(subnet6)
-			dump.AddSubnet6(subnet6.Subnet6, pack.ID)
+			pack.InsertSubnet6(subnet6)
+			dump.InsertPairSubnet6xID(subnet6.Subnet6, pack.ID)
 			subnetExisted[subnet6.Subnet6] = Nothing{}
 		}
 	}
@@ -612,12 +625,12 @@ func (dump *Dump) EctractAndApplyUpdateSubnet6(record *Content, pack *PackedCont
 	for _, subnet6 := range pack.Subnet6 {
 		if _, ok := subnetExisted[subnet6.Subnet6]; !ok {
 			pack.RemoveSubnet6(subnet6)
-			dump.DeleteSubnet(subnet6.Subnet6, pack.ID)
+			dump.DropPairSubnet4xID(subnet6.Subnet6, pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) AppendSubnet6(subnet6 Subnet6) {
+func (pack *PackedContent) InsertSubnet6(subnet6 Subnet6) {
 	for _, existedSubnet6 := range pack.Subnet6 {
 		if subnet6 == existedSubnet6 {
 			return
@@ -643,7 +656,7 @@ func (dump *Dump) ExtractAndApplyDomain(record *Content, pack *PackedContent) {
 		for _, domain := range pack.Domain {
 			nDomain := NormalizeDomain(domain.Domain)
 
-			dump.AddDomain(nDomain, pack.ID)
+			dump.InsertPairDomainID(nDomain, pack.ID)
 		}
 	}
 }
@@ -652,11 +665,11 @@ func (dump *Dump) EctractAndApplyUpdateDomain(record *Content, pack *PackedConte
 	domainExisted := NewStringSet(len(pack.Domain))
 	if len(record.Domain) > 0 {
 		for _, domain := range record.Domain {
-			pack.AppendDomain(domain)
+			pack.InsertDomain(domain)
 
 			nDomain := NormalizeDomain(domain.Domain)
 
-			dump.AddDomain(nDomain, pack.ID)
+			dump.InsertPairDomainID(nDomain, pack.ID)
 
 			domainExisted[domain.Domain] = Nothing{}
 		}
@@ -668,12 +681,12 @@ func (dump *Dump) EctractAndApplyUpdateDomain(record *Content, pack *PackedConte
 
 			nDomain := NormalizeDomain(domain.Domain)
 
-			dump.DeleteDomain(nDomain, pack.ID)
+			dump.DropPairDomainID(nDomain, pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) AppendDomain(domain Domain) {
+func (pack *PackedContent) InsertDomain(domain Domain) {
 	for _, existedDomain := range pack.Domain {
 		if domain == existedDomain {
 			return
@@ -702,7 +715,7 @@ func (dump *Dump) ExtractAndApplyURL(record *Content, pack *PackedContent) {
 				record.HTTPSBlock++
 			}
 
-			dump.AddUrl(nURL, pack.ID)
+			dump.InsertPairURLxID(nURL, pack.ID)
 		}
 	}
 
@@ -715,14 +728,14 @@ func (dump *Dump) EctractAndApplyUpdateURL(record *Content, pack *PackedContent)
 
 	if len(record.URL) > 0 {
 		for _, u := range record.URL {
-			pack.AppendURL(u)
+			pack.InsertURL(u)
 
 			nURL := NormalizeURL(u.URL)
 			if strings.HasPrefix(nURL, "https://") {
 				HTTPSBlock++
 			}
 
-			dump.AddUrl(nURL, pack.ID)
+			dump.InsertPairURLxID(nURL, pack.ID)
 
 			urlExisted[u.URL] = Nothing{}
 		}
@@ -737,12 +750,12 @@ func (dump *Dump) EctractAndApplyUpdateURL(record *Content, pack *PackedContent)
 
 			nURL := NormalizeURL(u.URL)
 
-			dump.DeleteUrl(nURL, pack.ID)
+			dump.DropPairURLxID(nURL, pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) AppendURL(u URL) {
+func (pack *PackedContent) InsertURL(u URL) {
 	for _, existedURL := range pack.URL {
 		if u == existedURL {
 			return
@@ -805,7 +818,7 @@ func getContentId(_e xml.StartElement) int32 {
 	return int32(id)
 }
 
-func handleRegister(element xml.StartElement, r *Reg) {
+func parseRegister(element xml.StartElement, r *Reg) {
 	for _, attr := range element.Attr {
 		switch attr.Name.Local {
 		case "formatVersion":

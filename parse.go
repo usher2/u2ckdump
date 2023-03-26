@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"sync"
+	"time"
 
 	"github.com/yl2chen/cidranger"
 
@@ -15,16 +16,21 @@ type (
 	MinContentMap map[int32]*PackedContent
 )
 
-type Stat struct {
-	Cnt            int
-	CntAdd         int
-	CntUpdate      int
-	CntRemove      int
-	MaxArrayIntSet int
+type ParseStatistics struct {
+	Count          int
+	AddCount       int
+	UpdateCount    int
+	RemoveCount    int
+	MaxIDSetLen    int
 	MaxContentSize int
+	Updated        time.Time
 }
 
-var Stats Stat
+var Stats ParseStatistics
+
+func (s *ParseStatistics) Update() {
+	s.Updated = time.Now()
+}
 
 type Dump struct {
 	sync.RWMutex
@@ -55,24 +61,24 @@ func NewDump() *Dump {
 	}
 }
 
-func (d *Dump) AddIp(ip4 uint32, id int32) {
-	d.ip4.Add(ip4, id)
+func (d *Dump) InsertPairIP4xID(ip4 uint32, id int32) {
+	d.ip4.Insert(ip4, id)
 }
 
-func (d *Dump) DeleteIp(ip4 uint32, id int32) {
-	d.ip4.Delete(ip4, id)
+func (d *Dump) DropPairIP4xID(ip4 uint32, id int32) {
+	d.ip4.Drop(ip4, id)
 }
 
-func (d *Dump) AddIp6(ip6 string, id int32) {
-	d.ip6.Add(ip6, id)
+func (d *Dump) InsertPairIP6xID(ip6 string, id int32) {
+	d.ip6.Insert(ip6, id)
 }
 
-func (d *Dump) DeleteIp6(ip6 string, id int32) {
-	d.ip6.Delete(ip6, id)
+func (d *Dump) DropPairIP6xID(ip6 string, id int32) {
+	d.ip6.Drop(ip6, id)
 }
 
-func (d *Dump) AddSubnet(subnet4 string, id int32) {
-	if d.subnet4.Add(subnet4, id) {
+func (d *Dump) InsertPairSubnet4xID(subnet4 string, id int32) {
+	if d.subnet4.Insert(subnet4, id) {
 		_, network, err := net.ParseCIDR(subnet4)
 		if err != nil {
 			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet4, err.Error())
@@ -84,8 +90,8 @@ func (d *Dump) AddSubnet(subnet4 string, id int32) {
 	}
 }
 
-func (d *Dump) DeleteSubnet(subnet4 string, id int32) {
-	if d.subnet4.Delete(subnet4, id) {
+func (d *Dump) DropPairSubnet4xID(subnet4 string, id int32) {
+	if d.subnet4.Drop(subnet4, id) {
 		_, network, err := net.ParseCIDR(subnet4)
 		if err != nil {
 			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet4, err.Error())
@@ -97,8 +103,8 @@ func (d *Dump) DeleteSubnet(subnet4 string, id int32) {
 	}
 }
 
-func (d *Dump) AddSubnet6(subnet6 string, id int32) {
-	if d.subnet6.Add(subnet6, id) {
+func (d *Dump) InsertPairSubnet6xID(subnet6 string, id int32) {
+	if d.subnet6.Insert(subnet6, id) {
 		_, network, err := net.ParseCIDR(subnet6)
 		if err != nil {
 			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet6, err.Error())
@@ -110,8 +116,8 @@ func (d *Dump) AddSubnet6(subnet6 string, id int32) {
 	}
 }
 
-func (d *Dump) DeleteSubnet6(subnet6 string, id int32) {
-	if d.subnet6.Delete(subnet6, id) {
+func (d *Dump) DropPairSubnet6xID(subnet6 string, id int32) {
+	if d.subnet6.Drop(subnet6, id) {
 		_, network, err := net.ParseCIDR(subnet6)
 		if err != nil {
 			logger.Debug.Printf("Can't parse CIDR: %s: %s\n", subnet6, err.Error())
@@ -123,28 +129,28 @@ func (d *Dump) DeleteSubnet6(subnet6 string, id int32) {
 	}
 }
 
-func (d *Dump) AddUrl(url string, id int32) {
-	d.url.Add(url, id)
+func (d *Dump) InsertPairURLxID(url string, id int32) {
+	d.url.Insert(url, id)
 }
 
-func (d *Dump) DeleteUrl(url string, id int32) {
-	d.url.Delete(url, id)
+func (d *Dump) DropPairURLxID(url string, id int32) {
+	d.url.Drop(url, id)
 }
 
-func (d *Dump) AddDomain(domain string, id int32) {
-	d.domain.Add(domain, id)
+func (d *Dump) InsertPairDomainID(domain string, id int32) {
+	d.domain.Insert(domain, id)
 }
 
-func (d *Dump) DeleteDomain(domain string, id int32) {
-	d.domain.Delete(domain, id)
+func (d *Dump) DropPairDomainID(domain string, id int32) {
+	d.domain.Drop(domain, id)
 }
 
-func (d *Dump) AddDecision(decision uint64, id int32) {
-	d.decision.Add(decision, id)
+func (d *Dump) InsertPairDecisionID(decision uint64, id int32) {
+	d.decision.Insert(decision, id)
 }
 
-func (d *Dump) DeleteDecision(decision uint64, id int32) {
-	d.decision.Delete(decision, id)
+func (d *Dump) DropPairDecisionID(decision uint64, id int32) {
+	d.decision.Drop(decision, id)
 }
 
 var CurrentDump = NewDump()
