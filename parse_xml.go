@@ -32,8 +32,8 @@ const (
 var hasher64 hash.Hash64
 
 // UnmarshalContent - unmarshal <content> element.
-func UnmarshalContent(b []byte, cont *Content) error {
-	buf := bytes.NewReader(b)
+func UnmarshalContent(contBuf []byte, content *Content) error {
+	buf := bytes.NewReader(contBuf)
 	decoder := xml.NewDecoder(buf)
 
 	for {
@@ -51,11 +51,11 @@ func UnmarshalContent(b []byte, cont *Content) error {
 			// TODO: one func for one case, handle time parsing
 			switch element.Name.Local {
 			case elementContent:
-				if err := parseContentElement(element, cont); err != nil {
+				if err := parseContentElement(element, content); err != nil {
 					return fmt.Errorf("parse content elm: %w", err)
 				}
 			case elementDecision:
-				if err := decoder.DecodeElement(&cont.Decision, &element); err != nil {
+				if err := decoder.DecodeElement(&content.Decision, &element); err != nil {
 					return fmt.Errorf("parse decision elm: %w", err)
 				}
 			case elementURL:
@@ -64,42 +64,42 @@ func UnmarshalContent(b []byte, cont *Content) error {
 					return fmt.Errorf("parse url elm: %w", err)
 				}
 
-				cont.URL = append(cont.URL, URL{URL: u.URL, Ts: parseRFC3339Time(u.Ts)})
+				content.URL = append(content.URL, URL{URL: u.URL, Ts: parseRFC3339Time(u.Ts)})
 			case elementDomain:
-				d := XMLDomain{}
-				if err := decoder.DecodeElement(&d, &element); err != nil {
+				domain := XMLDomain{}
+				if err := decoder.DecodeElement(&domain, &element); err != nil {
 					return fmt.Errorf("parse domain elm: %w", err)
 				}
 
-				cont.Domain = append(cont.Domain, Domain{Domain: d.Domain, Ts: parseRFC3339Time(d.Ts)})
+				content.Domain = append(content.Domain, Domain{Domain: domain.Domain, Ts: parseRFC3339Time(domain.Ts)})
 			case elementIP4:
-				ip := XMLIP{}
-				if err := decoder.DecodeElement(&ip, &element); err != nil {
+				ip4 := XMLIP{}
+				if err := decoder.DecodeElement(&ip4, &element); err != nil {
 					return fmt.Errorf("parse ip elm: %w", err)
 				}
 
-				cont.IP4 = append(cont.IP4, IP4{IP4: IPv4StrToInt(ip.IP), Ts: parseRFC3339Time(ip.Ts)})
+				content.IP4 = append(content.IP4, IP4{IP4: IPv4StrToInt(ip4.IP), Ts: parseRFC3339Time(ip4.Ts)})
 			case elementIP6:
-				ip := XMLIP6{}
-				if err := decoder.DecodeElement(&ip, &element); err != nil {
+				ip6 := XMLIP6{}
+				if err := decoder.DecodeElement(&ip6, &element); err != nil {
 					return fmt.Errorf("parse ipv6 elm: %w", err)
 				}
 
-				cont.IP6 = append(cont.IP6, IP6{IP6: net.ParseIP(ip.IP6), Ts: parseRFC3339Time(ip.Ts)})
+				content.IP6 = append(content.IP6, IP6{IP6: net.ParseIP(ip6.IP6), Ts: parseRFC3339Time(ip6.Ts)})
 			case elementIP4Subnet:
-				s := XMLSubnet{}
-				if err := decoder.DecodeElement(&s, &element); err != nil {
+				subnet4 := XMLSubnet{}
+				if err := decoder.DecodeElement(&subnet4, &element); err != nil {
 					return fmt.Errorf("parse subnet elm: %w", err)
 				}
 
-				cont.Subnet4 = append(cont.Subnet4, Subnet4{Subnet4: s.Subnet, Ts: parseRFC3339Time(s.Ts)})
+				content.Subnet4 = append(content.Subnet4, Subnet4{Subnet4: subnet4.Subnet, Ts: parseRFC3339Time(subnet4.Ts)})
 			case elementIP6Subnet:
-				s := XMLSubnet6{}
-				if err := decoder.DecodeElement(&s, &element); err != nil {
+				subnet6 := XMLSubnet6{}
+				if err := decoder.DecodeElement(&subnet6, &element); err != nil {
 					return fmt.Errorf("parse ipv6 subnet elm: %w", err)
 				}
 
-				cont.Subnet6 = append(cont.Subnet6, Subnet6{Subnet6: s.Subnet6, Ts: parseRFC3339Time(s.Ts)})
+				content.Subnet6 = append(content.Subnet6, Subnet6{Subnet6: subnet6.Subnet6, Ts: parseRFC3339Time(subnet6.Ts)})
 			}
 		}
 	}
@@ -108,38 +108,38 @@ func UnmarshalContent(b []byte, cont *Content) error {
 }
 
 // pasre <content> element itself.
-func parseContentElement(element xml.StartElement, v *Content) error {
+func parseContentElement(element xml.StartElement, content *Content) error {
 	for _, attr := range element.Attr {
 		switch attr.Name.Local {
 		case "id":
-			x, err := strconv.Atoi(attr.Value)
+			id, err := strconv.Atoi(attr.Value)
 			if err != nil {
 				return fmt.Errorf("id atoi: %w: %s", err, attr.Value)
 			}
 
-			v.ID = int32(x)
+			content.ID = int32(id)
 		case "entryType":
-			x, err := strconv.Atoi(attr.Value)
+			entryType, err := strconv.Atoi(attr.Value)
 			if err != nil {
 				return fmt.Errorf("entryType atoi: %w: %s", err, attr.Value)
 			}
 
-			v.EntryType = int32(x)
+			content.EntryType = int32(entryType)
 		case "urgencyType":
-			x, err := strconv.Atoi(attr.Value)
+			urgencyType, err := strconv.Atoi(attr.Value)
 			if err != nil {
 				return fmt.Errorf("urgencyType atoi: %w: %s", err, attr.Value)
 			}
 
-			v.UrgencyType = int32(x)
+			content.UrgencyType = int32(urgencyType)
 		case "includeTime":
-			v.IncludeTime = parseMoscowTime(attr.Value)
+			content.IncludeTime = parseMoscowTime(attr.Value)
 		case "blockType":
-			v.BlockType = attr.Value
+			content.BlockType = attr.Value
 		case "hash":
-			v.Hash = attr.Value
+			content.Hash = attr.Value
 		case "ts":
-			v.Ts = parseRFC3339Time(attr.Value)
+			content.Ts = parseRFC3339Time(attr.Value)
 		}
 	}
 
