@@ -221,7 +221,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 }
 
 // SearchSuffix - search by domain public suffix.
-func (s *server) SearchSuffix(ctx context.Context, in *pb.DomainRequest) (*pb.SearchResponse, error) {
+func (s *server) SearchDomainSuffix(ctx context.Context, in *pb.DomainRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
 	logger.Debug.Printf("Received Domain: %v\n", query)
