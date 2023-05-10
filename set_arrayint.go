@@ -1,15 +1,15 @@
 package main
 
-// ArrayIntSet - int array object for ref purpose.
-type ArrayIntSet []int32
+// IntArrayStorage - int array object for ref purpose.
+type IntArrayStorage []int32
 
 // Blank - is the array empty?
-func (a ArrayIntSet) Blank() bool {
+func (a IntArrayStorage) Blank() bool {
 	return len(a) == 0
 }
 
 // Add - add item to the array.
-func (a ArrayIntSet) Add(x int32) ArrayIntSet {
+func (a IntArrayStorage) Add(x int32) IntArrayStorage {
 	for _, v := range a {
 		if x == v {
 			return a
@@ -20,7 +20,7 @@ func (a ArrayIntSet) Add(x int32) ArrayIntSet {
 }
 
 // Del - del item from the array.
-func (a ArrayIntSet) Del(x int32) ArrayIntSet {
+func (a IntArrayStorage) Del(x int32) IntArrayStorage {
 	for i, v := range a {
 		if x == v {
 			return append(a[:i], a[i+1:]...)

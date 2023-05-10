@@ -138,18 +138,18 @@ func Test_Parse(t *testing.T) {
 		t.Errorf("Stat error: %v\n", Stats)
 	}
 
-	if len(CurrentDump.ip4Idx) != 13 ||
-		len(CurrentDump.ip6Idx) != 11 ||
-		len(CurrentDump.subnet4Idx) != 1 ||
-		len(CurrentDump.subnet6Idx) != 0 ||
-		len(CurrentDump.urlIdx) != 3 ||
-		len(CurrentDump.domainIdx) != 2 {
+	if len(CurrentDump.IPv4Index) != 13 ||
+		len(CurrentDump.IPv6Index) != 11 ||
+		len(CurrentDump.subnetIPv4Index) != 1 ||
+		len(CurrentDump.subnetIPv6Index) != 0 ||
+		len(CurrentDump.URLIndex) != 3 ||
+		len(CurrentDump.domainIndex) != 2 {
 		t.Errorf("Count error")
 	}
 
-	if len(CurrentDump.ContentIdx) != 5 ||
-		len(CurrentDump.ContentIdx) != Stats.Count {
-		t.Errorf("DumpSnap integrity error: %d\n", len(CurrentDump.ContentIdx))
+	if len(CurrentDump.ContentIndex) != 5 ||
+		len(CurrentDump.ContentIndex) != Stats.Count {
+		t.Errorf("DumpSnap integrity error: %d\n", len(CurrentDump.ContentIndex))
 	}
 
 	fmt.Println()
@@ -158,8 +158,8 @@ func Test_Parse(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	fmt.Printf("IP4:\n%v\n", CurrentDump.ip4Idx)
-	for k := range CurrentDump.ContentIdx {
+	fmt.Printf("IP4:\n%v\n", CurrentDump.IPv4Index)
+	for k := range CurrentDump.ContentIndex {
 		fmt.Printf("%d ", k)
 	}
 	fmt.Println()

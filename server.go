@@ -6,6 +6,8 @@ import (
 	"context"
 	"net"
 
+	"golang.org/x/net/publicsuffix"
+
 	"github.com/usher2/u2ckdump/internal/logger"
 	pb "github.com/usher2/u2ckdump/msg"
 )
@@ -26,11 +28,11 @@ func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*p
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.decisionIdx[query]
+		results := CurrentDump.decisionIndex[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if v, ok := CurrentDump.ContentIdx[id]; ok {
+			if v, ok := CurrentDump.ContentIndex[id]; ok {
 				resp.Results = append(resp.Results, v.newPbContent(0, nil, "", "", ""))
 			}
 		}
@@ -55,7 +57,7 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
 
-		if result, ok := CurrentDump.ContentIdx[query]; ok {
+		if result, ok := CurrentDump.ContentIndex[query]; ok {
 			resp.Results = append(resp.Results, result.newPbContent(0, nil, "", "", ""))
 		}
 
@@ -80,7 +82,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 
 	logger.Debug.Printf("Received IPv4: %s\n", ipBytes)
 
-	var resultSubnets, resulIPs ArrayIntSet
+	var resultSubnets, resulIPs IntArrayStorage
 	var subnets []string
 
 	// TODO: Change to DunpSnap search method.
@@ -98,7 +100,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 				subnet := entry.Network()
 				subnetStr := subnet.String()
 
-				if a, ok := CurrentDump.subnet4Idx[subnetStr]; ok {
+				if a, ok := CurrentDump.subnetIPv4Index[subnetStr]; ok {
 					resultSubnets = append(resultSubnets, a...)
 
 					for range a {
@@ -108,20 +110,20 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 			}
 		}
 
-		if a, ok := CurrentDump.ip4Idx[query]; ok {
+		if a, ok := CurrentDump.IPv4Index[query]; ok {
 			resulIPs = append(resulIPs, a...)
 		}
 
 		resp.Results = make([]*pb.Content, 0, len(resultSubnets)+len(resulIPs))
 
 		for i, id := range resultSubnets {
-			if cont, ok := CurrentDump.ContentIdx[id]; ok {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", "", subnets[i]))
 			}
 		}
 
 		for _, id := range resulIPs {
-			if cont, ok := CurrentDump.ContentIdx[id]; ok {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(query, nil, "", "", ""))
 			}
 		}
@@ -145,11 +147,11 @@ func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchRe
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.ip6Idx[string(query)]
+		results := CurrentDump.IPv6Index[string(query)]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := CurrentDump.ContentIdx[id]; ok {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, query, "", "", ""))
 			}
 		}
@@ -173,11 +175,11 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.urlIdx[query]
+		results := CurrentDump.URLIndex[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := CurrentDump.ContentIdx[id]; ok {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", query, ""))
 			}
 		}
@@ -190,7 +192,7 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
 }
 
-// SearchID - search by domain.
+// SearchDomain - search by domain.
 func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
@@ -201,16 +203,78 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 		CurrentDump.RLock()
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
-		results := CurrentDump.domainIdx[query]
+		results := CurrentDump.domainIndex[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
-			if cont, ok := CurrentDump.ContentIdx[id]; ok {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
 				resp.Results = append(resp.Results, cont.newPbContent(0, nil, query, "", ""))
 			}
 		}
 
 		CurrentDump.RUnlock()
+
+		return resp, nil
+	}
+
+	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
+}
+
+// SearchSuffix - search by domain public suffix.
+func (s *server) SearchSuffix(ctx context.Context, in *pb.DomainRequest) (*pb.SearchResponse, error) {
+	query := in.GetQuery()
+
+	logger.Debug.Printf("Received Domain: %v\n", query)
+
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
+		defer CurrentDump.RUnlock()
+
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+
+		suffix, _ := publicsuffix.PublicSuffix(query)
+		if suffix == "" {
+			resp.Results = make([]*pb.Content, 0)
+
+			return resp, nil
+		}
+
+		results := CurrentDump.publicSuffixIndex[suffix]
+
+		resp.Results = make([]*pb.Content, 0, len(results))
+
+		for _, id := range results {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, query, "", ""))
+			}
+		}
+
+		return resp, nil
+	}
+
+	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
+}
+
+// SearchEntryType - search by entry type.
+func (s *server) SearchEntryType(ctx context.Context, in *pb.IDRequest) (*pb.SearchResponse, error) {
+	query := in.GetQuery()
+
+	logger.Debug.Printf("Received EntryType: %v\n", query)
+
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
+		defer CurrentDump.RUnlock()
+
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+
+		results := CurrentDump.entryTypeIndex[uint32(query)]
+
+		resp.Results = make([]*pb.Content, 0, len(results))
+		for _, id := range results {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", "", ""))
+			}
+		}
 
 		return resp, nil
 	}

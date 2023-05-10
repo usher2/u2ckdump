@@ -74,6 +74,8 @@ service Check {
   rpc SearchTextDecision (TextDecisionRequest) returns (SearchResponse);
   rpc SearchSubnet4 (Subnet4Request) returns (SearchResponse);
   rpc SearchSubnet6 (Subnet6Request) returns (SearchResponse);
+  rpc SearchDomainSuffix (DomainRequest) returns (SearchResponse);
+  rpc SearchEntryType (IDRequest) returns (SearchResponse);
   rpc Stat (StatRequest) returns (StatResponse);
   rpc Ping (PingRequest) returns (PongResponse);
 }

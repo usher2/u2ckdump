@@ -8,11 +8,11 @@ func NewStringSet(size int) StringMap {
 	return make(StringMap, size)
 }
 
-// StringIntSet - string map of int array object for ref purpose.
-type StringIntSet map[string]ArrayIntSet
+// StringSearchIndex - string map of int array object for ref purpose.
+type StringSearchIndex map[string]IntArrayStorage
 
 // Remove - delete item from the string map of int array.
-func (a *StringIntSet) Remove(s string, id int32) bool {
+func (a *StringSearchIndex) Remove(s string, id int32) bool {
 	if v, ok := (*a)[s]; ok {
 		v = v.Del(id)
 
@@ -29,12 +29,12 @@ func (a *StringIntSet) Remove(s string, id int32) bool {
 }
 
 // Insert - add item to the string map of int array.
-func (a *StringIntSet) Insert(s string, id int32) bool {
+func (a *StringSearchIndex) Insert(s string, id int32) bool {
 	first := false
 
 	v, ok := (*a)[s]
 	if !ok {
-		v = make(ArrayIntSet, 0, 1)
+		v = make(IntArrayStorage, 0, 1)
 		first = true
 	}
 

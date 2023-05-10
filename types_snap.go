@@ -12,14 +12,15 @@ const (
 // PackedContent - packed version of Content.
 type PackedContent struct {
 	ID                 int32
+	EntryType          int32 // for protobuf
 	BlockType          int32 // for protobuf
 	RegistryUpdateTime int64
 	Decision           uint64
 	URL                []URL
-	IP4                []IP4
-	IP6                []IP6
-	Subnet4            []Subnet4
-	Subnet6            []Subnet6
+	IPv4               []IPv4
+	IPv6               []IPv6
+	SubnetIPv4         []SubnetIPv4
+	SubnetIPv6         []SubnetIPv6
 	Domain             []Domain
 	Payload            []byte // It is a protobuf message.
 	RecordHash         uint64
@@ -27,32 +28,32 @@ type PackedContent struct {
 
 // Content - store for <content> with hash.
 type Content struct {
-	ID          int32     `json:"id"`
-	EntryType   int32     `json:"et"`
-	UrgencyType int32     `json:"ut,omitempty"`
-	Decision    Decision  `json:"d"`
-	IncludeTime int64     `json:"it"`
-	Ts          int64     `json:"ts,omitempty"`
-	BlockType   string    `json:"bt,omitempty"`
-	Hash        string    `json:"h"`
-	URL         []URL     `json:"url,omitempty"`
-	IP4         []IP4     `json:"ip4,omitempty"`
-	IP6         []IP6     `json:"ip6,omitempty"`
-	Subnet4     []Subnet4 `json:"sb4,omitempty"`
-	Subnet6     []Subnet6 `json:"sb6,omitempty"`
-	Domain      []Domain  `json:"dm,omitempty"`
-	HTTPSBlock  int       `json:"hb"`
-	RecordHash  uint64    `json:"u2h"`
+	ID          int32        `json:"id"`
+	EntryType   int32        `json:"et"`
+	UrgencyType int32        `json:"ut,omitempty"`
+	Decision    Decision     `json:"d"`
+	IncludeTime int64        `json:"it"`
+	Ts          int64        `json:"ts,omitempty"`
+	BlockType   string       `json:"bt,omitempty"`
+	Hash        string       `json:"h"`
+	URL         []URL        `json:"url,omitempty"`
+	IPv4        []IPv4       `json:"ip4,omitempty"`
+	IPv6        []IPv6       `json:"ip6,omitempty"`
+	SubnetIPv4  []SubnetIPv4 `json:"sb4,omitempty"`
+	SubnetIPv6  []SubnetIPv6 `json:"sb6,omitempty"`
+	Domain      []Domain     `json:"dm,omitempty"`
+	HTTPSBlock  int          `json:"hb"`
+	RecordHash  uint64       `json:"u2h"`
 }
 
-// Subnet6 - store for <ipv6Subnet>.
-type Subnet6 struct {
+// SubnetIPv6 - store for <ipv6Subnet>.
+type SubnetIPv6 struct {
 	Subnet6 string `json:"sb6"`
 	Ts      int64  `json:"ts,omitempty"`
 }
 
-// Subnet4 - store for <ipSubnet>.
-type Subnet4 struct {
+// SubnetIPv4 - store for <ipSubnet>.
+type SubnetIPv4 struct {
 	Subnet4 string `json:"sb4"`
 	Ts      int64  `json:"ts,omitempty"`
 }
@@ -69,14 +70,14 @@ type URL struct {
 	Ts  int64  `json:"ts,omitempty"`
 }
 
-// IP4 - store for <ip>.
-type IP4 struct {
+// IPv4 - store for <ip>.
+type IPv4 struct {
 	IP4 uint32 `json:"ip4"`
 	Ts  int64  `json:"ts,omitempty"`
 }
 
-// IP6 - store for <ip6>
-type IP6 struct {
+// IPv6 - store for <ip6>
+type IPv6 struct {
 	IP6 []byte `json:"ip6"`
 	Ts  int64  `json:"ts,omitempty"`
 }
