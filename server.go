@@ -249,17 +249,27 @@ func (s *server) SearchDomainSuffix(ctx context.Context, in *pb.SuffixRequest) (
 
 		results := CurrentDump.publicSuffixIndex[parent]
 
-		if variant == 2 && suffix != "" {
-			results = append(results, CurrentDump.publicSuffixIndex[suffix]...)
-		}
-
-		logger.Debug.Printf("***Suffix: %s, %s, results: %v\n", parent, suffix, results)
+		logger.Debug.Printf("***Parent: %s, results: %v\n", parent, results)
 
 		resp.Results = make([]*pb.Content, 0, len(results))
 
 		for _, id := range results {
 			if cont, ok := CurrentDump.ContentIndex[id]; ok {
-				resp.Results = append(resp.Results, cont.newPbContent(0, nil, query, "", ""))
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, parent, "", ""))
+			}
+		}
+
+		if variant != 2 || suffix == "" {
+			return resp, nil
+		}
+
+		results = CurrentDump.publicSuffixIndex[suffix]
+
+		logger.Debug.Printf("***Suffix: %s, results: %v\n", suffix, results)
+
+		for _, id := range results {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, suffix, "", ""))
 			}
 		}
 
