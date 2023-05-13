@@ -22,18 +22,18 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CheckClient interface {
-	SearchID(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	SearchIP4(ctx context.Context, in *IP4Request, opts ...grpc.CallOption) (*SearchResponse, error)
-	SearchIP6(ctx context.Context, in *IP6Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchContentID(ctx context.Context, in *ContentIDRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchIPv4(ctx context.Context, in *IPv4Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchIPv6(ctx context.Context, in *IPv6Request, opts ...grpc.CallOption) (*SearchResponse, error)
 	SearchURL(ctx context.Context, in *URLRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	SearchDomain(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	SearchDecision(ctx context.Context, in *DecisionRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	SearchTextDecision(ctx context.Context, in *TextDecisionRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	SearchSubnet4(ctx context.Context, in *Subnet4Request, opts ...grpc.CallOption) (*SearchResponse, error)
-	SearchSubnet6(ctx context.Context, in *Subnet6Request, opts ...grpc.CallOption) (*SearchResponse, error)
-	SearchDomainSuffix(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	SearchEntryType(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error)
+	SearchSubnetIPv4(ctx context.Context, in *SubnetIPv4Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchSubnetIPv6(ctx context.Context, in *SubnetIPv6Request, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchDomainSuffix(ctx context.Context, in *SuffixRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchEntryType(ctx context.Context, in *EntryTypeRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	Summary(ctx context.Context, in *SummaryRequest, opts ...grpc.CallOption) (*SummaryResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PongResponse, error)
 }
 
@@ -45,27 +45,27 @@ func NewCheckClient(cc grpc.ClientConnInterface) CheckClient {
 	return &checkClient{cc}
 }
 
-func (c *checkClient) SearchID(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchContentID(ctx context.Context, in *ContentIDRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/msg.Check/SearchID", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/msg.Check/SearchContentID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *checkClient) SearchIP4(ctx context.Context, in *IP4Request, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchIPv4(ctx context.Context, in *IPv4Request, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/msg.Check/SearchIP4", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/msg.Check/SearchIPv4", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *checkClient) SearchIP6(ctx context.Context, in *IP6Request, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchIPv6(ctx context.Context, in *IPv6Request, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/msg.Check/SearchIP6", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/msg.Check/SearchIPv6", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,25 +108,25 @@ func (c *checkClient) SearchTextDecision(ctx context.Context, in *TextDecisionRe
 	return out, nil
 }
 
-func (c *checkClient) SearchSubnet4(ctx context.Context, in *Subnet4Request, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchSubnetIPv4(ctx context.Context, in *SubnetIPv4Request, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/msg.Check/SearchSubnet4", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/msg.Check/SearchSubnetIPv4", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *checkClient) SearchSubnet6(ctx context.Context, in *Subnet6Request, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchSubnetIPv6(ctx context.Context, in *SubnetIPv6Request, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/msg.Check/SearchSubnet6", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/msg.Check/SearchSubnetIPv6", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *checkClient) SearchDomainSuffix(ctx context.Context, in *DomainRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchDomainSuffix(ctx context.Context, in *SuffixRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
 	err := c.cc.Invoke(ctx, "/msg.Check/SearchDomainSuffix", in, out, opts...)
 	if err != nil {
@@ -135,7 +135,7 @@ func (c *checkClient) SearchDomainSuffix(ctx context.Context, in *DomainRequest,
 	return out, nil
 }
 
-func (c *checkClient) SearchEntryType(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *checkClient) SearchEntryType(ctx context.Context, in *EntryTypeRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	out := new(SearchResponse)
 	err := c.cc.Invoke(ctx, "/msg.Check/SearchEntryType", in, out, opts...)
 	if err != nil {
@@ -144,9 +144,9 @@ func (c *checkClient) SearchEntryType(ctx context.Context, in *IDRequest, opts .
 	return out, nil
 }
 
-func (c *checkClient) Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error) {
-	out := new(StatResponse)
-	err := c.cc.Invoke(ctx, "/msg.Check/Stat", in, out, opts...)
+func (c *checkClient) Summary(ctx context.Context, in *SummaryRequest, opts ...grpc.CallOption) (*SummaryResponse, error) {
+	out := new(SummaryResponse)
+	err := c.cc.Invoke(ctx, "/msg.Check/Summary", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -166,18 +166,18 @@ func (c *checkClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.Ca
 // All implementations must embed UnimplementedCheckServer
 // for forward compatibility
 type CheckServer interface {
-	SearchID(context.Context, *IDRequest) (*SearchResponse, error)
-	SearchIP4(context.Context, *IP4Request) (*SearchResponse, error)
-	SearchIP6(context.Context, *IP6Request) (*SearchResponse, error)
+	SearchContentID(context.Context, *ContentIDRequest) (*SearchResponse, error)
+	SearchIPv4(context.Context, *IPv4Request) (*SearchResponse, error)
+	SearchIPv6(context.Context, *IPv6Request) (*SearchResponse, error)
 	SearchURL(context.Context, *URLRequest) (*SearchResponse, error)
 	SearchDomain(context.Context, *DomainRequest) (*SearchResponse, error)
 	SearchDecision(context.Context, *DecisionRequest) (*SearchResponse, error)
 	SearchTextDecision(context.Context, *TextDecisionRequest) (*SearchResponse, error)
-	SearchSubnet4(context.Context, *Subnet4Request) (*SearchResponse, error)
-	SearchSubnet6(context.Context, *Subnet6Request) (*SearchResponse, error)
-	SearchDomainSuffix(context.Context, *DomainRequest) (*SearchResponse, error)
-	SearchEntryType(context.Context, *IDRequest) (*SearchResponse, error)
-	Stat(context.Context, *StatRequest) (*StatResponse, error)
+	SearchSubnetIPv4(context.Context, *SubnetIPv4Request) (*SearchResponse, error)
+	SearchSubnetIPv6(context.Context, *SubnetIPv6Request) (*SearchResponse, error)
+	SearchDomainSuffix(context.Context, *SuffixRequest) (*SearchResponse, error)
+	SearchEntryType(context.Context, *EntryTypeRequest) (*SearchResponse, error)
+	Summary(context.Context, *SummaryRequest) (*SummaryResponse, error)
 	Ping(context.Context, *PingRequest) (*PongResponse, error)
 	mustEmbedUnimplementedCheckServer()
 }
@@ -186,14 +186,14 @@ type CheckServer interface {
 type UnimplementedCheckServer struct {
 }
 
-func (UnimplementedCheckServer) SearchID(context.Context, *IDRequest) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchID not implemented")
+func (UnimplementedCheckServer) SearchContentID(context.Context, *ContentIDRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchContentID not implemented")
 }
-func (UnimplementedCheckServer) SearchIP4(context.Context, *IP4Request) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchIP4 not implemented")
+func (UnimplementedCheckServer) SearchIPv4(context.Context, *IPv4Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchIPv4 not implemented")
 }
-func (UnimplementedCheckServer) SearchIP6(context.Context, *IP6Request) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchIP6 not implemented")
+func (UnimplementedCheckServer) SearchIPv6(context.Context, *IPv6Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchIPv6 not implemented")
 }
 func (UnimplementedCheckServer) SearchURL(context.Context, *URLRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchURL not implemented")
@@ -207,20 +207,20 @@ func (UnimplementedCheckServer) SearchDecision(context.Context, *DecisionRequest
 func (UnimplementedCheckServer) SearchTextDecision(context.Context, *TextDecisionRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchTextDecision not implemented")
 }
-func (UnimplementedCheckServer) SearchSubnet4(context.Context, *Subnet4Request) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchSubnet4 not implemented")
+func (UnimplementedCheckServer) SearchSubnetIPv4(context.Context, *SubnetIPv4Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchSubnetIPv4 not implemented")
 }
-func (UnimplementedCheckServer) SearchSubnet6(context.Context, *Subnet6Request) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchSubnet6 not implemented")
+func (UnimplementedCheckServer) SearchSubnetIPv6(context.Context, *SubnetIPv6Request) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchSubnetIPv6 not implemented")
 }
-func (UnimplementedCheckServer) SearchDomainSuffix(context.Context, *DomainRequest) (*SearchResponse, error) {
+func (UnimplementedCheckServer) SearchDomainSuffix(context.Context, *SuffixRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchDomainSuffix not implemented")
 }
-func (UnimplementedCheckServer) SearchEntryType(context.Context, *IDRequest) (*SearchResponse, error) {
+func (UnimplementedCheckServer) SearchEntryType(context.Context, *EntryTypeRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchEntryType not implemented")
 }
-func (UnimplementedCheckServer) Stat(context.Context, *StatRequest) (*StatResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Stat not implemented")
+func (UnimplementedCheckServer) Summary(context.Context, *SummaryRequest) (*SummaryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Summary not implemented")
 }
 func (UnimplementedCheckServer) Ping(context.Context, *PingRequest) (*PongResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -238,56 +238,56 @@ func RegisterCheckServer(s grpc.ServiceRegistrar, srv CheckServer) {
 	s.RegisterService(&Check_ServiceDesc, srv)
 }
 
-func _Check_SearchID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IDRequest)
+func _Check_SearchContentID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContentIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CheckServer).SearchID(ctx, in)
+		return srv.(CheckServer).SearchContentID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/msg.Check/SearchID",
+		FullMethod: "/msg.Check/SearchContentID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).SearchID(ctx, req.(*IDRequest))
+		return srv.(CheckServer).SearchContentID(ctx, req.(*ContentIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Check_SearchIP4_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IP4Request)
+func _Check_SearchIPv4_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IPv4Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CheckServer).SearchIP4(ctx, in)
+		return srv.(CheckServer).SearchIPv4(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/msg.Check/SearchIP4",
+		FullMethod: "/msg.Check/SearchIPv4",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).SearchIP4(ctx, req.(*IP4Request))
+		return srv.(CheckServer).SearchIPv4(ctx, req.(*IPv4Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Check_SearchIP6_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IP6Request)
+func _Check_SearchIPv6_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IPv6Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CheckServer).SearchIP6(ctx, in)
+		return srv.(CheckServer).SearchIPv6(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/msg.Check/SearchIP6",
+		FullMethod: "/msg.Check/SearchIPv6",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).SearchIP6(ctx, req.(*IP6Request))
+		return srv.(CheckServer).SearchIPv6(ctx, req.(*IPv6Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -364,44 +364,44 @@ func _Check_SearchTextDecision_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Check_SearchSubnet4_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Subnet4Request)
+func _Check_SearchSubnetIPv4_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubnetIPv4Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CheckServer).SearchSubnet4(ctx, in)
+		return srv.(CheckServer).SearchSubnetIPv4(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/msg.Check/SearchSubnet4",
+		FullMethod: "/msg.Check/SearchSubnetIPv4",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).SearchSubnet4(ctx, req.(*Subnet4Request))
+		return srv.(CheckServer).SearchSubnetIPv4(ctx, req.(*SubnetIPv4Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Check_SearchSubnet6_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Subnet6Request)
+func _Check_SearchSubnetIPv6_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubnetIPv6Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CheckServer).SearchSubnet6(ctx, in)
+		return srv.(CheckServer).SearchSubnetIPv6(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/msg.Check/SearchSubnet6",
+		FullMethod: "/msg.Check/SearchSubnetIPv6",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).SearchSubnet6(ctx, req.(*Subnet6Request))
+		return srv.(CheckServer).SearchSubnetIPv6(ctx, req.(*SubnetIPv6Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Check_SearchDomainSuffix_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DomainRequest)
+	in := new(SuffixRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -413,13 +413,13 @@ func _Check_SearchDomainSuffix_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/msg.Check/SearchDomainSuffix",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).SearchDomainSuffix(ctx, req.(*DomainRequest))
+		return srv.(CheckServer).SearchDomainSuffix(ctx, req.(*SuffixRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Check_SearchEntryType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IDRequest)
+	in := new(EntryTypeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -431,25 +431,25 @@ func _Check_SearchEntryType_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/msg.Check/SearchEntryType",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).SearchEntryType(ctx, req.(*IDRequest))
+		return srv.(CheckServer).SearchEntryType(ctx, req.(*EntryTypeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Check_Stat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StatRequest)
+func _Check_Summary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SummaryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CheckServer).Stat(ctx, in)
+		return srv.(CheckServer).Summary(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/msg.Check/Stat",
+		FullMethod: "/msg.Check/Summary",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CheckServer).Stat(ctx, req.(*StatRequest))
+		return srv.(CheckServer).Summary(ctx, req.(*SummaryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -480,16 +480,16 @@ var Check_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CheckServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SearchID",
-			Handler:    _Check_SearchID_Handler,
+			MethodName: "SearchContentID",
+			Handler:    _Check_SearchContentID_Handler,
 		},
 		{
-			MethodName: "SearchIP4",
-			Handler:    _Check_SearchIP4_Handler,
+			MethodName: "SearchIPv4",
+			Handler:    _Check_SearchIPv4_Handler,
 		},
 		{
-			MethodName: "SearchIP6",
-			Handler:    _Check_SearchIP6_Handler,
+			MethodName: "SearchIPv6",
+			Handler:    _Check_SearchIPv6_Handler,
 		},
 		{
 			MethodName: "SearchURL",
@@ -508,12 +508,12 @@ var Check_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Check_SearchTextDecision_Handler,
 		},
 		{
-			MethodName: "SearchSubnet4",
-			Handler:    _Check_SearchSubnet4_Handler,
+			MethodName: "SearchSubnetIPv4",
+			Handler:    _Check_SearchSubnetIPv4_Handler,
 		},
 		{
-			MethodName: "SearchSubnet6",
-			Handler:    _Check_SearchSubnet6_Handler,
+			MethodName: "SearchSubnetIPv6",
+			Handler:    _Check_SearchSubnetIPv6_Handler,
 		},
 		{
 			MethodName: "SearchDomainSuffix",
@@ -524,8 +524,8 @@ var Check_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Check_SearchEntryType_Handler,
 		},
 		{
-			MethodName: "Stat",
-			Handler:    _Check_Stat_Handler,
+			MethodName: "Summary",
+			Handler:    _Check_Summary_Handler,
 		},
 		{
 			MethodName: "Ping",

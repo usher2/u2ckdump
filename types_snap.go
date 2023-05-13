@@ -13,9 +13,11 @@ const (
 type PackedContent struct {
 	ID                 int32
 	EntryType          int32 // for protobuf
+	EntryTypeString    string
 	BlockType          int32 // for protobuf
 	RegistryUpdateTime int64
 	Decision           uint64
+	DecisionOrg        string
 	URL                []URL
 	IPv4               []IPv4
 	IPv6               []IPv6
@@ -48,14 +50,14 @@ type Content struct {
 
 // SubnetIPv6 - store for <ipv6Subnet>.
 type SubnetIPv6 struct {
-	Subnet6 string `json:"sb6"`
-	Ts      int64  `json:"ts,omitempty"`
+	SubnetIPv6 string `json:"sb6"`
+	Ts         int64  `json:"ts,omitempty"`
 }
 
 // SubnetIPv4 - store for <ipSubnet>.
 type SubnetIPv4 struct {
-	Subnet4 string `json:"sb4"`
-	Ts      int64  `json:"ts,omitempty"`
+	SubnetIPv4 string `json:"sb4"`
+	Ts         int64  `json:"ts,omitempty"`
 }
 
 // Domain - store for <domain>.
@@ -72,14 +74,14 @@ type URL struct {
 
 // IPv4 - store for <ip>.
 type IPv4 struct {
-	IP4 uint32 `json:"ip4"`
-	Ts  int64  `json:"ts,omitempty"`
+	IPv4 uint32 `json:"ip4"`
+	Ts   int64  `json:"ts,omitempty"`
 }
 
 // IPv6 - store for <ip6>
 type IPv6 struct {
-	IP6 []byte `json:"ip6"`
-	Ts  int64  `json:"ts,omitempty"`
+	IPv6 []byte `json:"ip6"`
+	Ts   int64  `json:"ts,omitempty"`
 }
 
 // Decision - <decision> and store for <decision>

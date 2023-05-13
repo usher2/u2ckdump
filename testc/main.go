@@ -132,25 +132,25 @@ func parseIp4(s string) uint32 {
 		if '0' <= s[i] && s[i] <= '9' {
 			n = n*10 + uint32(s[i]-'0')
 			if n > 0xFF {
-				//Debug.Printf("Bad IP (1) n=%d: %s\n", n, s)
+				// Debug.Printf("Bad IP (1) n=%d: %s\n", n, s)
 				return 0xFFFFFFFF
 			}
 		} else if s[i] == '.' {
 			if r != 0 {
 				ip = ip + (n << r)
 			} else {
-				//Debug.Printf("Bad IP (2): %s\n", s)
+				// Debug.Printf("Bad IP (2): %s\n", s)
 				return 0xFFFFFFFF
 			}
 			r = r - 8
 			n = 0
 		} else {
-			//Debug.Printf("Bad IP (3): %s\n", s)
+			// Debug.Printf("Bad IP (3): %s\n", s)
 			return 0xFFFFFFFF
 		}
 	}
 	if r != 0 {
-		//Debug.Printf("Bad IP (4): %s\n", s)
+		// Debug.Printf("Bad IP (4): %s\n", s)
 		return 0xFFFFFFFF
 	}
 	ip = ip + n
@@ -181,7 +181,6 @@ func printContent(packet *pb.Content) {
 	if packet.Aggr != "" {
 		fmt.Printf("    by %s\n", packet.Aggr)
 	}
-
 }
 
 func searchID(c pb.CheckClient) {
@@ -190,7 +189,7 @@ func searchID(c pb.CheckClient) {
 		fmt.Printf("Looking for content: %d\n", id)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		r, err := c.SearchID(ctx, &pb.IDRequest{Query: id})
+		r, err := c.SearchContentID(ctx, &pb.ContentIDRequest{Query: id})
 		if err != nil {
 			fmt.Printf("%v.SearchID(_) = _, %v\n", c, err)
 			return
@@ -214,7 +213,7 @@ func searchIP(c pb.CheckClient) {
 		fmt.Printf("Looking for %s\n", ip)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		r, err := c.SearchIP4(ctx, &pb.IP4Request{Query: parseIp4(ip)})
+		r, err := c.SearchIPv4(ctx, &pb.IPv4Request{Query: parseIp4(ip)})
 		if err != nil {
 			fmt.Printf("%v.SearchIP4(_) = _, %v\n", c, err)
 			return
@@ -242,7 +241,7 @@ func searchIP6(c pb.CheckClient) {
 		if len(ip6) == 0 {
 			fmt.Printf("Can't parse IP: %s\n", ip)
 		}
-		r, err := c.SearchIP6(ctx, &pb.IP6Request{Query: ip6})
+		r, err := c.SearchIPv6(ctx, &pb.IPv6Request{Query: ip6})
 		if err != nil {
 			fmt.Printf("%v.SearchIP6(_) = _, %v\n", c, err)
 			return

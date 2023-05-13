@@ -46,3 +46,26 @@ func IPv4StrToInt(s string) uint32 {
 
 	return ip
 }
+
+func int2Ip4(ip uint32) string {
+	var (
+		b [15]byte
+		c int
+	)
+	for i := 24; i >= 0; i -= 8 {
+		d := int((ip >> i) & 0x000000FF)
+		for j := 100; j > 0; j /= 10 {
+			t := byte((d / j) + '0')
+			d %= j
+			if (t > '0') || ((c != 0) && (b[c-1] != '.')) || (j == 1) {
+				b[c] = t
+				c++
+			}
+		}
+		if i > 0 {
+			b[c] = '.'
+			c++
+		}
+	}
+	return string(b[:c])
+}

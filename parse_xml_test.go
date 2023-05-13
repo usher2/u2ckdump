@@ -123,6 +123,7 @@ const (
 )
 
 func Test_Parse(t *testing.T) {
+	var stats ParseStatistics
 	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
 	dumpFile := strings.NewReader(xml01)
 	err := Parse(dumpFile)
@@ -130,12 +131,12 @@ func Test_Parse(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	if Stats.MaxIDSetLen != 5 ||
-		Stats.Count != 5 ||
-		Stats.AddCount != 5 ||
-		Stats.UpdateCount != 0 ||
-		Stats.RemoveCount != 0 {
-		t.Errorf("Stat error: %v\n", Stats)
+	if stats.MaxItemReferences != 5 ||
+		stats.Count != 5 ||
+		stats.AddCount != 5 ||
+		stats.UpdateCount != 0 ||
+		stats.RemoveCount != 0 {
+		t.Errorf("Stat error: %v\n", Summary)
 	}
 
 	if len(CurrentDump.IPv4Index) != 13 ||
@@ -148,7 +149,7 @@ func Test_Parse(t *testing.T) {
 	}
 
 	if len(CurrentDump.ContentIndex) != 5 ||
-		len(CurrentDump.ContentIndex) != Stats.Count {
+		len(CurrentDump.ContentIndex) != stats.Count {
 		t.Errorf("DumpSnap integrity error: %d\n", len(CurrentDump.ContentIndex))
 	}
 

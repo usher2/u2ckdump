@@ -3,15 +3,15 @@ syntax = "proto3";
 package msg;
 option go_package = "guthub.com/usher2/u2ckdump/msg";
 
-message IDRequest {
+message ContentIDRequest {
         int32 query = 1;
 }
 
-message IP4Request {
+message IPv4Request {
         uint32 query = 1;
 }
 
-message IP6Request {
+message IPv6Request {
         bytes query = 1;
 }
 
@@ -23,6 +23,11 @@ message DomainRequest {
         string query = 1;
 }
 
+message SuffixRequest {
+        string query = 1;
+        int32 variant = 2;
+}
+
 message DecisionRequest {
         uint64 query = 1;
 }
@@ -31,11 +36,15 @@ message TextDecisionRequest {
         string query = 1;
 }
 
-message Subnet4Request {
+message SubnetIPv4Request {
         string query = 1;
 }
 
-message Subnet6Request {
+message SubnetIPv6Request {
+        string query = 1;
+}
+
+message EntryTypeRequest {
         string query = 1;
 }
 
@@ -45,13 +54,13 @@ message SearchResponse {
         repeated Content results = 3;
 }
 
-message StatRequest {
+message SummaryRequest {
         string query = 1;
 }
 
-message StatResponse {
+message SummaryResponse {
         string error = 1;
-        bytes stats = 2;
+        bytes summary = 2;
 }
 
 message PingRequest {
@@ -65,18 +74,18 @@ message PongResponse {
 }
 
 service Check {
-  rpc SearchID (IDRequest) returns (SearchResponse);
-  rpc SearchIP4 (IP4Request) returns (SearchResponse);
-  rpc SearchIP6 (IP6Request) returns (SearchResponse);
+  rpc SearchContentID (ContentIDRequest) returns (SearchResponse);
+  rpc SearchIPv4 (IPv4Request) returns (SearchResponse);
+  rpc SearchIPv6 (IPv6Request) returns (SearchResponse);
   rpc SearchURL (URLRequest) returns (SearchResponse);
   rpc SearchDomain (DomainRequest) returns (SearchResponse);
   rpc SearchDecision (DecisionRequest) returns (SearchResponse);
   rpc SearchTextDecision (TextDecisionRequest) returns (SearchResponse);
-  rpc SearchSubnet4 (Subnet4Request) returns (SearchResponse);
-  rpc SearchSubnet6 (Subnet6Request) returns (SearchResponse);
-  rpc SearchDomainSuffix (DomainRequest) returns (SearchResponse);
-  rpc SearchEntryType (IDRequest) returns (SearchResponse);
-  rpc Stat (StatRequest) returns (StatResponse);
+  rpc SearchSubnetIPv4 (SubnetIPv4Request) returns (SearchResponse);
+  rpc SearchSubnetIPv6 (SubnetIPv6Request) returns (SearchResponse);
+  rpc SearchDomainSuffix (SuffixRequest) returns (SearchResponse);
+  rpc SearchEntryType (EntryTypeRequest) returns (SearchResponse);
+  rpc Summary (SummaryRequest) returns (SummaryResponse);
   rpc Ping (PingRequest) returns (PongResponse);
 }
 
@@ -91,4 +100,3 @@ message Content {
         string aggr = 8;
         bytes pack = 9;
 }
-

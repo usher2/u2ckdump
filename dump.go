@@ -6,28 +6,33 @@ import (
 	"time"
 
 	"github.com/yl2chen/cidranger"
-	"golang.org/x/net/publicsuffix"
 
 	"github.com/usher2/u2ckdump/internal/logger"
 )
 
 type (
-	Nothing       struct{}
-	Int32Map      map[int32]Nothing
-	MinContentMap map[int32]*PackedContent
+	Nothing          struct{}
+	Int32Map         map[int32]Nothing
+	PackedContentMap map[int32]*PackedContent
 )
 
 type ParseStatistics struct {
-	Count          int
-	AddCount       int
-	UpdateCount    int
-	RemoveCount    int
-	MaxIDSetLen    int
-	MaxContentSize int
-	Updated        time.Time
+	Count                         int
+	AddCount                      int
+	UpdateCount                   int
+	RemoveCount                   int
+	MaxItemReferences             int
+	MaxItemReferencesString       string
+	MaxURLIDReferences            int
+	MaxDomainIDReferences         int
+	MaxIPv4IDReferences           int
+	MaxIPv6IDReferences           int
+	MaxSubnetIPv4IDReferences     int
+	MaxSubnetIPv6IDReferences     int
+	LargestSizeOfContent          int
+	LargestSizeOfContentCintentID int32
+	Updated                       time.Time
 }
-
-var Stats ParseStatistics
 
 func (s *ParseStatistics) Update() {
 	s.Updated = time.Now()
@@ -43,10 +48,10 @@ type Dump struct {
 	URLIndex          StringSearchIndex
 	domainIndex       StringSearchIndex
 	decisionIndex     Uint64SearchIndex
-	ContentIndex      MinContentMap
+	ContentIndex      PackedContentMap
 	netTree           cidranger.Ranger
 	publicSuffixIndex StringSearchIndex
-	entryTypeIndex    Uint32SearchIndex
+	entryTypeIndex    StringSearchIndex
 }
 
 func NewDump() *Dump {
@@ -59,10 +64,10 @@ func NewDump() *Dump {
 		URLIndex:          make(StringSearchIndex),
 		domainIndex:       make(StringSearchIndex),
 		decisionIndex:     make(Uint64SearchIndex),
-		ContentIndex:      make(MinContentMap),
+		ContentIndex:      make(PackedContentMap),
 		netTree:           cidranger.NewPCTrieRanger(),
 		publicSuffixIndex: make(StringSearchIndex),
-		entryTypeIndex:    make(Uint32SearchIndex),
+		entryTypeIndex:    make(StringSearchIndex),
 	}
 }
 
@@ -144,14 +149,28 @@ func (d *Dump) RemoveFromURLIndex(url string, id int32) {
 
 func (d *Dump) InsertToDomainIndex(domain string, id int32) {
 	d.domainIndex.Insert(domain, id)
-	if suffix, _ := publicsuffix.PublicSuffix(domain); suffix != "" {
+
+	parent, suffix := parentDomains(domain)
+
+	if parent != "" {
+		d.publicSuffixIndex.Insert(parent, id)
+	}
+
+	if suffix != "" {
 		d.publicSuffixIndex.Insert(suffix, id)
 	}
 }
 
 func (d *Dump) RemoveFromDomainIndex(domain string, id int32) {
 	d.domainIndex.Remove(domain, id)
-	if suffix, _ := publicsuffix.PublicSuffix(domain); suffix != "" {
+
+	parent, suffix := parentDomains(domain)
+
+	if parent != "" {
+		d.publicSuffixIndex.Remove(parent, id)
+	}
+
+	if suffix != "" {
 		d.publicSuffixIndex.Remove(suffix, id)
 	}
 }
@@ -164,12 +183,12 @@ func (d *Dump) RemoveFromDecisionIndex(decision uint64, id int32) {
 	d.decisionIndex.Remove(decision, id)
 }
 
-func (d *Dump) InsertToEntryTypeIndex(entryType int32, id int32) {
-	d.entryTypeIndex.Insert(uint32(entryType), id)
+func (d *Dump) InsertToEntryTypeIndex(entryType string, id int32) {
+	d.entryTypeIndex.Insert(entryType, id)
 }
 
-func (d *Dump) RemoveFromEntryTypeIndex(entryType int32, id int32) {
-	d.entryTypeIndex.Remove(uint32(entryType), id)
+func (d *Dump) RemoveFromEntryTypeIndex(entryType string, id int32) {
+	d.entryTypeIndex.Remove(entryType, id)
 }
 
 var CurrentDump = NewDump()

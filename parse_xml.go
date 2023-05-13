@@ -78,28 +78,28 @@ func UnmarshalContent(contBuf []byte, content *Content) error {
 					return fmt.Errorf("parse ip elm: %w", err)
 				}
 
-				content.IPv4 = append(content.IPv4, IPv4{IP4: IPv4StrToInt(ip4.IP), Ts: parseRFC3339Time(ip4.Ts)})
+				content.IPv4 = append(content.IPv4, IPv4{IPv4: IPv4StrToInt(ip4.IP), Ts: parseRFC3339Time(ip4.Ts)})
 			case elementIP6:
 				ip6 := XMLIP6{}
 				if err := decoder.DecodeElement(&ip6, &element); err != nil {
 					return fmt.Errorf("parse ipv6 elm: %w", err)
 				}
 
-				content.IPv6 = append(content.IPv6, IPv6{IP6: net.ParseIP(ip6.IP6), Ts: parseRFC3339Time(ip6.Ts)})
+				content.IPv6 = append(content.IPv6, IPv6{IPv6: net.ParseIP(ip6.IP6), Ts: parseRFC3339Time(ip6.Ts)})
 			case elementIP4Subnet:
 				subnet4 := XMLSubnet{}
 				if err := decoder.DecodeElement(&subnet4, &element); err != nil {
 					return fmt.Errorf("parse subnet elm: %w", err)
 				}
 
-				content.SubnetIPv4 = append(content.SubnetIPv4, SubnetIPv4{Subnet4: subnet4.Subnet, Ts: parseRFC3339Time(subnet4.Ts)})
+				content.SubnetIPv4 = append(content.SubnetIPv4, SubnetIPv4{SubnetIPv4: subnet4.Subnet, Ts: parseRFC3339Time(subnet4.Ts)})
 			case elementIP6Subnet:
 				subnet6 := XMLSubnet6{}
 				if err := decoder.DecodeElement(&subnet6, &element); err != nil {
 					return fmt.Errorf("parse ipv6 subnet elm: %w", err)
 				}
 
-				content.SubnetIPv6 = append(content.SubnetIPv6, SubnetIPv6{Subnet6: subnet6.Subnet6, Ts: parseRFC3339Time(subnet6.Ts)})
+				content.SubnetIPv6 = append(content.SubnetIPv6, SubnetIPv6{SubnetIPv6: subnet6.Subnet6, Ts: parseRFC3339Time(subnet6.Ts)})
 			}
 		}
 	}
@@ -207,8 +207,9 @@ func Parse(dumpFile io.Reader) error {
 
 				// create hash of <content>...</content> for comp
 				contBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
-				if stats.MaxContentSize < len(contBuf) {
-					stats.MaxContentSize = len(contBuf)
+				if stats.LargestSizeOfContent < len(contBuf) {
+					stats.LargestSizeOfContent = len(contBuf)
+					stats.LargestSizeOfContentCintentID = id
 				}
 
 				bufferOffset = tokenStartOffset
@@ -261,10 +262,12 @@ func Parse(dumpFile io.Reader) error {
 	}
 
 	// Cleanup.
-	CurrentDump.Cleanup(ContJournal, &stats, reg.UpdateTime)
+	statistics := CurrentDump.Cleanup(ContJournal, &stats, reg.UpdateTime)
 
 	stats.Update()
-	Stats = stats
+	Summary.Store(statistics)
+
+	logger.Debug.Printf("Statistics: %#v\n", statistics)
 
 	// Print stats.
 
@@ -272,8 +275,8 @@ func Parse(dumpFile io.Reader) error {
 	logger.Info.Printf("  IP: %d IPv6: %d Subnets: %d Subnets6: %d Domains: %d URSs: %d\n",
 		len(CurrentDump.IPv4Index), len(CurrentDump.IPv6Index), len(CurrentDump.subnetIPv4Index), len(CurrentDump.subnetIPv6Index),
 		len(CurrentDump.domainIndex), len(CurrentDump.URLIndex))
-	logger.Info.Printf("Biggest array: %d\n", stats.MaxIDSetLen)
-	logger.Info.Printf("Biggest content: %d\n", stats.MaxContentSize)
+	logger.Info.Printf("Biggest array: %d\n", stats.MaxItemReferences)
+	logger.Info.Printf("Biggest content: %d (/n_%d)\n", stats.LargestSizeOfContent, stats.LargestSizeOfContentCintentID)
 
 	return nil
 }
@@ -291,46 +294,141 @@ func NewContent(recordHash uint64, buf []byte) (*Content, error) {
 	return content, nil
 }
 
-func (dump *Dump) Cleanup(existed Int32Map, stats *ParseStatistics, utime int64) {
+func (dump *Dump) Cleanup(existed Int32Map, stats *ParseStatistics, utime int64) *SummaryValues {
 	dump.Lock()
 	defer dump.Unlock()
 
 	dump.purge(existed, stats)   // remove deleted records from index.
 	dump.calcMaxEntityLen(stats) // calc max entity len.
 	dump.utime = utime           // set global update time.
+
+	statisctics := &SummaryValues{
+		UpdateTime:        dump.utime,
+		ContentEntries:    len(dump.ContentIndex),
+		IPv4Entries:       len(dump.IPv4Index),
+		IPv6Entries:       len(dump.IPv6Index),
+		SubnetIPv4Entries: len(dump.subnetIPv4Index),
+		SubnetIPv6Entries: len(dump.subnetIPv6Index),
+		DomainEntries:     len(dump.domainIndex),
+		URLEntries:        len(dump.URLIndex),
+		EntryTypes:        make(map[string]int),
+		DecisionOrgs:      make(map[string]int),
+	}
+
+	for _, c := range dump.ContentIndex {
+		switch c.BlockType {
+		case BlockTypeURL:
+			statisctics.BlockTypeURL++
+		case BlockTypeDomain:
+			statisctics.BlockTypeDomain++
+		case BlockTypeHTTPS:
+			statisctics.BlockTypeHTTPS++
+		case BlockTypeIP:
+			statisctics.BlockTypeIP++
+		case BlockTypeMask:
+			statisctics.BlockTypeMask++
+		}
+
+		statisctics.EntryTypes[entryTypeKey(c.EntryType, c.DecisionOrg)]++
+		statisctics.DecisionOrgs[c.DecisionOrg]++
+	}
+
+	statisctics.LargestSizeOfContent = stats.LargestSizeOfContent
+	statisctics.LargestSizeOfContentCintentID = stats.LargestSizeOfContentCintentID
+	statisctics.MaxItemReferences = stats.MaxItemReferences
+	statisctics.MaxItemReferencesString = stats.MaxItemReferencesString
+
+	return statisctics
+}
+
+func entryTypeKey(entryType int32, org string) (res string) {
+	basis := "15.1" //"[ст. 15.1](http://www.consultant.ru/document/cons_doc_LAW_61798/38c8ea666d27d9dc12b078c556e316e90248f551/), общая"
+	switch {
+	case entryType == 1 && (org == "Генпрокуратура" || org == ""):
+		basis = "15.1-1" // "[ст. 15.1-1](http://www.consultant.ru/document/cons_doc_LAW_61798/079aac275ffc6cea954b19c5b177a547b94f3c48/), неуважение"
+	case entryType == 2:
+		basis = "15.2" // "[ст. 15.2](http://www.consultant.ru/document/cons_doc_LAW_61798/1f316dc4a18023edcd030bc6591c4dd8b4f841dc/), правообладание"
+	case entryType == 3:
+		basis = "15.3" // "[ст. 15.3](http://www.consultant.ru/document/cons_doc_LAW_61798/34547c9b6ddb60cebd0a67593943fd9ef64ebdd0/), мятеж и фейки"
+	case entryType == 4:
+		basis = "15.4" // "[ст. 15.4](http://www.consultant.ru/document/cons_doc_LAW_61798/96723dcd9be73473a978013263f16f42cd8cd53d/), ОРИ не молчи"
+	case entryType == 5 && org == "Мосгорсуд":
+		basis = "15.6" // "[ст. 15.6](http://www.consultant.ru/document/cons_doc_LAW_61798/c7c4ad36689c46c7e8a3ab49c9db8ccbc7c82920/), вечная"
+	case entryType == 5 && (org == "Минцифра" || org == "Минкомсвязь"):
+		basis = "15.6-1" // "[ст. 15.6-1](http://www.consultant.ru/document/cons_doc_LAW_61798/c7c4ad36689c46c7e8a3ab49c9db8ccbc7c82920/), вечная зеркал"
+	case entryType == 6:
+		basis = "15.5" //"[ст. 15.5](http://www.consultant.ru/document/cons_doc_LAW_61798/98228cbe6565abbe55d0842a7e8593012c3449ea/), персональные данные"
+	case entryType == 7:
+		basis = "15.8" // "[ст. 15.8](http://www.consultant.ru/document/cons_doc_LAW_61798/1a807328c80a540bd0bb724927d6e774595431dc/), VPN"
+	case entryType == 8:
+		basis = "15.9" // "[ст. 15.9](http://www.consultant.ru/document/cons_doc_LAW_61798/31eb19e991d54b484ac546107c4db838b3631e9f/), сайт иноагента"
+	}
+
+	return strings.ReplaceAll(strings.ReplaceAll(basis, ".", "_"), "-", "_")
 }
 
 func (dump *Dump) calcMaxEntityLen(stats *ParseStatistics) {
-	stats.MaxIDSetLen = 0
+	stats.MaxItemReferences = 0
+	stats.MaxItemReferencesString = ""
 
-	for _, a := range dump.IPv4Index {
-		if stats.MaxIDSetLen < len(a) {
-			stats.MaxIDSetLen = len(a)
+	for key, a := range dump.IPv4Index {
+		if stats.MaxItemReferences < len(a) {
+			stats.MaxItemReferences = len(a)
+			stats.MaxItemReferencesString = int2Ip4(key)
+		}
+
+		if stats.MaxIPv4IDReferences < len(a) {
+			stats.MaxIPv4IDReferences = len(a)
 		}
 	}
-	for _, a := range dump.IPv6Index {
-		if stats.MaxIDSetLen < len(a) {
-			stats.MaxIDSetLen = len(a)
+	for key, a := range dump.IPv6Index {
+		if stats.MaxItemReferences < len(a) {
+			stats.MaxItemReferences = len(a)
+			stats.MaxItemReferencesString = key
+		}
+
+		if stats.MaxIPv6IDReferences < len(a) {
+			stats.MaxIPv6IDReferences = len(a)
 		}
 	}
-	for _, a := range dump.subnetIPv4Index {
-		if stats.MaxIDSetLen < len(a) {
-			stats.MaxIDSetLen = len(a)
+	for key, a := range dump.subnetIPv4Index {
+		if stats.MaxItemReferences < len(a) {
+			stats.MaxItemReferences = len(a)
+			stats.MaxItemReferencesString = key
+		}
+
+		if stats.MaxSubnetIPv4IDReferences < len(a) {
+			stats.MaxSubnetIPv4IDReferences = len(a)
 		}
 	}
-	for _, a := range dump.subnetIPv6Index {
-		if stats.MaxIDSetLen < len(a) {
-			stats.MaxIDSetLen = len(a)
+	for key, a := range dump.subnetIPv6Index {
+		if stats.MaxItemReferences < len(a) {
+			stats.MaxItemReferences = len(a)
+			stats.MaxItemReferencesString = key
+		}
+
+		if stats.MaxSubnetIPv6IDReferences < len(a) {
+			stats.MaxSubnetIPv6IDReferences = len(a)
 		}
 	}
-	for _, a := range dump.URLIndex {
-		if stats.MaxIDSetLen < len(a) {
-			stats.MaxIDSetLen = len(a)
+	for key, a := range dump.URLIndex {
+		if stats.MaxItemReferences < len(a) {
+			stats.MaxItemReferences = len(a)
+			stats.MaxItemReferencesString = key
+		}
+
+		if stats.MaxURLIDReferences < len(a) {
+			stats.MaxURLIDReferences = len(a)
 		}
 	}
-	for _, a := range dump.domainIndex {
-		if stats.MaxIDSetLen < len(a) {
-			stats.MaxIDSetLen = len(a)
+	for key, a := range dump.domainIndex {
+		if stats.MaxItemReferences < len(a) {
+			stats.MaxItemReferences = len(a)
+			stats.MaxItemReferencesString = key
+		}
+
+		if stats.MaxDomainIDReferences < len(a) {
+			stats.MaxDomainIDReferences = len(a)
 		}
 	}
 }
@@ -340,20 +438,20 @@ func (dump *Dump) purge(existed Int32Map, stats *ParseStatistics) {
 	for id, cont := range dump.ContentIndex {
 		if _, ok := existed[id]; !ok {
 			for _, ip4 := range cont.IPv4 {
-				dump.RemoveFromIPv4Index(ip4.IP4, cont.ID)
+				dump.RemoveFromIPv4Index(ip4.IPv4, cont.ID)
 			}
 
 			for _, ip6 := range cont.IPv6 {
-				ip6 := string(ip6.IP6)
+				ip6 := string(ip6.IPv6)
 				dump.RemoveFromIPv6Index(ip6, cont.ID)
 			}
 
 			for _, subnet6 := range cont.SubnetIPv6 {
-				dump.RemoveFromSubnetIPv6Index(subnet6.Subnet6, cont.ID)
+				dump.RemoveFromSubnetIPv6Index(subnet6.SubnetIPv6, cont.ID)
 			}
 
 			for _, subnet4 := range cont.SubnetIPv4 {
-				dump.RemoveFromSubnetIPv4Index(subnet4.Subnet4, cont.ID)
+				dump.RemoveFromSubnetIPv4Index(subnet4.SubnetIPv4, cont.ID)
 			}
 
 			for _, u := range cont.URL {
@@ -365,7 +463,7 @@ func (dump *Dump) purge(existed Int32Map, stats *ParseStatistics) {
 			}
 
 			dump.RemoveFromDecisionIndex(cont.Decision, cont.ID)
-			dump.RemoveFromEntryTypeIndex(cont.EntryType, cont.ID)
+			dump.RemoveFromEntryTypeIndex(entryTypeKey(cont.EntryType, cont.DecisionOrg), cont.ID)
 
 			delete(dump.ContentIndex, id)
 
@@ -441,20 +539,35 @@ func (dump *Dump) NewPackedContent(record *Content, updateTime int64) {
 
 func (dump *Dump) ExtractAndApplyEntryType(record *Content, pack *PackedContent) {
 	pack.EntryType = record.EntryType
-	dump.InsertToEntryTypeIndex(pack.EntryType, pack.ID)
+	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org)
+
+	dump.InsertToEntryTypeIndex(pack.EntryTypeString, pack.ID)
 }
 
 // IT IS REASON FOR ALARM!!!!
 func (dump *Dump) EctractAndApplyUpdateEntryType(record *Content, pack *PackedContent) {
-	dump.RemoveFromEntryTypeIndex(pack.EntryType, pack.ID)
+	dump.RemoveFromEntryTypeIndex(pack.EntryTypeString, pack.ID)
 
 	pack.EntryType = record.EntryType
+	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org)
 
-	dump.InsertToEntryTypeIndex(pack.EntryType, pack.ID)
+	dump.InsertToEntryTypeIndex(pack.EntryTypeString, pack.ID)
 }
 
 func (dump *Dump) ExtractAndApplyDecision(record *Content, pack *PackedContent) {
 	pack.Decision = hashDecision(&record.Decision)
+
+	switch {
+	case record.Decision.Org == "":
+		pack.DecisionOrg = "Генпрокуратура"
+	case !strings.Contains(record.Decision.Org, "Мосгорсуд") && (strings.Contains(record.Decision.Org, "суд") || strings.Contains(record.Decision.Org, "Суд")):
+		pack.DecisionOrg = "Суд"
+	case strings.Contains(record.Decision.Org, "ФССП"):
+		pack.DecisionOrg = "ФССП"
+	default:
+		pack.DecisionOrg = record.Decision.Org
+	}
+
 	dump.InsertToDecisionIndex(pack.Decision, pack.ID)
 }
 
@@ -482,7 +595,7 @@ func (dump *Dump) ExtractAndApplyIPv4(record *Content, pack *PackedContent) {
 	if len(record.IPv4) > 0 {
 		pack.IPv4 = record.IPv4
 		for _, ip4 := range pack.IPv4 {
-			dump.InsertToIPv4Index(ip4.IP4, pack.ID)
+			dump.InsertToIPv4Index(ip4.IPv4, pack.ID)
 		}
 	}
 }
@@ -492,15 +605,15 @@ func (dump *Dump) EctractAndApplyUpdateIPv4(record *Content, pack *PackedContent
 	if len(record.IPv4) > 0 {
 		for _, ip4 := range record.IPv4 {
 			pack.InsertIPv4(ip4)
-			dump.InsertToIPv4Index(ip4.IP4, pack.ID)
-			ipExisted[ip4.IP4] = Nothing{}
+			dump.InsertToIPv4Index(ip4.IPv4, pack.ID)
+			ipExisted[ip4.IPv4] = Nothing{}
 		}
 	}
 
 	for _, ip4 := range pack.IPv4 {
-		if _, ok := ipExisted[ip4.IP4]; !ok {
+		if _, ok := ipExisted[ip4.IPv4]; !ok {
 			pack.RemoveIPv4(ip4)
-			dump.RemoveFromIPv4Index(ip4.IP4, pack.ID)
+			dump.RemoveFromIPv4Index(ip4.IPv4, pack.ID)
 		}
 	}
 }
@@ -529,7 +642,7 @@ func (dump *Dump) ExtractAndApplyIPv6(record *Content, pack *PackedContent) {
 	if len(record.IPv6) > 0 {
 		pack.IPv6 = record.IPv6
 		for _, ip4 := range pack.IPv6 {
-			dump.InsertToIPv6Index(string(ip4.IP6), pack.ID)
+			dump.InsertToIPv6Index(string(ip4.IPv6), pack.ID)
 		}
 	}
 }
@@ -540,23 +653,23 @@ func (dump *Dump) EctractAndApplyUpdateIPv6(record *Content, pack *PackedContent
 		for _, ip6 := range record.IPv6 {
 			pack.InsertIPv6(ip6)
 
-			addr := string(ip6.IP6)
+			addr := string(ip6.IPv6)
 			dump.InsertToIPv6Index(addr, pack.ID)
 			ipExisted[addr] = Nothing{}
 		}
 	}
 
 	for _, ip6 := range pack.IPv6 {
-		if _, ok := ipExisted[string(ip6.IP6)]; !ok {
+		if _, ok := ipExisted[string(ip6.IPv6)]; !ok {
 			pack.RemoveIPv6(ip6)
-			dump.RemoveFromIPv6Index(string(ip6.IP6), pack.ID)
+			dump.RemoveFromIPv6Index(string(ip6.IPv6), pack.ID)
 		}
 	}
 }
 
 func (pack *PackedContent) InsertIPv6(ip6 IPv6) {
 	for _, existedIP6 := range pack.IPv6 {
-		if string(ip6.IP6) == string(existedIP6.IP6) && ip6.Ts == existedIP6.Ts {
+		if string(ip6.IPv6) == string(existedIP6.IPv6) && ip6.Ts == existedIP6.Ts {
 			return
 		}
 	}
@@ -566,7 +679,7 @@ func (pack *PackedContent) InsertIPv6(ip6 IPv6) {
 
 func (pack *PackedContent) RemoveIPv6(ip6 IPv6) {
 	for i, existedIP6 := range pack.IPv6 {
-		if string(ip6.IP6) == string(existedIP6.IP6) && ip6.Ts == existedIP6.Ts {
+		if string(ip6.IPv6) == string(existedIP6.IPv6) && ip6.Ts == existedIP6.Ts {
 			pack.IPv6 = append(pack.IPv6[:i], pack.IPv6[i+1:]...)
 
 			return
@@ -578,42 +691,42 @@ func (dump *Dump) ExtractAndApplySubnetIPv4(record *Content, pack *PackedContent
 	if len(record.SubnetIPv4) > 0 {
 		pack.SubnetIPv4 = record.SubnetIPv4
 		for _, subnet4 := range pack.SubnetIPv4 {
-			dump.InsertToSubnetIPv4Index(subnet4.Subnet4, pack.ID)
+			dump.InsertToSubnetIPv4Index(subnet4.SubnetIPv4, pack.ID)
 		}
 	}
 }
 
 func (dump *Dump) EctractAndApplyUpdateSubnetIPv4(record *Content, pack *PackedContent) {
-	subnetExisted := NewStringSet(len(pack.SubnetIPv4))
+	existedSubnetIPv4 := NewStringSet(len(pack.SubnetIPv4))
 	if len(record.SubnetIPv4) > 0 {
-		for _, subnet4 := range record.SubnetIPv4 {
-			pack.InsertSubnetIPv4(subnet4)
-			dump.InsertToSubnetIPv4Index(subnet4.Subnet4, pack.ID)
-			subnetExisted[subnet4.Subnet4] = Nothing{}
+		for _, subnetIPv4 := range record.SubnetIPv4 {
+			pack.InsertSubnetIPv4(subnetIPv4)
+			dump.InsertToSubnetIPv4Index(subnetIPv4.SubnetIPv4, pack.ID)
+			existedSubnetIPv4[subnetIPv4.SubnetIPv4] = Nothing{}
 		}
 	}
 
-	for _, subnet4 := range pack.SubnetIPv4 {
-		if _, ok := subnetExisted[subnet4.Subnet4]; !ok {
-			pack.RemoveSubnetIPv4(subnet4)
-			dump.RemoveFromSubnetIPv4Index(subnet4.Subnet4, pack.ID)
+	for _, subnetIPv4 := range pack.SubnetIPv4 {
+		if _, ok := existedSubnetIPv4[subnetIPv4.SubnetIPv4]; !ok {
+			pack.RemoveSubnetIPv4(subnetIPv4)
+			dump.RemoveFromSubnetIPv4Index(subnetIPv4.SubnetIPv4, pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) InsertSubnetIPv4(subnet4 SubnetIPv4) {
-	for _, existedSubnet4 := range pack.SubnetIPv4 {
-		if subnet4 == existedSubnet4 {
+func (pack *PackedContent) InsertSubnetIPv4(subnetIPv4 SubnetIPv4) {
+	for _, existedSubnetIPv4 := range pack.SubnetIPv4 {
+		if subnetIPv4 == existedSubnetIPv4 {
 			return
 		}
 	}
 
-	pack.SubnetIPv4 = append(pack.SubnetIPv4, subnet4)
+	pack.SubnetIPv4 = append(pack.SubnetIPv4, subnetIPv4)
 }
 
-func (pack *PackedContent) RemoveSubnetIPv4(subnet4 SubnetIPv4) {
-	for i, existedSubnet4 := range pack.SubnetIPv4 {
-		if subnet4 == existedSubnet4 {
+func (pack *PackedContent) RemoveSubnetIPv4(subnetIPv4 SubnetIPv4) {
+	for i, existedSubnetIPv4 := range pack.SubnetIPv4 {
+		if subnetIPv4 == existedSubnetIPv4 {
 			pack.SubnetIPv4 = append(pack.SubnetIPv4[:i], pack.SubnetIPv4[i+1:]...)
 
 			return
@@ -625,42 +738,42 @@ func (dump *Dump) ExtractAndApplySubnetIPv6(record *Content, pack *PackedContent
 	if len(record.SubnetIPv6) > 0 {
 		pack.SubnetIPv6 = record.SubnetIPv6
 		for _, subnet6 := range pack.SubnetIPv6 {
-			dump.InsertToSubnetIPv4Index(subnet6.Subnet6, pack.ID)
+			dump.InsertToSubnetIPv4Index(subnet6.SubnetIPv6, pack.ID)
 		}
 	}
 }
 
 func (dump *Dump) EctractAndApplyUpdateSubnetIPv6(record *Content, pack *PackedContent) {
-	subnetExisted := NewStringSet(len(pack.SubnetIPv6))
+	existedSubnetIPv6 := NewStringSet(len(pack.SubnetIPv6))
 	if len(record.SubnetIPv6) > 0 {
-		for _, subnet6 := range record.SubnetIPv6 {
-			pack.InsertSubnetIPv6(subnet6)
-			dump.InsertToSubnetIPv6Index(subnet6.Subnet6, pack.ID)
-			subnetExisted[subnet6.Subnet6] = Nothing{}
+		for _, subnetIPv6 := range record.SubnetIPv6 {
+			pack.InsertSubnetIPv6(subnetIPv6)
+			dump.InsertToSubnetIPv6Index(subnetIPv6.SubnetIPv6, pack.ID)
+			existedSubnetIPv6[subnetIPv6.SubnetIPv6] = Nothing{}
 		}
 	}
 
-	for _, subnet6 := range pack.SubnetIPv6 {
-		if _, ok := subnetExisted[subnet6.Subnet6]; !ok {
-			pack.RemoveSubnetIPv6(subnet6)
-			dump.RemoveFromSubnetIPv4Index(subnet6.Subnet6, pack.ID)
+	for _, subnetIPv6 := range pack.SubnetIPv6 {
+		if _, ok := existedSubnetIPv6[subnetIPv6.SubnetIPv6]; !ok {
+			pack.RemoveSubnetIPv6(subnetIPv6)
+			dump.RemoveFromSubnetIPv4Index(subnetIPv6.SubnetIPv6, pack.ID)
 		}
 	}
 }
 
-func (pack *PackedContent) InsertSubnetIPv6(subnet6 SubnetIPv6) {
-	for _, existedSubnet6 := range pack.SubnetIPv6 {
-		if subnet6 == existedSubnet6 {
+func (pack *PackedContent) InsertSubnetIPv6(subnetIPv6 SubnetIPv6) {
+	for _, existedSubnetIPv6 := range pack.SubnetIPv6 {
+		if subnetIPv6 == existedSubnetIPv6 {
 			return
 		}
 	}
 
-	pack.SubnetIPv6 = append(pack.SubnetIPv6, subnet6)
+	pack.SubnetIPv6 = append(pack.SubnetIPv6, subnetIPv6)
 }
 
-func (pack *PackedContent) RemoveSubnetIPv6(subnet6 SubnetIPv6) {
-	for i, existedSubnet6 := range pack.SubnetIPv6 {
-		if subnet6 == existedSubnet6 {
+func (pack *PackedContent) RemoveSubnetIPv6(subnetIPv6 SubnetIPv6) {
+	for i, existedSubnetIPv6 := range pack.SubnetIPv6 {
+		if subnetIPv6 == existedSubnetIPv6 {
 			pack.SubnetIPv6 = append(pack.SubnetIPv6[:i], pack.SubnetIPv6[i+1:]...)
 
 			return

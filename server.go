@@ -4,9 +4,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net"
-
-	"golang.org/x/net/publicsuffix"
 
 	"github.com/usher2/u2ckdump/internal/logger"
 	pb "github.com/usher2/u2ckdump/msg"
@@ -45,8 +44,8 @@ func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*p
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
 }
 
-// SearchID - search by content ID.
-func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResponse, error) {
+// SearchContentID - search by content ID.
+func (s *server) SearchContentID(ctx context.Context, in *pb.ContentIDRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
 	logger.Debug.Printf("Received content ID: %d\n", query)
@@ -69,8 +68,8 @@ func (s *server) SearchID(ctx context.Context, in *pb.IDRequest) (*pb.SearchResp
 	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
 }
 
-// SearchID - search by IPv4.
-func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResponse, error) {
+// SearchIPv4 - search by IPv4.
+func (s *server) SearchIPv4(c context.Context, in *pb.IPv4Request) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 	ipBytes := net.IP{
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff,
@@ -137,7 +136,7 @@ func (s *server) SearchIP4(c context.Context, in *pb.IP4Request) (*pb.SearchResp
 }
 
 // SearchID - search by IPv6.
-func (s *server) SearchIP6(ctx context.Context, in *pb.IP6Request) (*pb.SearchResponse, error) {
+func (s *server) SearchIPv6(ctx context.Context, in *pb.IPv6Request) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
 	logger.Debug.Printf("Received IPv6: %v\n", query)
@@ -221,10 +220,11 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 }
 
 // SearchSuffix - search by domain public suffix.
-func (s *server) SearchDomainSuffix(ctx context.Context, in *pb.DomainRequest) (*pb.SearchResponse, error) {
+func (s *server) SearchDomainSuffix(ctx context.Context, in *pb.SuffixRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
+	variant := in.GetVariant()
 
-	logger.Debug.Printf("Received Domain: %v\n", query)
+	logger.Debug.Printf("Received Domain Suffix: %v\n", query)
 
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
@@ -232,14 +232,28 @@ func (s *server) SearchDomainSuffix(ctx context.Context, in *pb.DomainRequest) (
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
 
-		suffix, _ := publicsuffix.PublicSuffix(query)
-		if suffix == "" {
+		parent, suffix := parentDomains(query)
+		if parent == "" && suffix == "" {
 			resp.Results = make([]*pb.Content, 0)
 
 			return resp, nil
 		}
 
-		results := CurrentDump.publicSuffixIndex[suffix]
+		logger.Debug.Printf("***Suffixes: %s, %s\n", parent, suffix)
+
+		if parent == "" {
+			resp.Results = make([]*pb.Content, 0)
+
+			return resp, nil
+		}
+
+		results := CurrentDump.publicSuffixIndex[parent]
+
+		if variant == 2 && suffix != "" {
+			results = append(results, CurrentDump.publicSuffixIndex[suffix]...)
+		}
+
+		logger.Debug.Printf("***Suffix: %s, %s, results: %v\n", parent, suffix, results)
 
 		resp.Results = make([]*pb.Content, 0, len(results))
 
@@ -256,7 +270,7 @@ func (s *server) SearchDomainSuffix(ctx context.Context, in *pb.DomainRequest) (
 }
 
 // SearchEntryType - search by entry type.
-func (s *server) SearchEntryType(ctx context.Context, in *pb.IDRequest) (*pb.SearchResponse, error) {
+func (s *server) SearchEntryType(ctx context.Context, in *pb.EntryTypeRequest) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
 	logger.Debug.Printf("Received EntryType: %v\n", query)
@@ -267,7 +281,12 @@ func (s *server) SearchEntryType(ctx context.Context, in *pb.IDRequest) (*pb.Sea
 
 		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
 
-		results := CurrentDump.entryTypeIndex[uint32(query)]
+		results, ok := CurrentDump.entryTypeIndex[query]
+		if !ok {
+			resp.Results = make([]*pb.Content, 0)
+
+			return resp, nil
+		}
 
 		resp.Results = make([]*pb.Content, 0, len(results))
 		for _, id := range results {
@@ -300,4 +319,22 @@ func (s *server) Ping(ctx context.Context, in *pb.PingRequest) (*pb.PongResponse
 	}
 
 	return &pb.PongResponse{Error: SrvDataNotReady}, nil
+}
+
+// Summary - return summary statistics.
+func (s *server) Summary(ctx context.Context, in *pb.SummaryRequest) (*pb.SummaryResponse, error) {
+	logger.Debug.Printf("Received Summary request\n")
+
+	summary := Summary.Load()
+
+	if summary == nil {
+		return &pb.SummaryResponse{Error: SrvDataNotReady}, nil
+	}
+
+	data, err := json.Marshal(summary)
+	if err != nil {
+		return &pb.SummaryResponse{Error: err.Error()}, nil
+	}
+
+	return &pb.SummaryResponse{Summary: data}, nil
 }
