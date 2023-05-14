@@ -35,6 +35,8 @@ type CheckClient interface {
 	SearchEntryType(ctx context.Context, in *EntryTypeRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	Summary(ctx context.Context, in *SummaryRequest, opts ...grpc.CallOption) (*SummaryResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PongResponse, error)
+	SearchOrg(ctx context.Context, in *OrgRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	SearchWithoutNo(ctx context.Context, in *WithoutNoRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 }
 
 type checkClient struct {
@@ -162,6 +164,24 @@ func (c *checkClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *checkClient) SearchOrg(ctx context.Context, in *OrgRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/msg.Check/SearchOrg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *checkClient) SearchWithoutNo(ctx context.Context, in *WithoutNoRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, "/msg.Check/SearchWithoutNo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CheckServer is the server API for Check service.
 // All implementations must embed UnimplementedCheckServer
 // for forward compatibility
@@ -179,6 +199,8 @@ type CheckServer interface {
 	SearchEntryType(context.Context, *EntryTypeRequest) (*SearchResponse, error)
 	Summary(context.Context, *SummaryRequest) (*SummaryResponse, error)
 	Ping(context.Context, *PingRequest) (*PongResponse, error)
+	SearchOrg(context.Context, *OrgRequest) (*SearchResponse, error)
+	SearchWithoutNo(context.Context, *WithoutNoRequest) (*SearchResponse, error)
 	mustEmbedUnimplementedCheckServer()
 }
 
@@ -224,6 +246,12 @@ func (UnimplementedCheckServer) Summary(context.Context, *SummaryRequest) (*Summ
 }
 func (UnimplementedCheckServer) Ping(context.Context, *PingRequest) (*PongResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedCheckServer) SearchOrg(context.Context, *OrgRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchOrg not implemented")
+}
+func (UnimplementedCheckServer) SearchWithoutNo(context.Context, *WithoutNoRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchWithoutNo not implemented")
 }
 func (UnimplementedCheckServer) mustEmbedUnimplementedCheckServer() {}
 
@@ -472,6 +500,42 @@ func _Check_Ping_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Check_SearchOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/msg.Check/SearchOrg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchOrg(ctx, req.(*OrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Check_SearchWithoutNo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WithoutNoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CheckServer).SearchWithoutNo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/msg.Check/SearchWithoutNo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CheckServer).SearchWithoutNo(ctx, req.(*WithoutNoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Check_ServiceDesc is the grpc.ServiceDesc for Check service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -530,6 +594,14 @@ var Check_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Ping",
 			Handler:    _Check_Ping_Handler,
+		},
+		{
+			MethodName: "SearchOrg",
+			Handler:    _Check_SearchOrg_Handler,
+		},
+		{
+			MethodName: "SearchWithoutNo",
+			Handler:    _Check_SearchWithoutNo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

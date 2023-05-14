@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,6 +53,9 @@ type Dump struct {
 	netTree           cidranger.Ranger
 	publicSuffixIndex StringSearchIndex
 	entryTypeIndex    StringSearchIndex
+	orgIndex          StringSearchIndex
+	packedOrgIndex    map[uint64]string
+	withoutDecisionNo IntArrayStorage
 }
 
 func NewDump() *Dump {
@@ -68,6 +72,9 @@ func NewDump() *Dump {
 		netTree:           cidranger.NewPCTrieRanger(),
 		publicSuffixIndex: make(StringSearchIndex),
 		entryTypeIndex:    make(StringSearchIndex),
+		orgIndex:          make(StringSearchIndex),
+		packedOrgIndex:    make(map[uint64]string),
+		withoutDecisionNo: make(IntArrayStorage, 0),
 	}
 }
 
@@ -181,6 +188,26 @@ func (d *Dump) InsertToDecisionIndex(decision uint64, id int32) {
 
 func (d *Dump) RemoveFromDecisionIndex(decision uint64, id int32) {
 	d.decisionIndex.Remove(decision, id)
+}
+
+func (d *Dump) InsertToDecisionOrgIndex(org string, id int32) {
+	d.orgIndex.Insert(org, id)
+}
+
+func (d *Dump) RemoveFromDecisionOrgIndex(org string, id int32) {
+	d.orgIndex.Remove(org, id)
+}
+
+func (d *Dump) InsertToDecisionWithoutNoIndex(number string, id int32) {
+	if strings.ReplaceAll(strings.ToLower(number), ".", "") != "б/н" {
+		return
+	}
+
+	d.withoutDecisionNo = d.withoutDecisionNo.Add(id)
+}
+
+func (d *Dump) RemoveFromDecisionWithoutNoIndex(id int32) {
+	d.withoutDecisionNo = d.withoutDecisionNo.Del(id)
 }
 
 func (d *Dump) InsertToEntryTypeIndex(entryType string, id int32) {

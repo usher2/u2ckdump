@@ -50,8 +50,9 @@ message EntryTypeRequest {
 
 message SearchResponse {
         string error = 1;
-        int64 registryUpdateTime = 2;
-        repeated Content results = 3;
+        string query = 2;
+        int64 registryUpdateTime = 3;
+        repeated Content results = 4;
 }
 
 message SummaryRequest {
@@ -73,20 +74,30 @@ message PongResponse {
         string pong = 3;
 }
 
+message OrgRequest {
+        uint64 query = 1;
+}
+
+message WithoutNoRequest {
+        string query = 1;
+}
+
 service Check {
-  rpc SearchContentID (ContentIDRequest) returns (SearchResponse);
-  rpc SearchIPv4 (IPv4Request) returns (SearchResponse);
-  rpc SearchIPv6 (IPv6Request) returns (SearchResponse);
-  rpc SearchURL (URLRequest) returns (SearchResponse);
-  rpc SearchDomain (DomainRequest) returns (SearchResponse);
-  rpc SearchDecision (DecisionRequest) returns (SearchResponse);
-  rpc SearchTextDecision (TextDecisionRequest) returns (SearchResponse);
-  rpc SearchSubnetIPv4 (SubnetIPv4Request) returns (SearchResponse);
-  rpc SearchSubnetIPv6 (SubnetIPv6Request) returns (SearchResponse);
-  rpc SearchDomainSuffix (SuffixRequest) returns (SearchResponse);
-  rpc SearchEntryType (EntryTypeRequest) returns (SearchResponse);
-  rpc Summary (SummaryRequest) returns (SummaryResponse);
-  rpc Ping (PingRequest) returns (PongResponse);
+        rpc SearchContentID (ContentIDRequest) returns (SearchResponse);
+        rpc SearchIPv4 (IPv4Request) returns (SearchResponse);
+        rpc SearchIPv6 (IPv6Request) returns (SearchResponse);
+        rpc SearchURL (URLRequest) returns (SearchResponse);
+        rpc SearchDomain (DomainRequest) returns (SearchResponse);
+        rpc SearchDecision (DecisionRequest) returns (SearchResponse);
+        rpc SearchTextDecision (TextDecisionRequest) returns (SearchResponse);
+        rpc SearchSubnetIPv4 (SubnetIPv4Request) returns (SearchResponse);
+        rpc SearchSubnetIPv6 (SubnetIPv6Request) returns (SearchResponse);
+        rpc SearchDomainSuffix (SuffixRequest) returns (SearchResponse);
+        rpc SearchEntryType (EntryTypeRequest) returns (SearchResponse);
+        rpc Summary (SummaryRequest) returns (SummaryResponse);
+        rpc Ping (PingRequest) returns (PongResponse);
+        rpc SearchOrg (OrgRequest) returns (SearchResponse);
+        rpc SearchWithoutNo (WithoutNoRequest) returns (SearchResponse);
 }
 
 message Content {

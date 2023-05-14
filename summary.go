@@ -24,4 +24,5 @@ type SummaryValues struct {
 	LargestSizeOfContentCintentID int32          `json:"largest_size_of_content_content_id"` // Content ID with largest size of content
 	MaxItemReferences             int            `json:"max_item_references"`                // Max number of references to a single item
 	MaxItemReferencesString       string         `json:"max_item_references_string"`         // String representation of max number of references to a single item
+	EntriesWithoutDecisionNo      int            `json:"entries_without_decision_no"`        // Number of entries without decision No
 }

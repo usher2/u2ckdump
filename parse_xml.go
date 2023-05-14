@@ -329,14 +329,28 @@ func (dump *Dump) Cleanup(existed Int32Map, stats *ParseStatistics, utime int64)
 			statisctics.BlockTypeMask++
 		}
 
-		statisctics.EntryTypes[entryTypeKey(c.EntryType, c.DecisionOrg)]++
-		statisctics.DecisionOrgs[c.DecisionOrg]++
+		// statisctics.EntryTypes[entryTypeKey(c.EntryType, c.DecisionOrg)]++
+		// statisctics.DecisionOrgs[c.DecisionOrg]++
+	}
+
+	for entryTypeKey, list := range dump.entryTypeIndex {
+		statisctics.EntryTypes[entryTypeKey] = len(list)
+	}
+
+	for org := range dump.packedOrgIndex {
+		delete(dump.packedOrgIndex, org)
+	}
+
+	for org, list := range dump.orgIndex {
+		statisctics.DecisionOrgs[org] = len(list)
+		dump.packedOrgIndex[String2fnv2uint64(org)] = org
 	}
 
 	statisctics.LargestSizeOfContent = stats.LargestSizeOfContent
 	statisctics.LargestSizeOfContentCintentID = stats.LargestSizeOfContentCintentID
 	statisctics.MaxItemReferences = stats.MaxItemReferences
 	statisctics.MaxItemReferencesString = stats.MaxItemReferencesString
+	statisctics.EntriesWithoutDecisionNo = len(dump.withoutDecisionNo)
 
 	return statisctics
 }
@@ -463,6 +477,8 @@ func (dump *Dump) purge(existed Int32Map, stats *ParseStatistics) {
 			}
 
 			dump.RemoveFromDecisionIndex(cont.Decision, cont.ID)
+			dump.RemoveFromDecisionOrgIndex(cont.DecisionOrg, cont.ID)
+			dump.RemoveFromDecisionWithoutNoIndex(cont.ID)
 			dump.RemoveFromEntryTypeIndex(entryTypeKey(cont.EntryType, cont.DecisionOrg), cont.ID)
 
 			delete(dump.ContentIndex, id)
@@ -554,30 +570,40 @@ func (dump *Dump) EctractAndApplyUpdateEntryType(record *Content, pack *PackedCo
 	dump.InsertToEntryTypeIndex(pack.EntryTypeString, pack.ID)
 }
 
+func makeRightDecisionOrg(org string) string {
+	switch {
+	case org == "":
+		return "Генпрокуратура"
+	case !strings.Contains(org, "Мосгорсуд") && (strings.Contains(org, "суд") || strings.Contains(org, "Суд")):
+		return "Суд"
+	case strings.Contains(org, "ФССП"):
+		return "ФССП"
+	default:
+		return org
+	}
+}
+
 func (dump *Dump) ExtractAndApplyDecision(record *Content, pack *PackedContent) {
 	pack.Decision = hashDecision(&record.Decision)
-
-	switch {
-	case record.Decision.Org == "":
-		pack.DecisionOrg = "Генпрокуратура"
-	case !strings.Contains(record.Decision.Org, "Мосгорсуд") && (strings.Contains(record.Decision.Org, "суд") || strings.Contains(record.Decision.Org, "Суд")):
-		pack.DecisionOrg = "Суд"
-	case strings.Contains(record.Decision.Org, "ФССП"):
-		pack.DecisionOrg = "ФССП"
-	default:
-		pack.DecisionOrg = record.Decision.Org
-	}
+	pack.DecisionOrg = makeRightDecisionOrg(record.Decision.Org)
 
 	dump.InsertToDecisionIndex(pack.Decision, pack.ID)
+	dump.InsertToDecisionOrgIndex(pack.DecisionOrg, pack.ID)
+	dump.InsertToDecisionWithoutNoIndex(record.Decision.Number, pack.ID)
 }
 
 // IT IS REASON FOR ALARM!!!!
 func (dump *Dump) EctractAndApplyUpdateDecision(record *Content, pack *PackedContent) {
 	dump.RemoveFromDecisionIndex(pack.Decision, pack.ID)
+	dump.RemoveFromDecisionOrgIndex(pack.DecisionOrg, pack.ID)
+	dump.RemoveFromDecisionWithoutNoIndex(pack.ID)
 
 	pack.Decision = hashDecision(&record.Decision)
+	pack.DecisionOrg = makeRightDecisionOrg(record.Decision.Org)
 
 	dump.InsertToDecisionIndex(pack.Decision, pack.ID)
+	dump.InsertToDecisionOrgIndex(pack.DecisionOrg, pack.ID)
+	dump.InsertToDecisionWithoutNoIndex(record.Decision.Number, pack.ID)
 }
 
 func hashDecision(decision *Decision) uint64 {

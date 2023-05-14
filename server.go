@@ -4,7 +4,11 @@ package main
 
 import (
 	"context"
+	"encoding/base32"
+	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
 	"net"
 
 	"github.com/usher2/u2ckdump/internal/logger"
@@ -14,6 +18,36 @@ import (
 // server - our grpc server.
 type server struct {
 	pb.UnimplementedCheckServer
+}
+
+const encodeCorc = "abcdefghjkmnpqrstvwxyz0123456789"
+
+func String2fnv2base32(s string) string {
+	h64 := fnv.New64a()
+	h64.Write([]byte(s))
+	return Uint64ToBase32(h64.Sum64())
+}
+
+func String2fnv2uint64(s string) uint64 {
+	h64 := fnv.New64a()
+	h64.Write([]byte(s))
+	return h64.Sum64()
+}
+
+func Uint64ToBase32(i uint64) string {
+	b32 := base32.NewEncoding(encodeCorc).WithPadding(base32.NoPadding)
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(b, i)
+	return b32.EncodeToString(b)
+}
+
+func Base32ToUint64(s string) (uint64, error) {
+	b32 := base32.NewEncoding(encodeCorc).WithPadding(base32.NoPadding)
+	b, err := b32.DecodeString(s)
+	if err == nil {
+		return binary.LittleEndian.Uint64(b), nil
+	}
+	return 0, err
 }
 
 // SearchDecision - search by decision number.
@@ -26,7 +60,7 @@ func (s *server) SearchDecision(ctx context.Context, in *pb.DecisionRequest) (*p
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: fmt.Sprintf("%d", query)}
 		results := CurrentDump.decisionIndex[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
@@ -54,7 +88,7 @@ func (s *server) SearchContentID(ctx context.Context, in *pb.ContentIDRequest) (
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: fmt.Sprintf("%d", query)}
 
 		if result, ok := CurrentDump.ContentIndex[query]; ok {
 			resp.Results = append(resp.Results, result.newPbContent(0, nil, "", "", ""))
@@ -88,7 +122,7 @@ func (s *server) SearchIPv4(c context.Context, in *pb.IPv4Request) (*pb.SearchRe
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: ipBytes.String()}
 
 		// TODO: Change to DumpSnap search method
 		cnw, err := CurrentDump.netTree.ContainingNetworks(ipBytes)
@@ -145,7 +179,7 @@ func (s *server) SearchIPv6(ctx context.Context, in *pb.IPv6Request) (*pb.Search
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: string(query)}
 		results := CurrentDump.IPv6Index[string(query)]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
@@ -173,7 +207,7 @@ func (s *server) SearchURL(ctx context.Context, in *pb.URLRequest) (*pb.SearchRe
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: query}
 		results := CurrentDump.URLIndex[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
@@ -201,7 +235,7 @@ func (s *server) SearchDomain(ctx context.Context, in *pb.DomainRequest) (*pb.Se
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: query}
 		results := CurrentDump.domainIndex[query]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
@@ -230,7 +264,7 @@ func (s *server) SearchDomainSuffix(ctx context.Context, in *pb.SuffixRequest) (
 		CurrentDump.RLock()
 		defer CurrentDump.RUnlock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: query}
 
 		parent, suffix := parentDomains(query)
 		if parent == "" && suffix == "" {
@@ -289,7 +323,7 @@ func (s *server) SearchEntryType(ctx context.Context, in *pb.EntryTypeRequest) (
 		CurrentDump.RLock()
 		defer CurrentDump.RUnlock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: query}
 
 		results, ok := CurrentDump.entryTypeIndex[query]
 		if !ok {
@@ -297,6 +331,65 @@ func (s *server) SearchEntryType(ctx context.Context, in *pb.EntryTypeRequest) (
 
 			return resp, nil
 		}
+
+		resp.Results = make([]*pb.Content, 0, len(results))
+		for _, id := range results {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", "", ""))
+			}
+		}
+
+		return resp, nil
+	}
+
+	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
+}
+
+func (s *server) SearchOrg(ctx context.Context, in *pb.OrgRequest) (*pb.SearchResponse, error) {
+	query := in.GetQuery()
+
+	logger.Debug.Printf("Received Org: %x\n", query)
+
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
+		defer CurrentDump.RUnlock()
+
+		orgForSearch := CurrentDump.packedOrgIndex[query]
+
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: orgForSearch}
+
+		results, ok := CurrentDump.orgIndex[orgForSearch]
+		if !ok {
+			resp.Results = make([]*pb.Content, 0)
+
+			return resp, nil
+		}
+
+		resp.Results = make([]*pb.Content, 0, len(results))
+		for _, id := range results {
+			if cont, ok := CurrentDump.ContentIndex[id]; ok {
+				resp.Results = append(resp.Results, cont.newPbContent(0, nil, "", "", ""))
+			}
+		}
+
+		return resp, nil
+	}
+
+	return &pb.SearchResponse{Error: SrvDataNotReady}, nil
+}
+
+func (s *server) SearchWithoutNo(ctx context.Context, in *pb.WithoutNoRequest) (*pb.SearchResponse, error) {
+	query := in.GetQuery()
+
+	logger.Debug.Printf("Received WithoutNo: %v\n", query)
+
+	if CurrentDump != nil && CurrentDump.utime > 0 {
+		CurrentDump.RLock()
+		defer CurrentDump.RUnlock()
+
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime}
+
+		results := CurrentDump.withoutDecisionNo
 
 		resp.Results = make([]*pb.Content, 0, len(results))
 		for _, id := range results {
