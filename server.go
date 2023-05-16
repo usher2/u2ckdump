@@ -173,13 +173,15 @@ func (s *server) SearchIPv4(c context.Context, in *pb.IPv4Request) (*pb.SearchRe
 func (s *server) SearchIPv6(ctx context.Context, in *pb.IPv6Request) (*pb.SearchResponse, error) {
 	query := in.GetQuery()
 
-	logger.Debug.Printf("Received IPv6: %v\n", query)
+	ip := net.IP(query)
+
+	logger.Debug.Printf("Received IPv6: %s\n", ip.String())
 
 	// TODO: Change to DunpSnap search method.
 	if CurrentDump != nil && CurrentDump.utime > 0 {
 		CurrentDump.RLock()
 
-		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: string(query)}
+		resp := &pb.SearchResponse{RegistryUpdateTime: CurrentDump.utime, Query: ip.String()}
 		results := CurrentDump.IPv6Index[string(query)]
 		resp.Results = make([]*pb.Content, 0, len(results))
 
