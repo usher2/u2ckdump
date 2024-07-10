@@ -18,6 +18,7 @@ type PackedContent struct {
 	RegistryUpdateTime int64
 	Decision           uint64
 	DecisionOrg        string
+	DecisionNumber     string
 	URL                []URL
 	IPv4               []IPv4
 	IPv6               []IPv6

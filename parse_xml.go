@@ -355,9 +355,11 @@ func (dump *Dump) Cleanup(existed Int32Map, stats *ParseStatistics, utime int64)
 	return statisctics
 }
 
-func entryTypeKey(entryType int32, org string) (res string) {
+func entryTypeKey(entryType int32, org, number string) (res string) {
 	basis := "15.1" //"[ст. 15.1](http://www.consultant.ru/document/cons_doc_LAW_61798/38c8ea666d27d9dc12b078c556e316e90248f551/), общая"
 	switch {
+	case entryType == 1 && org == "Роскомнадзор" && strings.HasSuffix(number, "-СОБ"):
+		basis = "15.1 1(м)" //"[ст. 15.1 пункт 1 попдункт м](http://www.consultant.ru/document/cons_doc_LAW_61798/38c8ea666d27d9dc12b078c556e316e90248f551/), общая"
 	case entryType == 1 && (org == "Генпрокуратура" || org == ""):
 		basis = "15.1-1" // "[ст. 15.1-1](http://www.consultant.ru/document/cons_doc_LAW_61798/079aac275ffc6cea954b19c5b177a547b94f3c48/), неуважение"
 	case entryType == 2:
@@ -479,7 +481,7 @@ func (dump *Dump) purge(existed Int32Map, stats *ParseStatistics) {
 			dump.RemoveFromDecisionIndex(cont.Decision, cont.ID)
 			dump.RemoveFromDecisionOrgIndex(cont.DecisionOrg, cont.ID)
 			dump.RemoveFromDecisionWithoutNoIndex(cont.ID)
-			dump.RemoveFromEntryTypeIndex(entryTypeKey(cont.EntryType, cont.DecisionOrg), cont.ID)
+			dump.RemoveFromEntryTypeIndex(entryTypeKey(cont.EntryType, cont.DecisionOrg, cont.DecisionNumber), cont.ID)
 
 			delete(dump.ContentIndex, id)
 
@@ -555,7 +557,7 @@ func (dump *Dump) NewPackedContent(record *Content, updateTime int64) {
 
 func (dump *Dump) ExtractAndApplyEntryType(record *Content, pack *PackedContent) {
 	pack.EntryType = record.EntryType
-	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org)
+	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org, record.Decision.Number)
 
 	dump.InsertToEntryTypeIndex(pack.EntryTypeString, pack.ID)
 }
@@ -565,7 +567,7 @@ func (dump *Dump) EctractAndApplyUpdateEntryType(record *Content, pack *PackedCo
 	dump.RemoveFromEntryTypeIndex(pack.EntryTypeString, pack.ID)
 
 	pack.EntryType = record.EntryType
-	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org)
+	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org, record.Decision.Number)
 
 	dump.InsertToEntryTypeIndex(pack.EntryTypeString, pack.ID)
 }
@@ -586,6 +588,7 @@ func makeRightDecisionOrg(org string) string {
 func (dump *Dump) ExtractAndApplyDecision(record *Content, pack *PackedContent) {
 	pack.Decision = hashDecision(&record.Decision)
 	pack.DecisionOrg = makeRightDecisionOrg(record.Decision.Org)
+	pack.DecisionNumber = record.Decision.Number
 
 	dump.InsertToDecisionIndex(pack.Decision, pack.ID)
 	dump.InsertToDecisionOrgIndex(pack.DecisionOrg, pack.ID)
@@ -600,6 +603,7 @@ func (dump *Dump) EctractAndApplyUpdateDecision(record *Content, pack *PackedCon
 
 	pack.Decision = hashDecision(&record.Decision)
 	pack.DecisionOrg = makeRightDecisionOrg(record.Decision.Org)
+	pack.DecisionNumber = record.Decision.Number
 
 	dump.InsertToDecisionIndex(pack.Decision, pack.ID)
 	dump.InsertToDecisionOrgIndex(pack.DecisionOrg, pack.ID)
