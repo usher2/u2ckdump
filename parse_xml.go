@@ -359,7 +359,7 @@ func entryTypeKey(entryType int32, org, number string) (res string) {
 	basis := "15.1" //"[ст. 15.1](http://www.consultant.ru/document/cons_doc_LAW_61798/38c8ea666d27d9dc12b078c556e316e90248f551/), общая"
 	switch {
 	case entryType == 1 && org == "Роскомнадзор" && strings.HasSuffix(number, "-СОБ"):
-		basis = "15.1 1(м)" //"[ст. 15.1 пункт 1 попдункт м](http://www.consultant.ru/document/cons_doc_LAW_61798/38c8ea666d27d9dc12b078c556e316e90248f551/), общая"
+		basis = "15.1.1(м)" //"[ст. 15.1 пункт 1 попдункт м](http://www.consultant.ru/document/cons_doc_LAW_61798/38c8ea666d27d9dc12b078c556e316e90248f551/), общая"
 	case entryType == 1 && (org == "Генпрокуратура" || org == ""):
 		basis = "15.1-1" // "[ст. 15.1-1](http://www.consultant.ru/document/cons_doc_LAW_61798/079aac275ffc6cea954b19c5b177a547b94f3c48/), неуважение"
 	case entryType == 2:
