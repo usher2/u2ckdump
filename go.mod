@@ -1,6 +1,6 @@
 module github.com/usher2/u2ckdump
 
-go 1.21
+go 1.22
 
 require (
 	github.com/yl2chen/cidranger v1.0.2
