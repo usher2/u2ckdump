@@ -22,6 +22,7 @@ type ParseStatistics struct {
 	AddCount                      int
 	UpdateCount                   int
 	RemoveCount                   int
+	ParseErrors                   []ParseError
 	MaxItemReferences             int
 	MaxItemReferencesString       string
 	MaxURLIDReferences            int
@@ -35,8 +36,20 @@ type ParseStatistics struct {
 	Updated                       time.Time
 }
 
+type ParseError struct {
+	ContentID int32  `json:"content_id"`
+	Error     string `json:"error"`
+}
+
 func (s *ParseStatistics) Update() {
 	s.Updated = time.Now()
+}
+
+func (s *ParseStatistics) AddParseError(contentID int32, err error) {
+	s.ParseErrors = append(s.ParseErrors, ParseError{
+		ContentID: contentID,
+		Error:     err.Error(),
+	})
 }
 
 type Dump struct {

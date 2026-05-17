@@ -191,12 +191,128 @@ func TestParseReturnsSkipErrorForMalformedContent(t *testing.T) {
 	}
 }
 
+func TestParseRecordsRecoverableContentErrors(t *testing.T) {
+	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
+
+	oldDump := CurrentDump
+	CurrentDump = NewDump()
+	defer func() {
+		CurrentDump = oldDump
+	}()
+
+	oldRecord := &Content{
+		ID:         42,
+		RecordHash: 1,
+		EntryType:  1,
+		Decision: Decision{
+			Date:   "2000-01-01",
+			Number: "1",
+			Org:    "ONE",
+		},
+		URL: []URL{{URL: "https://old.example/"}},
+	}
+	CurrentDump.NewPackedContent(oldRecord, 100)
+
+	dumpFile := strings.NewReader(`<?xml version="1.0" encoding="windows-1251"?>
+<reg:register xmlns:reg="http://rsoc.ru" updateTime="2011-01-01T01:01:01+03:00">
+<content id="42" includeTime="2001-01-01T01:01:01" entryType="bad" blockType="default">
+	<decision date="2000-01-01" number="1/1/11-1111" org="ONE"/>
+	<url>https://bad.example/</url>
+</content>
+<content id="43" includeTime="2001-01-01T01:01:01" entryType="1" blockType="default">
+	<decision date="2000-01-01" number="1/1/11-1112" org="TWO"/>
+	<url>https://good.example/</url>
+</content>
+</reg:register>`)
+
+	stats, err := Parse(dumpFile)
+	if err != nil {
+		t.Fatalf("parse error: %s", err)
+	}
+	if len(stats.ParseErrors) != 1 {
+		t.Fatalf("parse errors: got %d, want 1: %#v", len(stats.ParseErrors), stats.ParseErrors)
+	}
+	if stats.ParseErrors[0].ContentID != 42 ||
+		!strings.Contains(stats.ParseErrors[0].Error, "entryType atoi") {
+		t.Fatalf("unexpected parse error: %#v", stats.ParseErrors[0])
+	}
+	if _, ok := CurrentDump.ContentIndex[42]; !ok {
+		t.Fatal("malformed changed content purged previous known-good record")
+	}
+	if _, ok := CurrentDump.ContentIndex[43]; !ok {
+		t.Fatal("parser did not continue to later valid content")
+	}
+
+	summary, ok := Summary.Load().(*SummaryValues)
+	if !ok {
+		t.Fatalf("summary type: %T", Summary.Load())
+	}
+	if len(summary.ParseErrors) != 1 || summary.ParseErrors[0].ContentID != 42 {
+		t.Fatalf("summary parse errors: %#v", summary.ParseErrors)
+	}
+}
+
+func TestParseRefreshesUnchangedContentUpdateTime(t *testing.T) {
+	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
+
+	oldDump := CurrentDump
+	CurrentDump = NewDump()
+	defer func() {
+		CurrentDump = oldDump
+	}()
+
+	const content = `<content id="42" includeTime="2001-01-01T01:01:01" entryType="1" blockType="default">
+	<decision date="2000-01-01" number="1/1/11-1111" org="ONE"/>
+	<url>https://example.test/</url>
+</content>`
+
+	first := strings.NewReader(`<?xml version="1.0" encoding="windows-1251"?>
+<reg:register xmlns:reg="http://rsoc.ru" updateTime="2011-01-01T01:01:01+03:00">` + content + `
+</reg:register>`)
+	second := strings.NewReader(`<?xml version="1.0" encoding="windows-1251"?>
+<reg:register xmlns:reg="http://rsoc.ru" updateTime="2013-03-03T03:03:03+03:00">` + content + `
+</reg:register>`)
+
+	firstStats, err := Parse(first)
+	if err != nil {
+		t.Fatalf("first parse error: %s", err)
+	}
+	if firstStats.AddCount != 1 {
+		t.Fatalf("first add count: got %d, want 1", firstStats.AddCount)
+	}
+
+	initialHash := CurrentDump.ContentIndex[42].RecordHash
+	secondStats, err := Parse(second)
+	if err != nil {
+		t.Fatalf("second parse error: %s", err)
+	}
+	if secondStats.UpdateCount != 0 {
+		t.Fatalf("second update count: got %d, want 0", secondStats.UpdateCount)
+	}
+	if CurrentDump.ContentIndex[42].RecordHash != initialHash {
+		t.Fatal("unchanged content was rehashed differently")
+	}
+
+	wantUpdateTime := parseRFC3339Time("2013-03-03T03:03:03+03:00")
+	if CurrentDump.ContentIndex[42].RegistryUpdateTime != wantUpdateTime {
+		t.Fatalf("registry update time: got %d, want %d",
+			CurrentDump.ContentIndex[42].RegistryUpdateTime, wantUpdateTime)
+	}
+}
+
 func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
 	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
 
 	dump := NewDump()
-	pack := newPackedContent(42, 0, 0, nil)
 	oldRecord := &Content{
+		ID:         42,
+		RecordHash: 1,
+		EntryType:  1,
+		Decision: Decision{
+			Date:   "2001-01-01",
+			Number: "old-number",
+			Org:    "Old Org",
+		},
 		IPv4: []IPv4{
 			{IPv4: IPv4StrToInt("192.0.2.1")},
 			{IPv4: IPv4StrToInt("192.0.2.2")},
@@ -229,14 +345,20 @@ func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
 		},
 	}
 
-	dump.ExtractAndApplyIPv4(oldRecord, pack)
-	dump.ExtractAndApplyIPv6(oldRecord, pack)
-	dump.ExtractAndApplySubnetIPv4(oldRecord, pack)
-	dump.ExtractAndApplySubnetIPv6(oldRecord, pack)
-	dump.ExtractAndApplyDomain(oldRecord, pack)
-	dump.ExtractAndApplyURL(oldRecord, pack)
+	dump.NewPackedContent(oldRecord, 100)
+	pack := dump.ContentIndex[oldRecord.ID]
+	oldDecision := pack.Decision
+	oldEntryType := pack.EntryTypeString
 
 	newRecord := &Content{
+		ID:         42,
+		RecordHash: 2,
+		EntryType:  2,
+		Decision: Decision{
+			Date:   "2002-02-02",
+			Number: "б/н",
+			Org:    "New Org",
+		},
 		IPv4: []IPv4{
 			{IPv4: IPv4StrToInt("192.0.2.2")},
 			{IPv4: IPv4StrToInt("192.0.2.4")},
@@ -263,12 +385,7 @@ func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
 		},
 	}
 
-	dump.ExtractAndApplyUpdateIPv4(newRecord, pack)
-	dump.ExtractAndApplyUpdateIPv6(newRecord, pack)
-	dump.ExtractAndApplyUpdateSubnetIPv4(newRecord, pack)
-	dump.ExtractAndApplyUpdateSubnetIPv6(newRecord, pack)
-	dump.ExtractAndApplyUpdateDomain(newRecord, pack)
-	dump.ExtractAndApplyUpdateURL(newRecord, pack)
+	dump.MergePackedContent(newRecord, pack, 200)
 
 	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.1"), pack.ID, false)
 	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.2"), pack.ID, true)
@@ -300,6 +417,16 @@ func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
 	assertStringID(t, dump.URLIndex, NormalizeURL("http://old-two.example/c"), pack.ID, false)
 	assertStringID(t, dump.URLIndex, NormalizeURL("http://new.example/d"), pack.ID, true)
 
+	assertUint64ID(t, dump.decisionIndex, oldDecision, pack.ID, false)
+	assertUint64ID(t, dump.decisionIndex, pack.Decision, pack.ID, true)
+	assertStringID(t, dump.orgIndex, "Old Org", pack.ID, false)
+	assertStringID(t, dump.orgIndex, "New Org", pack.ID, true)
+	assertStringID(t, dump.entryTypeIndex, oldEntryType, pack.ID, false)
+	assertStringID(t, dump.entryTypeIndex, pack.EntryTypeString, pack.ID, true)
+	if !containsInt32(dump.withoutDecisionNo, pack.ID) {
+		t.Fatalf("decision without number index does not contain content id %d: %v", pack.ID, dump.withoutDecisionNo)
+	}
+
 	if len(pack.IPv4) != len(newRecord.IPv4) ||
 		len(pack.IPv6) != len(newRecord.IPv6) ||
 		len(pack.SubnetIPv4) != len(newRecord.SubnetIPv4) ||
@@ -307,6 +434,35 @@ func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
 		len(pack.Domain) != len(newRecord.Domain) ||
 		len(pack.URL) != len(newRecord.URL) {
 		t.Fatalf("packed content slices were not rebound to the new record")
+	}
+}
+
+func TestPurgeRemovesEntryTypeByStoredKey(t *testing.T) {
+	dump := NewDump()
+	record := &Content{
+		ID:         42,
+		RecordHash: 1,
+		EntryType:  1,
+		Decision: Decision{
+			Date:   "2001-01-01",
+			Number: "number",
+			Org:    "",
+		},
+	}
+
+	dump.NewPackedContent(record, 100)
+	pack := dump.ContentIndex[record.ID]
+	assertStringID(t, dump.entryTypeIndex, pack.EntryTypeString, pack.ID, true)
+
+	stats := &ParseStatistics{}
+	dump.purge(Int32Map{}, stats)
+
+	assertStringID(t, dump.entryTypeIndex, pack.EntryTypeString, pack.ID, false)
+	if _, ok := dump.ContentIndex[record.ID]; ok {
+		t.Fatalf("content id %d was not purged", record.ID)
+	}
+	if stats.RemoveCount != 1 {
+		t.Fatalf("remove count: got %d, want 1", stats.RemoveCount)
 	}
 }
 
@@ -323,6 +479,22 @@ func assertStringID(t *testing.T, index StringSearchIndex, key string, id int32,
 
 	if got != want {
 		t.Fatalf("index[%q] id %d: got %t, want %t", key, id, got, want)
+	}
+}
+
+func assertUint64ID(t *testing.T, index Uint64SearchIndex, key uint64, id int32, want bool) {
+	t.Helper()
+
+	got := false
+	for _, v := range index[key] {
+		if v == id {
+			got = true
+			break
+		}
+	}
+
+	if got != want {
+		t.Fatalf("index[%d] id %d: got %t, want %t", key, id, got, want)
 	}
 }
 
