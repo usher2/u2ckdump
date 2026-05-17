@@ -62,7 +62,7 @@ func main() {
 		if dumpFile, err := os.Open(*confDumpCacheDir + "/dump.xml"); err != nil {
 			logger.Error.Printf("Can't open last dump: %s\n", err.Error())
 		} else {
-			err = Parse(dumpFile)
+			_, err = Parse(dumpFile)
 			if err != nil {
 				logger.Error.Printf("Parse error: %s\n", err.Error())
 			} else {

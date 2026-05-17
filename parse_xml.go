@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"hash"
 	"hash/fnv"
 	"io"
 	"net"
@@ -28,8 +27,6 @@ const (
 	elementIP4Subnet = "ipSubnet"
 	elementIP6Subnet = "ipv6Subnet"
 )
-
-var hasher64 hash.Hash64
 
 // UnmarshalContent - unmarshal <content> element.
 func UnmarshalContent(contBuf []byte, content *Content) error {
@@ -147,7 +144,7 @@ func parseContentElement(element xml.StartElement, content *Content) error {
 }
 
 // Parse - parse dump.
-func Parse(dumpFile io.Reader) error {
+func Parse(dumpFile io.Reader) (*ParseStatistics, error) {
 	var (
 		reg                            Reg
 		buffer                         bytes.Buffer
@@ -156,7 +153,7 @@ func Parse(dumpFile io.Reader) error {
 		stats ParseStatistics
 	)
 
-	hasher64 = fnv.New64a()
+	hasher64 := fnv.New64a()
 	decoder := xml.NewDecoder(dumpFile)
 
 	// we need this closure, we don't want constructor
@@ -180,7 +177,7 @@ func Parse(dumpFile io.Reader) error {
 		token, err := decoder.Token()
 		if token == nil {
 			if err != io.EOF {
-				return err
+				return nil, err
 			}
 
 			break
@@ -195,7 +192,9 @@ func Parse(dumpFile io.Reader) error {
 				id := getContentId(element)
 
 				// parse <content>...</content> only if need
-				decoder.Skip()
+				if err := decoder.Skip(); err != nil {
+					return nil, fmt.Errorf("skip content %d: %w", id, err)
+				}
 
 				// read buffer to mark anyway
 				diff := tokenStartOffset - bufferOffset
@@ -209,7 +208,7 @@ func Parse(dumpFile io.Reader) error {
 				contBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
 				if stats.LargestSizeOfContent < len(contBuf) {
 					stats.LargestSizeOfContent = len(contBuf)
-					stats.LargestSizeOfContentCintentID = id
+					stats.LargestSizeOfContentContentID = id
 				}
 
 				bufferOffset = tokenStartOffset
@@ -223,12 +222,16 @@ func Parse(dumpFile io.Reader) error {
 				CurrentDump.Lock()
 
 				prevCont, exists := CurrentDump.ContentIndex[id]
+				// Known behavior: registry dumps can contain malformed records.
+				// Mark the ID as seen before decoding so a bad changed record does
+				// not purge the previous known-good content for the same ID.
 				ContJournal[id] = Nothing{} // add to journal.
 
 				switch {
 				case !exists:
 					newCont, err := NewContent(newRecordHash, contBuf)
 					if err != nil {
+						stats.AddParseError(id, err)
 						logger.Error.Printf("Decode Error: %s\n", err)
 
 						break
@@ -239,6 +242,7 @@ func Parse(dumpFile io.Reader) error {
 				case prevCont.RecordHash != newRecordHash:
 					newCont, err := NewContent(newRecordHash, contBuf)
 					if err != nil {
+						stats.AddParseError(id, err)
 						logger.Error.Printf("Decode Error: %s\n", err)
 
 						break
@@ -276,9 +280,9 @@ func Parse(dumpFile io.Reader) error {
 		len(CurrentDump.IPv4Index), len(CurrentDump.IPv6Index), len(CurrentDump.subnetIPv4Index), len(CurrentDump.subnetIPv6Index),
 		len(CurrentDump.domainIndex), len(CurrentDump.URLIndex))
 	logger.Info.Printf("Biggest array: %d\n", stats.MaxItemReferences)
-	logger.Info.Printf("Biggest content: %d (/n_%d)\n", stats.LargestSizeOfContent, stats.LargestSizeOfContentCintentID)
+	logger.Info.Printf("Biggest content: %d (/n_%d)\n", stats.LargestSizeOfContent, stats.LargestSizeOfContentContentID)
 
-	return nil
+	return &stats, nil
 }
 
 func NewContent(recordHash uint64, buf []byte) (*Content, error) {
@@ -347,9 +351,10 @@ func (dump *Dump) Cleanup(existed Int32Map, stats *ParseStatistics, utime int64)
 	}
 
 	statisctics.LargestSizeOfContent = stats.LargestSizeOfContent
-	statisctics.LargestSizeOfContentCintentID = stats.LargestSizeOfContentCintentID
+	statisctics.LargestSizeOfContentContentID = stats.LargestSizeOfContentContentID
 	statisctics.MaxItemReferences = stats.MaxItemReferences
 	statisctics.MaxItemReferencesString = stats.MaxItemReferencesString
+	statisctics.ParseErrors = append(statisctics.ParseErrors, stats.ParseErrors...)
 	statisctics.EntriesWithoutDecisionNo = len(dump.withoutDecisionNo)
 
 	return statisctics
@@ -453,41 +458,43 @@ func (dump *Dump) calcMaxEntityLen(stats *ParseStatistics) {
 func (dump *Dump) purge(existed Int32Map, stats *ParseStatistics) {
 	for id, cont := range dump.ContentIndex {
 		if _, ok := existed[id]; !ok {
-			for _, ip4 := range cont.IPv4 {
-				dump.RemoveFromIPv4Index(ip4.IPv4, cont.ID)
-			}
-
-			for _, ip6 := range cont.IPv6 {
-				ip6 := string(ip6.IPv6)
-				dump.RemoveFromIPv6Index(ip6, cont.ID)
-			}
-
-			for _, subnet6 := range cont.SubnetIPv6 {
-				dump.RemoveFromSubnetIPv6Index(subnet6.SubnetIPv6, cont.ID)
-			}
-
-			for _, subnet4 := range cont.SubnetIPv4 {
-				dump.RemoveFromSubnetIPv4Index(subnet4.SubnetIPv4, cont.ID)
-			}
-
-			for _, u := range cont.URL {
-				dump.RemoveFromURLIndex(NormalizeURL(u.URL), cont.ID)
-			}
-
-			for _, domain := range cont.Domain {
-				dump.RemoveFromDomainIndex(NormalizeDomain(domain.Domain), cont.ID)
-			}
-
-			dump.RemoveFromDecisionIndex(cont.Decision, cont.ID)
-			dump.RemoveFromDecisionOrgIndex(cont.DecisionOrg, cont.ID)
-			dump.RemoveFromDecisionWithoutNoIndex(cont.ID)
-			dump.RemoveFromEntryTypeIndex(entryTypeKey(cont.EntryType, cont.DecisionOrg, cont.DecisionNumber), cont.ID)
-
+			dump.removePackedContentIndexes(cont)
 			delete(dump.ContentIndex, id)
 
 			stats.RemoveCount++
 		}
 	}
+}
+
+func (dump *Dump) removePackedContentIndexes(cont *PackedContent) {
+	for _, ip4 := range cont.IPv4 {
+		dump.RemoveFromIPv4Index(ip4.IPv4, cont.ID)
+	}
+
+	for _, ip6 := range cont.IPv6 {
+		dump.RemoveFromIPv6Index(string(ip6.IPv6), cont.ID)
+	}
+
+	for _, subnet6 := range cont.SubnetIPv6 {
+		dump.RemoveFromSubnetIPv6Index(subnet6.SubnetIPv6, cont.ID)
+	}
+
+	for _, subnet4 := range cont.SubnetIPv4 {
+		dump.RemoveFromSubnetIPv4Index(subnet4.SubnetIPv4, cont.ID)
+	}
+
+	for _, u := range cont.URL {
+		dump.RemoveFromURLIndex(NormalizeURL(u.URL), cont.ID)
+	}
+
+	for _, domain := range cont.Domain {
+		dump.RemoveFromDomainIndex(NormalizeDomain(domain.Domain), cont.ID)
+	}
+
+	dump.RemoveFromDecisionIndex(cont.Decision, cont.ID)
+	dump.RemoveFromDecisionOrgIndex(cont.DecisionOrg, cont.ID)
+	dump.RemoveFromDecisionWithoutNoIndex(cont.ID)
+	dump.RemoveFromEntryTypeIndex(cont.EntryTypeString, cont.ID)
 }
 
 // Marshal - encodes content to JSON.
@@ -521,22 +528,24 @@ func (record *Content) constructBlockType() int32 {
 }
 
 func (dump *Dump) SetContentUpdateTime(id int32, updateTime int64) {
-	dump.ContentIndex[id].RegistryUpdateTime = dump.utime
+	dump.ContentIndex[id].RegistryUpdateTime = updateTime
 }
 
 // MergePackedContent - merges new content with previous one.
 // It is used to update existing content.
 func (dump *Dump) MergePackedContent(record *Content, prev *PackedContent, updateTime int64) {
+	dump.removePackedContentIndexes(prev)
 	prev.refreshPackedContent(record.RecordHash, updateTime, record.Marshal())
+	prev.clearIndexedFields()
 
-	dump.EctractAndApplyUpdateIPv4(record, prev)
-	dump.EctractAndApplyUpdateIPv6(record, prev)
-	dump.EctractAndApplyUpdateSubnetIPv4(record, prev)
-	dump.EctractAndApplyUpdateSubnetIPv6(record, prev)
-	dump.EctractAndApplyUpdateDomain(record, prev)
-	dump.EctractAndApplyUpdateURL(record, prev)
-	dump.EctractAndApplyUpdateDecision(record, prev)  // reason for ALARM!!!
-	dump.EctractAndApplyUpdateEntryType(record, prev) // reason for ALARM!!!
+	dump.ExtractAndApplyIPv4(record, prev)
+	dump.ExtractAndApplyIPv6(record, prev)
+	dump.ExtractAndApplySubnetIPv4(record, prev)
+	dump.ExtractAndApplySubnetIPv6(record, prev)
+	dump.ExtractAndApplyDomain(record, prev)
+	dump.ExtractAndApplyURL(record, prev)
+	dump.ExtractAndApplyDecision(record, prev)
+	dump.ExtractAndApplyEntryType(record, prev)
 }
 
 // NewPackedContent - creates new content.
@@ -556,16 +565,6 @@ func (dump *Dump) NewPackedContent(record *Content, updateTime int64) {
 }
 
 func (dump *Dump) ExtractAndApplyEntryType(record *Content, pack *PackedContent) {
-	pack.EntryType = record.EntryType
-	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org, record.Decision.Number)
-
-	dump.InsertToEntryTypeIndex(pack.EntryTypeString, pack.ID)
-}
-
-// IT IS REASON FOR ALARM!!!!
-func (dump *Dump) EctractAndApplyUpdateEntryType(record *Content, pack *PackedContent) {
-	dump.RemoveFromEntryTypeIndex(pack.EntryTypeString, pack.ID)
-
 	pack.EntryType = record.EntryType
 	pack.EntryTypeString = entryTypeKey(record.EntryType, record.Decision.Org, record.Decision.Number)
 
@@ -595,24 +594,9 @@ func (dump *Dump) ExtractAndApplyDecision(record *Content, pack *PackedContent) 
 	dump.InsertToDecisionWithoutNoIndex(record.Decision.Number, pack.ID)
 }
 
-// IT IS REASON FOR ALARM!!!!
-func (dump *Dump) EctractAndApplyUpdateDecision(record *Content, pack *PackedContent) {
-	dump.RemoveFromDecisionIndex(pack.Decision, pack.ID)
-	dump.RemoveFromDecisionOrgIndex(pack.DecisionOrg, pack.ID)
-	dump.RemoveFromDecisionWithoutNoIndex(pack.ID)
-
-	pack.Decision = hashDecision(&record.Decision)
-	pack.DecisionOrg = makeRightDecisionOrg(record.Decision.Org)
-	pack.DecisionNumber = record.Decision.Number
-
-	dump.InsertToDecisionIndex(pack.Decision, pack.ID)
-	dump.InsertToDecisionOrgIndex(pack.DecisionOrg, pack.ID)
-	dump.InsertToDecisionWithoutNoIndex(record.Decision.Number, pack.ID)
-}
-
 func hashDecision(decision *Decision) uint64 {
 	// hash.Write([]byte(v0.Decision.Org + " " + v0.Decision.Number + " " + v0.Decision.Date))
-	hasher64.Reset()
+	hasher64 := fnv.New64a()
 	hasher64.Write([]byte(decision.Org))
 	hasher64.Write([]byte(" "))
 	hasher64.Write([]byte(decision.Number))
@@ -630,89 +614,11 @@ func (dump *Dump) ExtractAndApplyIPv4(record *Content, pack *PackedContent) {
 	}
 }
 
-func (dump *Dump) EctractAndApplyUpdateIPv4(record *Content, pack *PackedContent) {
-	ipExisted := make(map[uint32]Nothing, len(pack.IPv4))
-	if len(record.IPv4) > 0 {
-		for _, ip4 := range record.IPv4 {
-			pack.InsertIPv4(ip4)
-			dump.InsertToIPv4Index(ip4.IPv4, pack.ID)
-			ipExisted[ip4.IPv4] = Nothing{}
-		}
-	}
-
-	for _, ip4 := range pack.IPv4 {
-		if _, ok := ipExisted[ip4.IPv4]; !ok {
-			pack.RemoveIPv4(ip4)
-			dump.RemoveFromIPv4Index(ip4.IPv4, pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertIPv4(ip4 IPv4) {
-	for _, existedIP4 := range pack.IPv4 {
-		if ip4 == existedIP4 {
-			return
-		}
-	}
-
-	pack.IPv4 = append(pack.IPv4, ip4)
-}
-
-func (pack *PackedContent) RemoveIPv4(ip4 IPv4) {
-	for i, existedIP4 := range pack.IPv4 {
-		if ip4 == existedIP4 {
-			pack.IPv4 = append(pack.IPv4[:i], pack.IPv4[i+1:]...)
-
-			return
-		}
-	}
-}
-
 func (dump *Dump) ExtractAndApplyIPv6(record *Content, pack *PackedContent) {
 	if len(record.IPv6) > 0 {
 		pack.IPv6 = record.IPv6
 		for _, ip4 := range pack.IPv6 {
 			dump.InsertToIPv6Index(string(ip4.IPv6), pack.ID)
-		}
-	}
-}
-
-func (dump *Dump) EctractAndApplyUpdateIPv6(record *Content, pack *PackedContent) {
-	ipExisted := make(map[string]Nothing, len(pack.IPv6))
-	if len(record.IPv6) > 0 {
-		for _, ip6 := range record.IPv6 {
-			pack.InsertIPv6(ip6)
-
-			addr := string(ip6.IPv6)
-			dump.InsertToIPv6Index(addr, pack.ID)
-			ipExisted[addr] = Nothing{}
-		}
-	}
-
-	for _, ip6 := range pack.IPv6 {
-		if _, ok := ipExisted[string(ip6.IPv6)]; !ok {
-			pack.RemoveIPv6(ip6)
-			dump.RemoveFromIPv6Index(string(ip6.IPv6), pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertIPv6(ip6 IPv6) {
-	for _, existedIP6 := range pack.IPv6 {
-		if string(ip6.IPv6) == string(existedIP6.IPv6) && ip6.Ts == existedIP6.Ts {
-			return
-		}
-	}
-
-	pack.IPv6 = append(pack.IPv6, ip6)
-}
-
-func (pack *PackedContent) RemoveIPv6(ip6 IPv6) {
-	for i, existedIP6 := range pack.IPv6 {
-		if string(ip6.IPv6) == string(existedIP6.IPv6) && ip6.Ts == existedIP6.Ts {
-			pack.IPv6 = append(pack.IPv6[:i], pack.IPv6[i+1:]...)
-
-			return
 		}
 	}
 }
@@ -726,87 +632,11 @@ func (dump *Dump) ExtractAndApplySubnetIPv4(record *Content, pack *PackedContent
 	}
 }
 
-func (dump *Dump) EctractAndApplyUpdateSubnetIPv4(record *Content, pack *PackedContent) {
-	existedSubnetIPv4 := NewStringSet(len(pack.SubnetIPv4))
-	if len(record.SubnetIPv4) > 0 {
-		for _, subnetIPv4 := range record.SubnetIPv4 {
-			pack.InsertSubnetIPv4(subnetIPv4)
-			dump.InsertToSubnetIPv4Index(subnetIPv4.SubnetIPv4, pack.ID)
-			existedSubnetIPv4[subnetIPv4.SubnetIPv4] = Nothing{}
-		}
-	}
-
-	for _, subnetIPv4 := range pack.SubnetIPv4 {
-		if _, ok := existedSubnetIPv4[subnetIPv4.SubnetIPv4]; !ok {
-			pack.RemoveSubnetIPv4(subnetIPv4)
-			dump.RemoveFromSubnetIPv4Index(subnetIPv4.SubnetIPv4, pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertSubnetIPv4(subnetIPv4 SubnetIPv4) {
-	for _, existedSubnetIPv4 := range pack.SubnetIPv4 {
-		if subnetIPv4 == existedSubnetIPv4 {
-			return
-		}
-	}
-
-	pack.SubnetIPv4 = append(pack.SubnetIPv4, subnetIPv4)
-}
-
-func (pack *PackedContent) RemoveSubnetIPv4(subnetIPv4 SubnetIPv4) {
-	for i, existedSubnetIPv4 := range pack.SubnetIPv4 {
-		if subnetIPv4 == existedSubnetIPv4 {
-			pack.SubnetIPv4 = append(pack.SubnetIPv4[:i], pack.SubnetIPv4[i+1:]...)
-
-			return
-		}
-	}
-}
-
 func (dump *Dump) ExtractAndApplySubnetIPv6(record *Content, pack *PackedContent) {
 	if len(record.SubnetIPv6) > 0 {
 		pack.SubnetIPv6 = record.SubnetIPv6
 		for _, subnet6 := range pack.SubnetIPv6 {
-			dump.InsertToSubnetIPv4Index(subnet6.SubnetIPv6, pack.ID)
-		}
-	}
-}
-
-func (dump *Dump) EctractAndApplyUpdateSubnetIPv6(record *Content, pack *PackedContent) {
-	existedSubnetIPv6 := NewStringSet(len(pack.SubnetIPv6))
-	if len(record.SubnetIPv6) > 0 {
-		for _, subnetIPv6 := range record.SubnetIPv6 {
-			pack.InsertSubnetIPv6(subnetIPv6)
-			dump.InsertToSubnetIPv6Index(subnetIPv6.SubnetIPv6, pack.ID)
-			existedSubnetIPv6[subnetIPv6.SubnetIPv6] = Nothing{}
-		}
-	}
-
-	for _, subnetIPv6 := range pack.SubnetIPv6 {
-		if _, ok := existedSubnetIPv6[subnetIPv6.SubnetIPv6]; !ok {
-			pack.RemoveSubnetIPv6(subnetIPv6)
-			dump.RemoveFromSubnetIPv4Index(subnetIPv6.SubnetIPv6, pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertSubnetIPv6(subnetIPv6 SubnetIPv6) {
-	for _, existedSubnetIPv6 := range pack.SubnetIPv6 {
-		if subnetIPv6 == existedSubnetIPv6 {
-			return
-		}
-	}
-
-	pack.SubnetIPv6 = append(pack.SubnetIPv6, subnetIPv6)
-}
-
-func (pack *PackedContent) RemoveSubnetIPv6(subnetIPv6 SubnetIPv6) {
-	for i, existedSubnetIPv6 := range pack.SubnetIPv6 {
-		if subnetIPv6 == existedSubnetIPv6 {
-			pack.SubnetIPv6 = append(pack.SubnetIPv6[:i], pack.SubnetIPv6[i+1:]...)
-
-			return
+			dump.InsertToSubnetIPv6Index(subnet6.SubnetIPv6, pack.ID)
 		}
 	}
 }
@@ -818,51 +648,6 @@ func (dump *Dump) ExtractAndApplyDomain(record *Content, pack *PackedContent) {
 			nDomain := NormalizeDomain(domain.Domain)
 
 			dump.InsertToDomainIndex(nDomain, pack.ID)
-		}
-	}
-}
-
-func (dump *Dump) EctractAndApplyUpdateDomain(record *Content, pack *PackedContent) {
-	domainExisted := NewStringSet(len(pack.Domain))
-	if len(record.Domain) > 0 {
-		for _, domain := range record.Domain {
-			pack.InsertDomain(domain)
-
-			nDomain := NormalizeDomain(domain.Domain)
-
-			dump.InsertToDomainIndex(nDomain, pack.ID)
-
-			domainExisted[domain.Domain] = Nothing{}
-		}
-	}
-
-	for _, domain := range pack.Domain {
-		if _, ok := domainExisted[domain.Domain]; !ok {
-			pack.RemoveDomain(domain)
-
-			nDomain := NormalizeDomain(domain.Domain)
-
-			dump.RemoveFromDomainIndex(nDomain, pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertDomain(domain Domain) {
-	for _, existedDomain := range pack.Domain {
-		if domain == existedDomain {
-			return
-		}
-	}
-
-	pack.Domain = append(pack.Domain, domain)
-}
-
-func (pack *PackedContent) RemoveDomain(domain Domain) {
-	for i, existedDomain := range pack.Domain {
-		if domain == existedDomain {
-			pack.Domain = append(pack.Domain[:i], pack.Domain[i+1:]...)
-
-			return
 		}
 	}
 }
@@ -883,61 +668,23 @@ func (dump *Dump) ExtractAndApplyURL(record *Content, pack *PackedContent) {
 	pack.BlockType = record.constructBlockType()
 }
 
-func (dump *Dump) EctractAndApplyUpdateURL(record *Content, pack *PackedContent) {
-	urlExisted := NewStringSet(len(pack.URL))
-	HTTPSBlock := 0
-
-	if len(record.URL) > 0 {
-		for _, u := range record.URL {
-			pack.InsertURL(u)
-
-			nURL := NormalizeURL(u.URL)
-			if strings.HasPrefix(nURL, "https://") {
-				HTTPSBlock++
-			}
-
-			dump.InsertToURLIndex(nURL, pack.ID)
-
-			urlExisted[u.URL] = Nothing{}
-		}
-	}
-
-	record.HTTPSBlock = HTTPSBlock
-	pack.BlockType = record.constructBlockType()
-
-	for _, u := range pack.URL {
-		if _, ok := urlExisted[u.URL]; !ok {
-			pack.RemoveURL(u)
-
-			nURL := NormalizeURL(u.URL)
-
-			dump.RemoveFromURLIndex(nURL, pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertURL(u URL) {
-	for _, existedURL := range pack.URL {
-		if u == existedURL {
-			return
-		}
-	}
-
-	pack.URL = append(pack.URL, u)
-}
-
-func (pack *PackedContent) RemoveURL(u URL) {
-	for i, existedURL := range pack.URL {
-		if u == existedURL {
-			pack.URL = append(pack.URL[:i], pack.URL[i+1:]...)
-
-			return
-		}
-	}
-}
-
 func (pack *PackedContent) refreshPackedContent(hash uint64, utime int64, payload []byte) {
 	pack.RecordHash, pack.RegistryUpdateTime, pack.Payload = hash, utime, payload
+}
+
+func (pack *PackedContent) clearIndexedFields() {
+	pack.EntryType = 0
+	pack.EntryTypeString = ""
+	pack.BlockType = 0
+	pack.Decision = 0
+	pack.DecisionOrg = ""
+	pack.DecisionNumber = ""
+	pack.URL = nil
+	pack.IPv4 = nil
+	pack.IPv6 = nil
+	pack.SubnetIPv4 = nil
+	pack.SubnetIPv6 = nil
+	pack.Domain = nil
 }
 
 func newPackedContent(id int32, hash uint64, utime int64, payload []byte) *PackedContent {

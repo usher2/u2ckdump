@@ -20,8 +20,9 @@ type SummaryValues struct {
 	BlockTypeDomain               int            `json:"block_type_domain"`                  // Number of domain block types
 	BlockTypeMask                 int            `json:"block_type_mask"`                    // Number of mask block types
 	BlockTypeIP                   int            `json:"block_type_ip"`                      // Number of IP block types
+	ParseErrors                   []ParseError   `json:"parse_errors,omitempty"`             // Recoverable per-content parse errors
 	LargestSizeOfContent          int            `json:"largest_size_of_content"`            // Largest size of content
-	LargestSizeOfContentCintentID int32          `json:"largest_size_of_content_content_id"` // Content ID with largest size of content
+	LargestSizeOfContentContentID int32          `json:"largest_size_of_content_content_id"` // Content ID with largest size of content
 	MaxItemReferences             int            `json:"max_item_references"`                // Max number of references to a single item
 	MaxItemReferencesString       string         `json:"max_item_references_string"`         // String representation of max number of references to a single item
 	EntriesWithoutDecisionNo      int            `json:"entries_without_decision_no"`        // Number of entries without decision No

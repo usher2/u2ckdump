@@ -95,7 +95,7 @@ func DumpRefresh(url, token, dir string) {
 
 		defer dumpFile.Close()
 
-		err = Parse(dumpFile)
+		_, err = Parse(dumpFile)
 		if err != nil {
 			logger.Error.Printf("Parse error: %s\n", err.Error())
 

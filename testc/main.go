@@ -161,7 +161,7 @@ func printContent(packet *pb.Content) {
 	content := TContent{}
 	err := json.Unmarshal(packet.Pack, &content)
 	if err != nil {
-		fmt.Printf("Oooops!!! %s\n", err.Error)
+		fmt.Printf("Oooops!!! %s\n", err.Error())
 		return
 	}
 	if (content.BlockType == "" || content.BlockType == "default") && content.HttpsBlock == 0 {
