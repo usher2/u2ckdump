@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"testing"
@@ -163,4 +164,155 @@ func Test_Parse(t *testing.T) {
 		fmt.Printf("%d ", k)
 	}
 	fmt.Println()
+}
+
+func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
+	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
+
+	dump := NewDump()
+	pack := newPackedContent(42, 0, 0, nil)
+	oldRecord := &Content{
+		IPv4: []IPv4{
+			{IPv4: IPv4StrToInt("192.0.2.1")},
+			{IPv4: IPv4StrToInt("192.0.2.2")},
+			{IPv4: IPv4StrToInt("192.0.2.3")},
+		},
+		IPv6: []IPv6{
+			{IPv6: net.ParseIP("2001:db8::1")},
+			{IPv6: net.ParseIP("2001:db8::2")},
+			{IPv6: net.ParseIP("2001:db8::3")},
+		},
+		SubnetIPv4: []SubnetIPv4{
+			{SubnetIPv4: "198.51.100.0/24"},
+			{SubnetIPv4: "203.0.113.0/24"},
+			{SubnetIPv4: "192.0.2.0/24"},
+		},
+		SubnetIPv6: []SubnetIPv6{
+			{SubnetIPv6: "2001:db8:1::/48"},
+			{SubnetIPv6: "2001:db8:2::/48"},
+			{SubnetIPv6: "2001:db8:3::/48"},
+		},
+		Domain: []Domain{
+			{Domain: "old-one.example"},
+			{Domain: "kept.example"},
+			{Domain: "old-two.example"},
+		},
+		URL: []URL{
+			{URL: "http://old-one.example/a"},
+			{URL: "https://kept.example/b"},
+			{URL: "http://old-two.example/c"},
+		},
+	}
+
+	dump.ExtractAndApplyIPv4(oldRecord, pack)
+	dump.ExtractAndApplyIPv6(oldRecord, pack)
+	dump.ExtractAndApplySubnetIPv4(oldRecord, pack)
+	dump.ExtractAndApplySubnetIPv6(oldRecord, pack)
+	dump.ExtractAndApplyDomain(oldRecord, pack)
+	dump.ExtractAndApplyURL(oldRecord, pack)
+
+	newRecord := &Content{
+		IPv4: []IPv4{
+			{IPv4: IPv4StrToInt("192.0.2.2")},
+			{IPv4: IPv4StrToInt("192.0.2.4")},
+		},
+		IPv6: []IPv6{
+			{IPv6: net.ParseIP("2001:db8::2")},
+			{IPv6: net.ParseIP("2001:db8::4")},
+		},
+		SubnetIPv4: []SubnetIPv4{
+			{SubnetIPv4: "203.0.113.0/24"},
+			{SubnetIPv4: "198.18.0.0/15"},
+		},
+		SubnetIPv6: []SubnetIPv6{
+			{SubnetIPv6: "2001:db8:2::/48"},
+			{SubnetIPv6: "2001:db8:4::/48"},
+		},
+		Domain: []Domain{
+			{Domain: "kept.example"},
+			{Domain: "new.example"},
+		},
+		URL: []URL{
+			{URL: "https://kept.example/b"},
+			{URL: "http://new.example/d"},
+		},
+	}
+
+	dump.EctractAndApplyUpdateIPv4(newRecord, pack)
+	dump.EctractAndApplyUpdateIPv6(newRecord, pack)
+	dump.EctractAndApplyUpdateSubnetIPv4(newRecord, pack)
+	dump.EctractAndApplyUpdateSubnetIPv6(newRecord, pack)
+	dump.EctractAndApplyUpdateDomain(newRecord, pack)
+	dump.EctractAndApplyUpdateURL(newRecord, pack)
+
+	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.1"), pack.ID, false)
+	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.2"), pack.ID, true)
+	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.3"), pack.ID, false)
+	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.4"), pack.ID, true)
+
+	assertStringID(t, dump.IPv6Index, string(net.ParseIP("2001:db8::1")), pack.ID, false)
+	assertStringID(t, dump.IPv6Index, string(net.ParseIP("2001:db8::2")), pack.ID, true)
+	assertStringID(t, dump.IPv6Index, string(net.ParseIP("2001:db8::3")), pack.ID, false)
+	assertStringID(t, dump.IPv6Index, string(net.ParseIP("2001:db8::4")), pack.ID, true)
+
+	assertStringID(t, dump.subnetIPv4Index, "198.51.100.0/24", pack.ID, false)
+	assertStringID(t, dump.subnetIPv4Index, "203.0.113.0/24", pack.ID, true)
+	assertStringID(t, dump.subnetIPv4Index, "192.0.2.0/24", pack.ID, false)
+	assertStringID(t, dump.subnetIPv4Index, "198.18.0.0/15", pack.ID, true)
+
+	assertStringID(t, dump.subnetIPv6Index, "2001:db8:1::/48", pack.ID, false)
+	assertStringID(t, dump.subnetIPv6Index, "2001:db8:2::/48", pack.ID, true)
+	assertStringID(t, dump.subnetIPv6Index, "2001:db8:3::/48", pack.ID, false)
+	assertStringID(t, dump.subnetIPv6Index, "2001:db8:4::/48", pack.ID, true)
+
+	assertStringID(t, dump.domainIndex, NormalizeDomain("old-one.example"), pack.ID, false)
+	assertStringID(t, dump.domainIndex, NormalizeDomain("kept.example"), pack.ID, true)
+	assertStringID(t, dump.domainIndex, NormalizeDomain("old-two.example"), pack.ID, false)
+	assertStringID(t, dump.domainIndex, NormalizeDomain("new.example"), pack.ID, true)
+
+	assertStringID(t, dump.URLIndex, NormalizeURL("http://old-one.example/a"), pack.ID, false)
+	assertStringID(t, dump.URLIndex, NormalizeURL("https://kept.example/b"), pack.ID, true)
+	assertStringID(t, dump.URLIndex, NormalizeURL("http://old-two.example/c"), pack.ID, false)
+	assertStringID(t, dump.URLIndex, NormalizeURL("http://new.example/d"), pack.ID, true)
+
+	if len(pack.IPv4) != len(newRecord.IPv4) ||
+		len(pack.IPv6) != len(newRecord.IPv6) ||
+		len(pack.SubnetIPv4) != len(newRecord.SubnetIPv4) ||
+		len(pack.SubnetIPv6) != len(newRecord.SubnetIPv6) ||
+		len(pack.Domain) != len(newRecord.Domain) ||
+		len(pack.URL) != len(newRecord.URL) {
+		t.Fatalf("packed content slices were not rebound to the new record")
+	}
+}
+
+func assertStringID(t *testing.T, index StringSearchIndex, key string, id int32, want bool) {
+	t.Helper()
+
+	got := false
+	for _, v := range index[key] {
+		if v == id {
+			got = true
+			break
+		}
+	}
+
+	if got != want {
+		t.Fatalf("index[%q] id %d: got %t, want %t", key, id, got, want)
+	}
+}
+
+func assertUint32ID(t *testing.T, index Uint32SearchIndex, key uint32, id int32, want bool) {
+	t.Helper()
+
+	got := false
+	for _, v := range index[key] {
+		if v == id {
+			got = true
+			break
+		}
+	}
+
+	if got != want {
+		t.Fatalf("index[%d] id %d: got %t, want %t", key, id, got, want)
+	}
 }

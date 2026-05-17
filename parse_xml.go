@@ -631,41 +631,26 @@ func (dump *Dump) ExtractAndApplyIPv4(record *Content, pack *PackedContent) {
 }
 
 func (dump *Dump) EctractAndApplyUpdateIPv4(record *Content, pack *PackedContent) {
-	ipExisted := make(map[uint32]Nothing, len(pack.IPv4))
-	if len(record.IPv4) > 0 {
-		for _, ip4 := range record.IPv4 {
-			pack.InsertIPv4(ip4)
-			dump.InsertToIPv4Index(ip4.IPv4, pack.ID)
-			ipExisted[ip4.IPv4] = Nothing{}
-		}
-	}
-
+	oldIPs := make(map[uint32]Nothing, len(pack.IPv4))
 	for _, ip4 := range pack.IPv4 {
-		if _, ok := ipExisted[ip4.IPv4]; !ok {
-			pack.RemoveIPv4(ip4)
-			dump.RemoveFromIPv4Index(ip4.IPv4, pack.ID)
-		}
+		oldIPs[ip4.IPv4] = Nothing{}
 	}
-}
 
-func (pack *PackedContent) InsertIPv4(ip4 IPv4) {
-	for _, existedIP4 := range pack.IPv4 {
-		if ip4 == existedIP4 {
-			return
+	newIPs := make(map[uint32]Nothing, len(record.IPv4))
+	for _, ip4 := range record.IPv4 {
+		newIPs[ip4.IPv4] = Nothing{}
+		if _, ok := oldIPs[ip4.IPv4]; !ok {
+			dump.InsertToIPv4Index(ip4.IPv4, pack.ID)
 		}
 	}
 
-	pack.IPv4 = append(pack.IPv4, ip4)
-}
-
-func (pack *PackedContent) RemoveIPv4(ip4 IPv4) {
-	for i, existedIP4 := range pack.IPv4 {
-		if ip4 == existedIP4 {
-			pack.IPv4 = append(pack.IPv4[:i], pack.IPv4[i+1:]...)
-
-			return
+	for ip4 := range oldIPs {
+		if _, ok := newIPs[ip4]; !ok {
+			dump.RemoveFromIPv4Index(ip4, pack.ID)
 		}
 	}
+
+	pack.IPv4 = record.IPv4
 }
 
 func (dump *Dump) ExtractAndApplyIPv6(record *Content, pack *PackedContent) {
@@ -678,43 +663,27 @@ func (dump *Dump) ExtractAndApplyIPv6(record *Content, pack *PackedContent) {
 }
 
 func (dump *Dump) EctractAndApplyUpdateIPv6(record *Content, pack *PackedContent) {
-	ipExisted := make(map[string]Nothing, len(pack.IPv6))
-	if len(record.IPv6) > 0 {
-		for _, ip6 := range record.IPv6 {
-			pack.InsertIPv6(ip6)
-
-			addr := string(ip6.IPv6)
-			dump.InsertToIPv6Index(addr, pack.ID)
-			ipExisted[addr] = Nothing{}
-		}
-	}
-
+	oldIPs := make(map[string]Nothing, len(pack.IPv6))
 	for _, ip6 := range pack.IPv6 {
-		if _, ok := ipExisted[string(ip6.IPv6)]; !ok {
-			pack.RemoveIPv6(ip6)
-			dump.RemoveFromIPv6Index(string(ip6.IPv6), pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertIPv6(ip6 IPv6) {
-	for _, existedIP6 := range pack.IPv6 {
-		if string(ip6.IPv6) == string(existedIP6.IPv6) && ip6.Ts == existedIP6.Ts {
-			return
-		}
+		oldIPs[string(ip6.IPv6)] = Nothing{}
 	}
 
-	pack.IPv6 = append(pack.IPv6, ip6)
-}
-
-func (pack *PackedContent) RemoveIPv6(ip6 IPv6) {
-	for i, existedIP6 := range pack.IPv6 {
-		if string(ip6.IPv6) == string(existedIP6.IPv6) && ip6.Ts == existedIP6.Ts {
-			pack.IPv6 = append(pack.IPv6[:i], pack.IPv6[i+1:]...)
-
-			return
+	newIPs := make(map[string]Nothing, len(record.IPv6))
+	for _, ip6 := range record.IPv6 {
+		addr := string(ip6.IPv6)
+		newIPs[addr] = Nothing{}
+		if _, ok := oldIPs[addr]; !ok {
+			dump.InsertToIPv6Index(addr, pack.ID)
 		}
 	}
+
+	for addr := range oldIPs {
+		if _, ok := newIPs[addr]; !ok {
+			dump.RemoveFromIPv6Index(addr, pack.ID)
+		}
+	}
+
+	pack.IPv6 = record.IPv6
 }
 
 func (dump *Dump) ExtractAndApplySubnetIPv4(record *Content, pack *PackedContent) {
@@ -727,41 +696,26 @@ func (dump *Dump) ExtractAndApplySubnetIPv4(record *Content, pack *PackedContent
 }
 
 func (dump *Dump) EctractAndApplyUpdateSubnetIPv4(record *Content, pack *PackedContent) {
-	existedSubnetIPv4 := NewStringSet(len(pack.SubnetIPv4))
-	if len(record.SubnetIPv4) > 0 {
-		for _, subnetIPv4 := range record.SubnetIPv4 {
-			pack.InsertSubnetIPv4(subnetIPv4)
-			dump.InsertToSubnetIPv4Index(subnetIPv4.SubnetIPv4, pack.ID)
-			existedSubnetIPv4[subnetIPv4.SubnetIPv4] = Nothing{}
-		}
-	}
-
+	oldSubnets := NewStringSet(len(pack.SubnetIPv4))
 	for _, subnetIPv4 := range pack.SubnetIPv4 {
-		if _, ok := existedSubnetIPv4[subnetIPv4.SubnetIPv4]; !ok {
-			pack.RemoveSubnetIPv4(subnetIPv4)
-			dump.RemoveFromSubnetIPv4Index(subnetIPv4.SubnetIPv4, pack.ID)
-		}
+		oldSubnets[subnetIPv4.SubnetIPv4] = Nothing{}
 	}
-}
 
-func (pack *PackedContent) InsertSubnetIPv4(subnetIPv4 SubnetIPv4) {
-	for _, existedSubnetIPv4 := range pack.SubnetIPv4 {
-		if subnetIPv4 == existedSubnetIPv4 {
-			return
+	newSubnets := NewStringSet(len(record.SubnetIPv4))
+	for _, subnetIPv4 := range record.SubnetIPv4 {
+		newSubnets[subnetIPv4.SubnetIPv4] = Nothing{}
+		if _, ok := oldSubnets[subnetIPv4.SubnetIPv4]; !ok {
+			dump.InsertToSubnetIPv4Index(subnetIPv4.SubnetIPv4, pack.ID)
 		}
 	}
 
-	pack.SubnetIPv4 = append(pack.SubnetIPv4, subnetIPv4)
-}
-
-func (pack *PackedContent) RemoveSubnetIPv4(subnetIPv4 SubnetIPv4) {
-	for i, existedSubnetIPv4 := range pack.SubnetIPv4 {
-		if subnetIPv4 == existedSubnetIPv4 {
-			pack.SubnetIPv4 = append(pack.SubnetIPv4[:i], pack.SubnetIPv4[i+1:]...)
-
-			return
+	for subnetIPv4 := range oldSubnets {
+		if _, ok := newSubnets[subnetIPv4]; !ok {
+			dump.RemoveFromSubnetIPv4Index(subnetIPv4, pack.ID)
 		}
 	}
+
+	pack.SubnetIPv4 = record.SubnetIPv4
 }
 
 func (dump *Dump) ExtractAndApplySubnetIPv6(record *Content, pack *PackedContent) {
@@ -774,41 +728,26 @@ func (dump *Dump) ExtractAndApplySubnetIPv6(record *Content, pack *PackedContent
 }
 
 func (dump *Dump) EctractAndApplyUpdateSubnetIPv6(record *Content, pack *PackedContent) {
-	existedSubnetIPv6 := NewStringSet(len(pack.SubnetIPv6))
-	if len(record.SubnetIPv6) > 0 {
-		for _, subnetIPv6 := range record.SubnetIPv6 {
-			pack.InsertSubnetIPv6(subnetIPv6)
-			dump.InsertToSubnetIPv6Index(subnetIPv6.SubnetIPv6, pack.ID)
-			existedSubnetIPv6[subnetIPv6.SubnetIPv6] = Nothing{}
-		}
-	}
-
+	oldSubnets := NewStringSet(len(pack.SubnetIPv6))
 	for _, subnetIPv6 := range pack.SubnetIPv6 {
-		if _, ok := existedSubnetIPv6[subnetIPv6.SubnetIPv6]; !ok {
-			pack.RemoveSubnetIPv6(subnetIPv6)
-			dump.RemoveFromSubnetIPv6Index(subnetIPv6.SubnetIPv6, pack.ID)
-		}
+		oldSubnets[subnetIPv6.SubnetIPv6] = Nothing{}
 	}
-}
 
-func (pack *PackedContent) InsertSubnetIPv6(subnetIPv6 SubnetIPv6) {
-	for _, existedSubnetIPv6 := range pack.SubnetIPv6 {
-		if subnetIPv6 == existedSubnetIPv6 {
-			return
+	newSubnets := NewStringSet(len(record.SubnetIPv6))
+	for _, subnetIPv6 := range record.SubnetIPv6 {
+		newSubnets[subnetIPv6.SubnetIPv6] = Nothing{}
+		if _, ok := oldSubnets[subnetIPv6.SubnetIPv6]; !ok {
+			dump.InsertToSubnetIPv6Index(subnetIPv6.SubnetIPv6, pack.ID)
 		}
 	}
 
-	pack.SubnetIPv6 = append(pack.SubnetIPv6, subnetIPv6)
-}
-
-func (pack *PackedContent) RemoveSubnetIPv6(subnetIPv6 SubnetIPv6) {
-	for i, existedSubnetIPv6 := range pack.SubnetIPv6 {
-		if subnetIPv6 == existedSubnetIPv6 {
-			pack.SubnetIPv6 = append(pack.SubnetIPv6[:i], pack.SubnetIPv6[i+1:]...)
-
-			return
+	for subnetIPv6 := range oldSubnets {
+		if _, ok := newSubnets[subnetIPv6]; !ok {
+			dump.RemoveFromSubnetIPv6Index(subnetIPv6, pack.ID)
 		}
 	}
+
+	pack.SubnetIPv6 = record.SubnetIPv6
 }
 
 func (dump *Dump) ExtractAndApplyDomain(record *Content, pack *PackedContent) {
@@ -823,48 +762,27 @@ func (dump *Dump) ExtractAndApplyDomain(record *Content, pack *PackedContent) {
 }
 
 func (dump *Dump) EctractAndApplyUpdateDomain(record *Content, pack *PackedContent) {
-	domainExisted := NewStringSet(len(pack.Domain))
-	if len(record.Domain) > 0 {
-		for _, domain := range record.Domain {
-			pack.InsertDomain(domain)
-
-			nDomain := NormalizeDomain(domain.Domain)
-
-			dump.InsertToDomainIndex(nDomain, pack.ID)
-
-			domainExisted[domain.Domain] = Nothing{}
-		}
-	}
-
+	oldDomains := NewStringSet(len(pack.Domain))
 	for _, domain := range pack.Domain {
-		if _, ok := domainExisted[domain.Domain]; !ok {
-			pack.RemoveDomain(domain)
-
-			nDomain := NormalizeDomain(domain.Domain)
-
-			dump.RemoveFromDomainIndex(nDomain, pack.ID)
-		}
+		oldDomains[NormalizeDomain(domain.Domain)] = Nothing{}
 	}
-}
 
-func (pack *PackedContent) InsertDomain(domain Domain) {
-	for _, existedDomain := range pack.Domain {
-		if domain == existedDomain {
-			return
+	newDomains := NewStringSet(len(record.Domain))
+	for _, domain := range record.Domain {
+		nDomain := NormalizeDomain(domain.Domain)
+		newDomains[nDomain] = Nothing{}
+		if _, ok := oldDomains[nDomain]; !ok {
+			dump.InsertToDomainIndex(nDomain, pack.ID)
 		}
 	}
 
-	pack.Domain = append(pack.Domain, domain)
-}
-
-func (pack *PackedContent) RemoveDomain(domain Domain) {
-	for i, existedDomain := range pack.Domain {
-		if domain == existedDomain {
-			pack.Domain = append(pack.Domain[:i], pack.Domain[i+1:]...)
-
-			return
+	for domain := range oldDomains {
+		if _, ok := newDomains[domain]; !ok {
+			dump.RemoveFromDomainIndex(domain, pack.ID)
 		}
 	}
+
+	pack.Domain = record.Domain
 }
 
 func (dump *Dump) ExtractAndApplyURL(record *Content, pack *PackedContent) {
@@ -884,56 +802,35 @@ func (dump *Dump) ExtractAndApplyURL(record *Content, pack *PackedContent) {
 }
 
 func (dump *Dump) EctractAndApplyUpdateURL(record *Content, pack *PackedContent) {
-	urlExisted := NewStringSet(len(pack.URL))
+	oldURLs := NewStringSet(len(pack.URL))
+	for _, u := range pack.URL {
+		oldURLs[NormalizeURL(u.URL)] = Nothing{}
+	}
+
+	newURLs := NewStringSet(len(record.URL))
 	HTTPSBlock := 0
 
-	if len(record.URL) > 0 {
-		for _, u := range record.URL {
-			pack.InsertURL(u)
-
-			nURL := NormalizeURL(u.URL)
-			if strings.HasPrefix(nURL, "https://") {
-				HTTPSBlock++
-			}
-
+	for _, u := range record.URL {
+		nURL := NormalizeURL(u.URL)
+		if strings.HasPrefix(nURL, "https://") {
+			HTTPSBlock++
+		}
+		newURLs[nURL] = Nothing{}
+		if _, ok := oldURLs[nURL]; !ok {
 			dump.InsertToURLIndex(nURL, pack.ID)
-
-			urlExisted[u.URL] = Nothing{}
 		}
 	}
 
 	record.HTTPSBlock = HTTPSBlock
 	pack.BlockType = record.constructBlockType()
 
-	for _, u := range pack.URL {
-		if _, ok := urlExisted[u.URL]; !ok {
-			pack.RemoveURL(u)
-
-			nURL := NormalizeURL(u.URL)
-
-			dump.RemoveFromURLIndex(nURL, pack.ID)
-		}
-	}
-}
-
-func (pack *PackedContent) InsertURL(u URL) {
-	for _, existedURL := range pack.URL {
-		if u == existedURL {
-			return
+	for url := range oldURLs {
+		if _, ok := newURLs[url]; !ok {
+			dump.RemoveFromURLIndex(url, pack.ID)
 		}
 	}
 
-	pack.URL = append(pack.URL, u)
-}
-
-func (pack *PackedContent) RemoveURL(u URL) {
-	for i, existedURL := range pack.URL {
-		if u == existedURL {
-			pack.URL = append(pack.URL[:i], pack.URL[i+1:]...)
-
-			return
-		}
-	}
+	pack.URL = record.URL
 }
 
 func (pack *PackedContent) refreshPackedContent(hash uint64, utime int64, payload []byte) {
