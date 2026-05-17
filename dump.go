@@ -31,7 +31,7 @@ type ParseStatistics struct {
 	MaxSubnetIPv4IDReferences     int
 	MaxSubnetIPv6IDReferences     int
 	LargestSizeOfContent          int
-	LargestSizeOfContentCintentID int32
+	LargestSizeOfContentContentID int32
 	Updated                       time.Time
 }
 

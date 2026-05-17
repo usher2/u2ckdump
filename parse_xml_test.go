@@ -263,12 +263,12 @@ func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
 		},
 	}
 
-	dump.EctractAndApplyUpdateIPv4(newRecord, pack)
-	dump.EctractAndApplyUpdateIPv6(newRecord, pack)
-	dump.EctractAndApplyUpdateSubnetIPv4(newRecord, pack)
-	dump.EctractAndApplyUpdateSubnetIPv6(newRecord, pack)
-	dump.EctractAndApplyUpdateDomain(newRecord, pack)
-	dump.EctractAndApplyUpdateURL(newRecord, pack)
+	dump.ExtractAndApplyUpdateIPv4(newRecord, pack)
+	dump.ExtractAndApplyUpdateIPv6(newRecord, pack)
+	dump.ExtractAndApplyUpdateSubnetIPv4(newRecord, pack)
+	dump.ExtractAndApplyUpdateSubnetIPv6(newRecord, pack)
+	dump.ExtractAndApplyUpdateDomain(newRecord, pack)
+	dump.ExtractAndApplyUpdateURL(newRecord, pack)
 
 	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.1"), pack.ID, false)
 	assertUint32ID(t, dump.IPv4Index, IPv4StrToInt("192.0.2.2"), pack.ID, true)

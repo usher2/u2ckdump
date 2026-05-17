@@ -211,7 +211,7 @@ func Parse(dumpFile io.Reader) (*ParseStatistics, error) {
 				contBuf := buffer.Next(int(tokenStartOffset - bufferOffset))
 				if stats.LargestSizeOfContent < len(contBuf) {
 					stats.LargestSizeOfContent = len(contBuf)
-					stats.LargestSizeOfContentCintentID = id
+					stats.LargestSizeOfContentContentID = id
 				}
 
 				bufferOffset = tokenStartOffset
@@ -278,7 +278,7 @@ func Parse(dumpFile io.Reader) (*ParseStatistics, error) {
 		len(CurrentDump.IPv4Index), len(CurrentDump.IPv6Index), len(CurrentDump.subnetIPv4Index), len(CurrentDump.subnetIPv6Index),
 		len(CurrentDump.domainIndex), len(CurrentDump.URLIndex))
 	logger.Info.Printf("Biggest array: %d\n", stats.MaxItemReferences)
-	logger.Info.Printf("Biggest content: %d (/n_%d)\n", stats.LargestSizeOfContent, stats.LargestSizeOfContentCintentID)
+	logger.Info.Printf("Biggest content: %d (/n_%d)\n", stats.LargestSizeOfContent, stats.LargestSizeOfContentContentID)
 
 	return &stats, nil
 }
@@ -349,7 +349,7 @@ func (dump *Dump) Cleanup(existed Int32Map, stats *ParseStatistics, utime int64)
 	}
 
 	statisctics.LargestSizeOfContent = stats.LargestSizeOfContent
-	statisctics.LargestSizeOfContentCintentID = stats.LargestSizeOfContentCintentID
+	statisctics.LargestSizeOfContentContentID = stats.LargestSizeOfContentContentID
 	statisctics.MaxItemReferences = stats.MaxItemReferences
 	statisctics.MaxItemReferencesString = stats.MaxItemReferencesString
 	statisctics.EntriesWithoutDecisionNo = len(dump.withoutDecisionNo)
@@ -531,14 +531,14 @@ func (dump *Dump) SetContentUpdateTime(id int32, updateTime int64) {
 func (dump *Dump) MergePackedContent(record *Content, prev *PackedContent, updateTime int64) {
 	prev.refreshPackedContent(record.RecordHash, updateTime, record.Marshal())
 
-	dump.EctractAndApplyUpdateIPv4(record, prev)
-	dump.EctractAndApplyUpdateIPv6(record, prev)
-	dump.EctractAndApplyUpdateSubnetIPv4(record, prev)
-	dump.EctractAndApplyUpdateSubnetIPv6(record, prev)
-	dump.EctractAndApplyUpdateDomain(record, prev)
-	dump.EctractAndApplyUpdateURL(record, prev)
-	dump.EctractAndApplyUpdateDecision(record, prev)  // reason for ALARM!!!
-	dump.EctractAndApplyUpdateEntryType(record, prev) // reason for ALARM!!!
+	dump.ExtractAndApplyUpdateIPv4(record, prev)
+	dump.ExtractAndApplyUpdateIPv6(record, prev)
+	dump.ExtractAndApplyUpdateSubnetIPv4(record, prev)
+	dump.ExtractAndApplyUpdateSubnetIPv6(record, prev)
+	dump.ExtractAndApplyUpdateDomain(record, prev)
+	dump.ExtractAndApplyUpdateURL(record, prev)
+	dump.ExtractAndApplyUpdateDecision(record, prev)  // reason for ALARM!!!
+	dump.ExtractAndApplyUpdateEntryType(record, prev) // reason for ALARM!!!
 }
 
 // NewPackedContent - creates new content.
@@ -565,7 +565,7 @@ func (dump *Dump) ExtractAndApplyEntryType(record *Content, pack *PackedContent)
 }
 
 // IT IS REASON FOR ALARM!!!!
-func (dump *Dump) EctractAndApplyUpdateEntryType(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateEntryType(record *Content, pack *PackedContent) {
 	dump.RemoveFromEntryTypeIndex(pack.EntryTypeString, pack.ID)
 
 	pack.EntryType = record.EntryType
@@ -598,7 +598,7 @@ func (dump *Dump) ExtractAndApplyDecision(record *Content, pack *PackedContent) 
 }
 
 // IT IS REASON FOR ALARM!!!!
-func (dump *Dump) EctractAndApplyUpdateDecision(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateDecision(record *Content, pack *PackedContent) {
 	dump.RemoveFromDecisionIndex(pack.Decision, pack.ID)
 	dump.RemoveFromDecisionOrgIndex(pack.DecisionOrg, pack.ID)
 	dump.RemoveFromDecisionWithoutNoIndex(pack.ID)
@@ -632,7 +632,7 @@ func (dump *Dump) ExtractAndApplyIPv4(record *Content, pack *PackedContent) {
 	}
 }
 
-func (dump *Dump) EctractAndApplyUpdateIPv4(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateIPv4(record *Content, pack *PackedContent) {
 	oldIPs := make(map[uint32]Nothing, len(pack.IPv4))
 	for _, ip4 := range pack.IPv4 {
 		oldIPs[ip4.IPv4] = Nothing{}
@@ -664,7 +664,7 @@ func (dump *Dump) ExtractAndApplyIPv6(record *Content, pack *PackedContent) {
 	}
 }
 
-func (dump *Dump) EctractAndApplyUpdateIPv6(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateIPv6(record *Content, pack *PackedContent) {
 	oldIPs := make(map[string]Nothing, len(pack.IPv6))
 	for _, ip6 := range pack.IPv6 {
 		oldIPs[string(ip6.IPv6)] = Nothing{}
@@ -697,7 +697,7 @@ func (dump *Dump) ExtractAndApplySubnetIPv4(record *Content, pack *PackedContent
 	}
 }
 
-func (dump *Dump) EctractAndApplyUpdateSubnetIPv4(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateSubnetIPv4(record *Content, pack *PackedContent) {
 	oldSubnets := NewStringSet(len(pack.SubnetIPv4))
 	for _, subnetIPv4 := range pack.SubnetIPv4 {
 		oldSubnets[subnetIPv4.SubnetIPv4] = Nothing{}
@@ -729,7 +729,7 @@ func (dump *Dump) ExtractAndApplySubnetIPv6(record *Content, pack *PackedContent
 	}
 }
 
-func (dump *Dump) EctractAndApplyUpdateSubnetIPv6(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateSubnetIPv6(record *Content, pack *PackedContent) {
 	oldSubnets := NewStringSet(len(pack.SubnetIPv6))
 	for _, subnetIPv6 := range pack.SubnetIPv6 {
 		oldSubnets[subnetIPv6.SubnetIPv6] = Nothing{}
@@ -763,7 +763,7 @@ func (dump *Dump) ExtractAndApplyDomain(record *Content, pack *PackedContent) {
 	}
 }
 
-func (dump *Dump) EctractAndApplyUpdateDomain(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateDomain(record *Content, pack *PackedContent) {
 	oldDomains := NewStringSet(len(pack.Domain))
 	for _, domain := range pack.Domain {
 		oldDomains[NormalizeDomain(domain.Domain)] = Nothing{}
@@ -803,7 +803,7 @@ func (dump *Dump) ExtractAndApplyURL(record *Content, pack *PackedContent) {
 	pack.BlockType = record.constructBlockType()
 }
 
-func (dump *Dump) EctractAndApplyUpdateURL(record *Content, pack *PackedContent) {
+func (dump *Dump) ExtractAndApplyUpdateURL(record *Content, pack *PackedContent) {
 	oldURLs := NewStringSet(len(pack.URL))
 	for _, u := range pack.URL {
 		oldURLs[NormalizeURL(u.URL)] = Nothing{}

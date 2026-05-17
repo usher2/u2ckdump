@@ -25,7 +25,7 @@ func TestExtractAndApplySubnetIPv6UsesIPv6Index(t *testing.T) {
 	}
 }
 
-func TestEctractAndApplyUpdateSubnetIPv6RemovesFromIPv6Index(t *testing.T) {
+func TestExtractAndApplyUpdateSubnetIPv6RemovesFromIPv6Index(t *testing.T) {
 	dump := NewDump()
 	pack := &PackedContent{
 		ID:         42,
@@ -33,7 +33,7 @@ func TestEctractAndApplyUpdateSubnetIPv6RemovesFromIPv6Index(t *testing.T) {
 	}
 	dump.InsertToSubnetIPv6Index("2001:db8::/32", pack.ID)
 
-	dump.EctractAndApplyUpdateSubnetIPv6(&Content{}, pack)
+	dump.ExtractAndApplyUpdateSubnetIPv6(&Content{}, pack)
 
 	if _, ok := dump.subnetIPv6Index["2001:db8::/32"]; ok {
 		t.Fatal("removed IPv6 subnet is still present in IPv6 subnet index")
