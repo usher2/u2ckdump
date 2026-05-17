@@ -481,7 +481,7 @@ func (dump *Dump) purge(existed Int32Map, stats *ParseStatistics) {
 			dump.RemoveFromDecisionIndex(cont.Decision, cont.ID)
 			dump.RemoveFromDecisionOrgIndex(cont.DecisionOrg, cont.ID)
 			dump.RemoveFromDecisionWithoutNoIndex(cont.ID)
-			dump.RemoveFromEntryTypeIndex(entryTypeKey(cont.EntryType, cont.DecisionOrg, cont.DecisionNumber), cont.ID)
+			dump.RemoveFromEntryTypeIndex(cont.EntryTypeString, cont.ID)
 
 			delete(dump.ContentIndex, id)
 
