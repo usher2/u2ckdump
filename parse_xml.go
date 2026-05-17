@@ -195,7 +195,9 @@ func Parse(dumpFile io.Reader) (*ParseStatistics, error) {
 				id := getContentId(element)
 
 				// parse <content>...</content> only if need
-				decoder.Skip()
+				if err := decoder.Skip(); err != nil {
+					return nil, fmt.Errorf("skip content %d: %w", id, err)
+				}
 
 				// read buffer to mark anyway
 				diff := tokenStartOffset - bufferOffset

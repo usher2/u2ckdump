@@ -166,6 +166,31 @@ func Test_Parse(t *testing.T) {
 	fmt.Println()
 }
 
+func TestParseReturnsSkipErrorForMalformedContent(t *testing.T) {
+	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
+
+	oldDump := CurrentDump
+	CurrentDump = NewDump()
+	defer func() {
+		CurrentDump = oldDump
+	}()
+
+	dumpFile := strings.NewReader(`<register updateTime="2011-01-01T01:01:01+03:00">
+<content id="42" includeTime="2001-01-01T01:01:01" entryType="1" blockType="default">
+	<decision date="2000-01-01" number="1/1/11-1111" org="ONE"/>
+	<url>https://example.test/
+</content>
+</register>`)
+
+	_, err := Parse(dumpFile)
+	if err == nil {
+		t.Fatal("expected malformed content to fail")
+	}
+	if !strings.Contains(err.Error(), "skip content 42") {
+		t.Fatalf("expected skip content id in error, got %q", err.Error())
+	}
+}
+
 func TestUpdateRebindsLargeFieldSlicesByIndexKey(t *testing.T) {
 	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
 
