@@ -123,10 +123,9 @@ const (
 )
 
 func Test_Parse(t *testing.T) {
-	var stats ParseStatistics
 	logger.LogInit(os.Stderr, os.Stdout, os.Stderr, os.Stderr)
 	dumpFile := strings.NewReader(xml01)
-	err := Parse(dumpFile)
+	stats, err := Parse(dumpFile)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -155,7 +154,7 @@ func Test_Parse(t *testing.T) {
 
 	fmt.Println()
 	dumpFile = strings.NewReader(xml02)
-	err = Parse(dumpFile)
+	_, err = Parse(dumpFile)
 	if err != nil {
 		t.Errorf(err.Error())
 	}

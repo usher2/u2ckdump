@@ -147,7 +147,7 @@ func parseContentElement(element xml.StartElement, content *Content) error {
 }
 
 // Parse - parse dump.
-func Parse(dumpFile io.Reader) error {
+func Parse(dumpFile io.Reader) (*ParseStatistics, error) {
 	var (
 		reg                            Reg
 		buffer                         bytes.Buffer
@@ -180,7 +180,7 @@ func Parse(dumpFile io.Reader) error {
 		token, err := decoder.Token()
 		if token == nil {
 			if err != io.EOF {
-				return err
+				return nil, err
 			}
 
 			break
@@ -278,7 +278,7 @@ func Parse(dumpFile io.Reader) error {
 	logger.Info.Printf("Biggest array: %d\n", stats.MaxItemReferences)
 	logger.Info.Printf("Biggest content: %d (/n_%d)\n", stats.LargestSizeOfContent, stats.LargestSizeOfContentCintentID)
 
-	return nil
+	return &stats, nil
 }
 
 func NewContent(recordHash uint64, buf []byte) (*Content, error) {
@@ -768,7 +768,7 @@ func (dump *Dump) ExtractAndApplySubnetIPv6(record *Content, pack *PackedContent
 	if len(record.SubnetIPv6) > 0 {
 		pack.SubnetIPv6 = record.SubnetIPv6
 		for _, subnet6 := range pack.SubnetIPv6 {
-			dump.InsertToSubnetIPv4Index(subnet6.SubnetIPv6, pack.ID)
+			dump.InsertToSubnetIPv6Index(subnet6.SubnetIPv6, pack.ID)
 		}
 	}
 }
@@ -786,7 +786,7 @@ func (dump *Dump) EctractAndApplyUpdateSubnetIPv6(record *Content, pack *PackedC
 	for _, subnetIPv6 := range pack.SubnetIPv6 {
 		if _, ok := existedSubnetIPv6[subnetIPv6.SubnetIPv6]; !ok {
 			pack.RemoveSubnetIPv6(subnetIPv6)
-			dump.RemoveFromSubnetIPv4Index(subnetIPv6.SubnetIPv6, pack.ID)
+			dump.RemoveFromSubnetIPv6Index(subnetIPv6.SubnetIPv6, pack.ID)
 		}
 	}
 }
